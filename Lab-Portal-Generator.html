@@ -44,6 +44,19 @@
       color-scheme: light;
       font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
       line-height: 1.5;
+      --brand-red: #DA291C;
+      --brand-red-dark: #B42318;
+      --brand-black: #000000;
+      --brand-text: #464646;
+      --brand-text-muted: #646464;
+      --brand-text-soft: #969696;
+      --brand-border: #C8C8C8;
+      --brand-panel: #FFFFFF;
+      --brand-surface: #F0F0F0;
+      --brand-surface-alt: #F7F7F7;
+      --brand-success: #3CB17E;
+      --brand-info: #307FE2;
+      --brand-danger: #DA291C;
     }
 
     * {
@@ -52,8 +65,8 @@
 
     body {
       margin: 0;
-      background: #f4f5f7;
-      color: #1f2933;
+      background: var(--brand-surface);
+      color: var(--brand-text);
     }
 
     .app {
@@ -90,7 +103,7 @@
     }
 
     .theme-toggle:focus-visible {
-      outline: 2px solid #2680c2;
+      outline: 2px solid var(--brand-red);
       outline-offset: 3px;
       border-radius: 999px;
     }
@@ -100,8 +113,8 @@
       width: 62px;
       height: 32px;
       border-radius: 999px;
-      border: 1px solid #9aa5b1;
-      background: linear-gradient(180deg, #eef2f7, #dce3ec);
+      border: 1px solid var(--brand-border);
+      background: linear-gradient(180deg, #f7f7f7, #e6e6e6);
       display: inline-flex;
       align-items: center;
       justify-content: space-between;
@@ -117,12 +130,12 @@
     }
 
     .theme-icon-sun {
-      color: #243b53;
+      color: var(--brand-text);
       opacity: 0.95;
     }
 
     .theme-icon-moon {
-      color: #52606d;
+      color: var(--brand-text-muted);
       opacity: 0.7;
     }
 
@@ -134,7 +147,7 @@
       height: 24px;
       border-radius: 999px;
       background: #ffffff;
-      border: 1px solid #94a3b8;
+      border: 1px solid var(--brand-border);
       box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
       transition: transform 200ms ease, background-color 200ms ease, border-color 200ms ease;
     }
@@ -142,12 +155,12 @@
     header h1 {
       margin: 0 0 0.25rem;
       font-size: clamp(1.9rem, 3vw, 2.6rem);
-      color: #102a43;
+      color: var(--brand-black);
     }
 
     header p {
       margin: 0;
-      color: #52606d;
+      color: var(--brand-text-muted);
     }
 
     .top-nav {
@@ -163,9 +176,9 @@
       gap: 0.35rem;
       padding: 0.45rem 0.9rem;
       border-radius: 999px;
-      border: 1px solid #cbd2d9;
-      background: #f5f7fa;
-      color: #334e68;
+      border: 1px solid var(--brand-border);
+      background: #ffffff;
+      color: var(--brand-text);
       font-weight: 600;
       font-size: 0.9rem;
       text-decoration: none;
@@ -173,16 +186,16 @@
     }
 
     .top-nav a:hover {
-      background: #edf2f7;
-      color: #102a43;
+      background: var(--brand-surface);
+      color: var(--brand-black);
       transform: translateY(-1px);
     }
 
     .top-nav a[aria-current="page"] {
-      background: #2680c2;
-      border-color: #2680c2;
+      background: var(--brand-red);
+      border-color: var(--brand-red);
       color: #ffffff;
-      box-shadow: 0 6px 14px rgba(38, 128, 194, 0.25);
+      box-shadow: 0 6px 14px rgba(218, 41, 28, 0.25);
     }
 
     main {
@@ -191,9 +204,9 @@
     }
 
     .panel {
-      background: #ffffff;
+      background: var(--brand-panel);
       border-radius: 12px;
-      border: 1px solid #d9e2ec;
+      border: 1px solid var(--brand-border);
       padding: 1.5rem;
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
     }
@@ -215,7 +228,7 @@
     .step-num {
       width: 24px;
       height: 24px;
-      background: #2680c2;
+      background: var(--brand-red);
       border-radius: 999px;
       color: #ffffff;
       font-size: 0.72rem;
@@ -224,18 +237,18 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 4px 10px rgba(38, 128, 194, 0.22);
+      box-shadow: 0 4px 10px rgba(218, 41, 28, 0.22);
     }
 
     .panel-header h2 {
       margin: 0;
       font-size: 1.35rem;
-      color: #243b53;
+      color: var(--brand-black);
     }
 
     .panel-intro {
       margin: 0 0 1rem;
-      color: #52606d;
+      color: var(--brand-text-muted);
     }
 
     .field-grid {
@@ -257,11 +270,11 @@
     label {
       font-size: 0.8rem;
       font-weight: 600;
-      color: #334e68;
+      color: var(--brand-text);
     }
 
     .muted {
-      color: #7b8794;
+      color: var(--brand-text-soft);
       font-weight: 400;
     }
 
@@ -269,9 +282,9 @@
     textarea {
       width: 100%;
       border-radius: 8px;
-      border: 1px solid #cbd2d9;
-      background: #f8fafc;
-      color: #1f2933;
+      border: 1px solid var(--brand-border);
+      background: #ffffff;
+      color: var(--brand-text);
       font: inherit;
       outline: none;
       transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
@@ -288,9 +301,9 @@
 
     input:focus,
     textarea:focus {
-      border-color: #2680c2;
+      border-color: var(--brand-red);
       background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(38, 128, 194, 0.15);
+      box-shadow: 0 0 0 3px rgba(218, 41, 28, 0.15);
     }
 
     textarea.raw {
@@ -301,9 +314,9 @@
 
     textarea.output {
       min-height: 260px;
-      background: #102a43;
+      background: #464646;
       color: #d9f99d;
-      border-color: #243b53;
+      border-color: #646464;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       font-size: 0.74rem;
     }
@@ -311,7 +324,7 @@
     .tip {
       margin: 0.35rem 0 0;
       font-size: 0.75rem;
-      color: #7b8794;
+      color: var(--brand-text-soft);
     }
 
     .btn-row,
@@ -344,26 +357,26 @@
     }
 
     .btn-outline {
-      border: 1px solid #cbd2d9;
-      background: #f5f7fa;
-      color: #243b53;
+      border: 1px solid var(--brand-border);
+      background: #ffffff;
+      color: var(--brand-text);
     }
 
     .btn-outline:hover {
-      background: #edf2f7;
-      color: #102a43;
+      background: var(--brand-surface);
+      color: var(--brand-black);
     }
 
     .btn-primary {
-      border: 1px solid #2680c2;
-      background: #2680c2;
+      border: 1px solid var(--brand-red);
+      background: var(--brand-red);
       color: #ffffff;
-      box-shadow: 0 8px 16px rgba(38, 128, 194, 0.18);
+      box-shadow: 0 8px 16px rgba(218, 41, 28, 0.18);
     }
 
     .btn-primary:hover {
-      background: #186faf;
-      border-color: #186faf;
+      background: var(--brand-red-dark);
+      border-color: var(--brand-red-dark);
     }
 
     .btn-download {
@@ -378,18 +391,18 @@
     }
 
     .btn-copy {
-      border: 1px solid #243b53;
-      background: #243b53;
-      color: #f0f4f8;
+      border: 1px solid #464646;
+      background: #464646;
+      color: #ffffff;
     }
 
     .btn-copy:hover {
-      background: #102a43;
-      border-color: #102a43;
+      background: #2f2f2f;
+      border-color: #2f2f2f;
     }
 
     .hero {
-      background: linear-gradient(135deg, #102a43, #243b53);
+      background: linear-gradient(135deg, #464646, #000000);
       color: #ffffff;
       overflow: hidden;
       position: relative;
@@ -402,7 +415,7 @@
       width: 240px;
       height: 240px;
       border-radius: 999px;
-      background: radial-gradient(circle, rgba(38, 128, 194, 0.3), transparent 70%);
+      background: radial-gradient(circle, rgba(218, 41, 28, 0.22), transparent 70%);
       pointer-events: none;
     }
 
@@ -412,7 +425,7 @@
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #9fb3c8;
+      color: #c8c8c8;
     }
 
     .hero h2 {
@@ -424,7 +437,7 @@
     .hero p {
       margin: 0;
       max-width: 760px;
-      color: #d9e2ec;
+      color: #f0f0f0;
     }
 
     .status {
@@ -435,29 +448,29 @@
     }
 
     .ok {
-      background: #f0fdf4;
-      color: #166534;
-      border: 1px solid #bbf7d0;
+      background: rgba(60, 177, 126, 0.12);
+      color: #2a7d59;
+      border: 1px solid rgba(60, 177, 126, 0.4);
     }
 
     .err {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
+      background: rgba(218, 41, 28, 0.08);
+      color: var(--brand-red-dark);
+      border: 1px solid rgba(218, 41, 28, 0.25);
     }
 
     .preview-box {
       display: none;
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px solid #e4e7eb;
+      border-top: 1px solid var(--brand-border);
     }
 
     .preview-box h3 {
       margin: 0 0 0.8rem;
       font-size: 0.78rem;
       font-weight: 700;
-      color: #7b8794;
+      color: var(--brand-text-soft);
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
@@ -470,16 +483,16 @@
     }
 
     .chip {
-      background: #f0f4f8;
-      border: 1px solid #d9e2ec;
+      background: var(--brand-surface);
+      border: 1px solid var(--brand-border);
       border-radius: 999px;
       padding: 0.3rem 0.7rem;
       font-size: 0.76rem;
-      color: #52606d;
+      color: var(--brand-text-muted);
     }
 
     .chip strong {
-      color: #243b53;
+      color: var(--brand-black);
     }
 
     .dev-list {
@@ -489,8 +502,8 @@
     }
 
     .dev-row {
-      background: #f8fafc;
-      border: 1px solid #d9e2ec;
+      background: var(--brand-surface-alt);
+      border: 1px solid var(--brand-border);
       border-radius: 10px;
       padding: 0.8rem 0.9rem;
       display: flex;
@@ -502,7 +515,7 @@
 
     .dev-name {
       font-weight: 600;
-      color: #102a43;
+      color: var(--brand-black);
       min-width: 180px;
     }
 
@@ -521,7 +534,7 @@
       margin-left: auto;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       font-size: 0.74rem;
-      color: #486581;
+      color: var(--brand-text-muted);
     }
 
     .output-section {
@@ -535,7 +548,7 @@
 
     footer {
       margin-top: 0.5rem;
-      color: #52606d;
+      color: var(--brand-text-muted);
       text-align: center;
       font-size: 0.92rem;
     }
@@ -547,12 +560,12 @@
     }
 
     body.theme-dark {
-      background: #0f172a;
-      color: #e5e7eb;
+      background: #464646;
+      color: #ffffff;
     }
 
     body.theme-dark header h1 {
-      color: #e8f1ff;
+      color: #ffffff;
     }
 
     body.theme-dark header p,
@@ -561,50 +574,50 @@
     body.theme-dark .tip,
     body.theme-dark .chip,
     body.theme-dark .preview-box h3 {
-      color: #aab8cc;
+      color: #f0f0f0;
     }
 
     body.theme-dark .top-nav a {
-      background: #111827;
-      border-color: #334155;
-      color: #dbeafe;
+      background: #646464;
+      border-color: #969696;
+      color: #ffffff;
     }
 
     body.theme-dark .top-nav a:hover {
-      background: #1f2937;
+      background: #5a5a5a;
       color: #ffffff;
     }
 
     body.theme-dark .top-nav a[aria-current="page"] {
-      background: #2680c2;
-      border-color: #2680c2;
+      background: var(--brand-red);
+      border-color: var(--brand-red);
       color: #ffffff;
     }
 
     body.theme-dark .theme-toggle-track {
-      background: linear-gradient(180deg, #1e293b, #0f172a);
-      border-color: #475569;
+      background: linear-gradient(180deg, #646464, #464646);
+      border-color: #969696;
     }
 
     body.theme-dark .theme-icon-sun {
-      color: #facc15;
+      color: #f0f0f0;
       opacity: 0.6;
     }
 
     body.theme-dark .theme-icon-moon {
-      color: #dbeafe;
+      color: #ffffff;
       opacity: 0.95;
     }
 
     body.theme-dark .theme-toggle-knob {
       transform: translateX(30px);
-      background: #0f172a;
-      border-color: #64748b;
+      background: #ffffff;
+      border-color: #c8c8c8;
     }
 
     body.theme-dark .panel {
-      background: #111827;
-      border-color: #334155;
+      background: #464646;
+      border-color: #969696;
       box-shadow: 0 18px 32px rgba(2, 6, 23, 0.35);
     }
 
@@ -612,54 +625,54 @@
     body.theme-dark label,
     body.theme-dark .chip strong,
     body.theme-dark .dev-name {
-      color: #e5e7eb;
+      color: #ffffff;
     }
 
     body.theme-dark input,
     body.theme-dark textarea {
-      background: #0f172a;
-      border-color: #334155;
-      color: #e5e7eb;
+      background: #3f3f3f;
+      border-color: #969696;
+      color: #ffffff;
     }
 
     body.theme-dark input:focus,
     body.theme-dark textarea:focus {
-      background: #020617;
+      background: #2f2f2f;
     }
 
     body.theme-dark textarea.output {
-      background: #020617;
-      border-color: #334155;
+      background: #2f2f2f;
+      border-color: #969696;
       color: #d9f99d;
     }
 
     body.theme-dark .btn-outline {
-      background: #0f172a;
-      border-color: #334155;
-      color: #dbeafe;
+      background: #3f3f3f;
+      border-color: #969696;
+      color: #ffffff;
     }
 
     body.theme-dark .btn-outline:hover {
-      background: #1f2937;
+      background: #5a5a5a;
       color: #ffffff;
     }
 
     body.theme-dark .preview-box {
-      border-top-color: #334155;
+      border-top-color: #969696;
     }
 
     body.theme-dark .chip {
-      background: #0f172a;
-      border-color: #334155;
+      background: #3f3f3f;
+      border-color: #969696;
     }
 
     body.theme-dark .dev-row {
-      background: #0f172a;
-      border-color: #334155;
+      background: #3f3f3f;
+      border-color: #969696;
     }
 
     body.theme-dark .credentials {
-      color: #9fb3c8;
+      color: #f0f0f0;
     }
 
     @media (max-width: 720px) {
@@ -803,7 +816,7 @@ let parsed = null;
 let generatedHTML = '';
 let generatedFilename = '';
 
-const BADGE_COLORS = {HTTPS:'#EE3124',HTTP:'#e07b1a',SSH:'#2d7a4f',DISPLAY:'#2563eb'};
+const BADGE_COLORS = {HTTPS:'#DA291C',HTTP:'#646464',SSH:'#3CB17E',DISPLAY:'#307FE2'};
 
 function parseHTML() {
   const raw = document.getElementById('rawHtml').value.trim();
@@ -897,7 +910,7 @@ function parseHTML() {
 }
 
 function buildBadge(label, url) {
-  const c = BADGE_COLORS[label]||'#555';
+  const c = BADGE_COLORS[label]||'#646464';
   return `<a href="${url}" target="_blank" style="display:inline-block;padding:4px 13px;border-radius:20px;background:${c};color:#fff;font-size:.7rem;font-weight:700;text-decoration:none;margin:2px 4px 2px 0;letter-spacing:.05em;white-space:nowrap">${label}</a>`;
 }
 
