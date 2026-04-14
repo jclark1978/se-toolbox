@@ -1,37 +1,24 @@
-# Repository Guidelines
+# Agent Instructions
 
-## Project Structure & Module Organization
-- `index.html` is the main FortiSKU Finder UI.
-- Feature pages live in `lifecycle/`, `ordering-guides/`, `asset-reports/`, and `lab-portal/`.
-- `src/features/` contains per-tool application logic.
-- `src/shared/` contains shared data and UI helpers.
-- `vendor/` holds vendored browser dependencies (MiniSearch, idb-keyval, xlsx).
-- `sw.js` is the optional service worker for offline caching.
+Before working in this repository:
 
-## Build, Test, and Development Commands
-- No build step is required; this is a static, browser-only app.
-- Serve locally with any static server, for example:
-  - `cd Fortisku`
-  - `python -m http.server 5173`
-- Then open `http://localhost:5173` (or `http://localhost:5173/lifecycle.html`).
+1. Read the global policy files in:
+   `/home/clarks/.codex/policies/`
+2. Read this repository's `README.md`
+3. Read `Project_Summary.md` if present
 
-## Coding Style & Naming Conventions
-- JavaScript uses ES modules; prefer `import`/`export` in `src/`.
-- Use 2-space indentation for HTML/CSS/JS (matches existing files).
-- Prefer `camelCase` for functions and variables (e.g., `buildCsvFilename`).
-- Keep UI strings and DOM selectors near the related UI module (`src/ui.js`).
+## Rule Split
 
-## Testing Guidelines
-- No automated test framework is set up yet.
-- If you add tests, document the runner in `README.md` and use clear names like
-  `search.test.js` or `storage.test.js`.
+- Global workflow, git habits, coding preferences, and decision rules come from:
+  `/home/clarks/.codex/policies/`
+- Repository-specific implementation details come from this repository
 
-## Commit & Pull Request Guidelines
-- Existing history uses short, imperative messages and occasional `feat:` prefixes.
-  Follow that style (e.g., `feat: Add lifecycle workbook lookup`).
-- PRs should include a short description, screenshots for UI changes, and note any
-  data/compatibility impacts (e.g., changes to IndexedDB schema or CSV output).
+## If There Is A Conflict
 
-## Security & Configuration Tips
-- All data is client-side; avoid uploading real customer data when demoing.
-- If you change cached assets, update `APP_SHELL` and bump `CACHE_NAME` in `sw.js`.
+- Follow repository facts for Fortisku-specific technical details
+- Follow global policies for general collaboration behavior
+- Ask for clarification if a conflict materially affects implementation
+
+## Default Expectation
+
+Treat this file as a pointer, not the full policy source of truth.
