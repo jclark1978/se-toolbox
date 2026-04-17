@@ -16,21 +16,6 @@ const HEADER_KEY_MAP = new Map([
   ["registrationdate", "registrationDate"]
 ]);
 
-const COLUMN_WIDTHS = [
-  19,
-  23.1640625,
-  56,
-  20.6640625,
-  10,
-  18.1640625,
-  3,
-  23.1640625,
-  8.33203125,
-  3,
-  10,
-  14.83203125
-];
-
 export async function inspectAssetWorkbook(file) {
   if (!file) {
     throw new Error("No workbook was selected.");
@@ -308,7 +293,7 @@ function buildWorksheetXml({ detailRows, assetCounts, renewalCounts, refs }) {
   rows.push(xmlRow(2, [
     inlineCell("A2", "Asset Report", 1),
     inlineCell("H2", "Asset Count", 3),
-    inlineCell("K2", "Renewal Schedule", 2)
+    inlineCell("N2", "Renewal Schedule", 2)
   ], 25));
 
   rows.push(xmlRow(3, [
@@ -320,8 +305,11 @@ function buildWorksheetXml({ detailRows, assetCounts, renewalCounts, refs }) {
     inlineCell("F3", "Registration Date", 0),
     inlineCell("H3", "Product Model", 0),
     inlineCell("I3", "Count", 0),
-    inlineCell("K3", "Quarter", 0),
-    inlineCell("L3", "Count", 0)
+    inlineCell("J3", "End of Order", 0),
+    inlineCell("K3", "Last Service Extension", 0),
+    inlineCell("L3", "End of Support", 0),
+    inlineCell("N3", "Quarter", 0),
+    inlineCell("O3", "Count", 0)
   ], 20));
 
   for (let index = 0; index < detailRows.length; index += 1) {
@@ -342,36 +330,42 @@ function buildWorksheetXml({ detailRows, assetCounts, renewalCounts, refs }) {
     const row = assetCounts[index];
     rows.push(appendRowCell(rows, rowNumber, inlineCell(`H${rowNumber}`, row.label, 6)));
     rows.push(appendRowCell(rows, rowNumber, numberCell(`I${rowNumber}`, row.count, 7)));
+    rows.push(appendRowCell(rows, rowNumber, lifecycleDateCell(`J${rowNumber}`, row.endOfOrderDate)));
+    rows.push(appendRowCell(rows, rowNumber, lifecycleDateCell(`K${rowNumber}`, row.lastServiceExtensionDate)));
+    rows.push(appendRowCell(rows, rowNumber, lifecycleDateCell(`L${rowNumber}`, row.endOfSupportDate)));
   }
 
   for (let index = 0; index < renewalCounts.length; index += 1) {
     const rowNumber = renewalStartRow + index;
     const row = renewalCounts[index];
-    rows.push(appendRowCell(rows, rowNumber, inlineCell(`K${rowNumber}`, row.label, 6)));
-    rows.push(appendRowCell(rows, rowNumber, numberCell(`L${rowNumber}`, row.count, 7)));
+    rows.push(appendRowCell(rows, rowNumber, inlineCell(`N${rowNumber}`, row.label, 6)));
+    rows.push(appendRowCell(rows, rowNumber, numberCell(`O${rowNumber}`, row.count, 7)));
   }
 
   const merged = `
     <mergeCells count="3">
       <mergeCell ref="A2:F2"/>
-      <mergeCell ref="H2:I2"/>
-      <mergeCell ref="K2:L2"/>
+      <mergeCell ref="H2:L2"/>
+      <mergeCell ref="N2:O2"/>
     </mergeCells>
   `;
 
   const conditionalFormatting = [
-    buildDateConditionalFormatting(detailStartRow, detailEndRow, referenceYear, 1),
+    buildDateConditionalFormatting("D", detailStartRow, detailEndRow, referenceYear, 1),
     buildQuarterConditionalFormatting("E", detailStartRow, detailEndRow, referenceYear, 5),
-    buildQuarterConditionalFormatting("K", renewalStartRow, renewalEndRow, referenceYear, 9),
-    buildLinkedQuarterConditionalFormatting("L", "K", renewalStartRow, renewalEndRow, referenceYear, 13)
+    buildDateConditionalFormatting("J", assetStartRow, assetEndRow, referenceYear, 9),
+    buildLinkedDateConditionalFormatting("K", "J", assetStartRow, assetEndRow, referenceYear, 13),
+    buildLinkedDateConditionalFormatting("L", "J", assetStartRow, assetEndRow, referenceYear, 17),
+    buildQuarterConditionalFormatting("N", renewalStartRow, renewalEndRow, referenceYear, 21),
+    buildLinkedQuarterConditionalFormatting("O", "N", renewalStartRow, renewalEndRow, referenceYear, 25)
   ].join("");
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <dimension ref="A2:L${maxRow}"/>
+  <dimension ref="A2:O${maxRow}"/>
   <sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>
   <sheetFormatPr defaultRowHeight="15"/>
-  <cols>${buildColsXml()}</cols>
+  <cols>${buildColsXml(detailRows, assetCounts, renewalCounts)}</cols>
   <sheetData>${collapseRows(rows)}</sheetData>
   ${merged}
   ${conditionalFormatting}
@@ -386,8 +380,8 @@ function buildWorksheetXml({ detailRows, assetCounts, renewalCounts, refs }) {
 function buildTableRefs({ detailRows, assetCounts, renewalCounts }) {
   return {
     detailRef: `A3:F${Math.max(3, detailRows.length + 3)}`,
-    assetRef: `H3:I${Math.max(3, assetCounts.length + 3)}`,
-    renewalRef: `K3:L${Math.max(3, renewalCounts.length + 3)}`
+    assetRef: `H3:L${Math.max(3, assetCounts.length + 3)}`,
+    renewalRef: `N3:O${Math.max(3, renewalCounts.length + 3)}`
   };
 }
 
@@ -416,20 +410,49 @@ function collapseRows(rows) {
     .join("");
 }
 
-function buildColsXml() {
-  return COLUMN_WIDTHS.map((width, index) => {
+function buildColsXml(detailRows, assetCounts, renewalCounts) {
+  return buildColumnWidths(detailRows, assetCounts, renewalCounts).map((width, index) => {
     const column = index + 1;
     return `<col min="${column}" max="${column}" width="${width}" customWidth="1"/>`;
   }).join("");
 }
 
-function buildDateConditionalFormatting(startRow, endRow, referenceYear, priorityStart) {
-  const ref = `D${startRow}:D${endRow}`;
+function buildColumnWidths(detailRows, assetCounts, renewalCounts) {
+  return [
+    computeColumnWidth(["Serial Number", ...detailRows.map((row) => row.serialNumber)], 12, 22),
+    computeColumnWidth(["Product Model", ...detailRows.map((row) => row.productModel), ...assetCounts.map((row) => row.label)], 14, 28),
+    computeColumnWidth(["Description", ...detailRows.map((row) => row.description)], 18, 56),
+    computeColumnWidth(["Unit Expiration Date", ...detailRows.map((row) => formatWorkbookDate(row.unitExpirationDate))], 12, 20),
+    computeColumnWidth(["Quarter", ...detailRows.map((row) => row.quarter)], 10, 14),
+    computeColumnWidth(["Registration Date", ...detailRows.map((row) => formatWorkbookDate(row.registrationDate))], 12, 20),
+    3,
+    computeColumnWidth(["Product Model", ...assetCounts.map((row) => row.label)], 14, 28),
+    computeColumnWidth(["Count", ...assetCounts.map((row) => String(row.count))], 8, 12),
+    computeColumnWidth(["End of Order", ...assetCounts.map((row) => row.endOfOrderDate)], 12, 18),
+    computeColumnWidth(["Last Service Extension", ...assetCounts.map((row) => row.lastServiceExtensionDate)], 16, 24),
+    computeColumnWidth(["End of Support", ...assetCounts.map((row) => row.endOfSupportDate)], 12, 18),
+    3,
+    computeColumnWidth(["Quarter", ...renewalCounts.map((row) => row.label)], 10, 14),
+    computeColumnWidth(["Count", ...renewalCounts.map((row) => String(row.count))], 8, 12)
+  ];
+}
+
+function computeColumnWidth(values, minWidth, maxWidth) {
+  const contentWidth = values.reduce((max, value) => {
+    const length = String(value || "").trim().length;
+    return Math.max(max, length);
+  }, 0);
+
+  return Math.min(maxWidth, Math.max(minWidth, contentWidth + 2));
+}
+
+function buildDateConditionalFormatting(column, startRow, endRow, referenceYear, priorityStart) {
+  const ref = `${column}${startRow}:${column}${endRow}`;
   return `<conditionalFormatting sqref="${ref}">
-    <cfRule type="expression" dxfId="0" priority="${priorityStart}" stopIfTrue="1"><formula>IFERROR(YEAR(D${startRow})&lt;${referenceYear},FALSE)</formula></cfRule>
-    <cfRule type="expression" dxfId="1" priority="${priorityStart + 1}" stopIfTrue="1"><formula>IFERROR(YEAR(D${startRow})=${referenceYear},FALSE)</formula></cfRule>
-    <cfRule type="expression" dxfId="2" priority="${priorityStart + 2}" stopIfTrue="1"><formula>IFERROR(YEAR(D${startRow})=${referenceYear + 1},FALSE)</formula></cfRule>
-    <cfRule type="expression" dxfId="3" priority="${priorityStart + 3}" stopIfTrue="1"><formula>IFERROR(YEAR(D${startRow})&gt;${referenceYear + 1},FALSE)</formula></cfRule>
+    <cfRule type="expression" dxfId="0" priority="${priorityStart}" stopIfTrue="1"><formula>IFERROR(YEAR(${column}${startRow})&lt;${referenceYear},FALSE)</formula></cfRule>
+    <cfRule type="expression" dxfId="1" priority="${priorityStart + 1}" stopIfTrue="1"><formula>IFERROR(YEAR(${column}${startRow})=${referenceYear},FALSE)</formula></cfRule>
+    <cfRule type="expression" dxfId="2" priority="${priorityStart + 2}" stopIfTrue="1"><formula>IFERROR(YEAR(${column}${startRow})=${referenceYear + 1},FALSE)</formula></cfRule>
+    <cfRule type="expression" dxfId="3" priority="${priorityStart + 3}" stopIfTrue="1"><formula>IFERROR(YEAR(${column}${startRow})&gt;${referenceYear + 1},FALSE)</formula></cfRule>
   </conditionalFormatting>`;
 }
 
@@ -440,6 +463,16 @@ function buildQuarterConditionalFormatting(column, startRow, endRow, referenceYe
     <cfRule type="expression" dxfId="1" priority="${priorityStart + 1}" stopIfTrue="1"><formula>IFERROR(VALUE(RIGHT(${column}${startRow},4))=${referenceYear},FALSE)</formula></cfRule>
     <cfRule type="expression" dxfId="2" priority="${priorityStart + 2}" stopIfTrue="1"><formula>IFERROR(VALUE(RIGHT(${column}${startRow},4))=${referenceYear + 1},FALSE)</formula></cfRule>
     <cfRule type="expression" dxfId="3" priority="${priorityStart + 3}" stopIfTrue="1"><formula>IFERROR(VALUE(RIGHT(${column}${startRow},4))&gt;${referenceYear + 1},FALSE)</formula></cfRule>
+  </conditionalFormatting>`;
+}
+
+function buildLinkedDateConditionalFormatting(targetColumn, sourceColumn, startRow, endRow, referenceYear, priorityStart) {
+  const ref = `${targetColumn}${startRow}:${targetColumn}${endRow}`;
+  return `<conditionalFormatting sqref="${ref}">
+    <cfRule type="expression" dxfId="0" priority="${priorityStart}" stopIfTrue="1"><formula>AND($${sourceColumn}${startRow}&lt;&gt;\"\",IFERROR(YEAR($${sourceColumn}${startRow})&lt;${referenceYear},FALSE))</formula></cfRule>
+    <cfRule type="expression" dxfId="1" priority="${priorityStart + 1}" stopIfTrue="1"><formula>AND($${sourceColumn}${startRow}&lt;&gt;\"\",IFERROR(YEAR($${sourceColumn}${startRow})=${referenceYear},FALSE))</formula></cfRule>
+    <cfRule type="expression" dxfId="2" priority="${priorityStart + 2}" stopIfTrue="1"><formula>AND($${sourceColumn}${startRow}&lt;&gt;\"\",IFERROR(YEAR($${sourceColumn}${startRow})=${referenceYear + 1},FALSE))</formula></cfRule>
+    <cfRule type="expression" dxfId="3" priority="${priorityStart + 3}" stopIfTrue="1"><formula>AND($${sourceColumn}${startRow}&lt;&gt;\"\",IFERROR(YEAR($${sourceColumn}${startRow})&gt;${referenceYear + 1},FALSE))</formula></cfRule>
   </conditionalFormatting>`;
 }
 
@@ -471,6 +504,23 @@ function numberCell(ref, value, styleIndex = 0) {
 
 function dateCell(ref, date, styleIndex = 0) {
   return `<c r="${ref}" s="${styleIndex}"><v>${dateToExcelSerial(date)}</v></c>`;
+}
+
+function lifecycleDateCell(ref, value) {
+  const parsed = parseDateValue(value);
+  return parsed ? dateCell(ref, parsed, 5) : inlineCell(ref, "", 6);
+}
+
+function formatWorkbookDate(value) {
+  const parsed = parseDateValue(value);
+  if (!parsed) {
+    return "";
+  }
+
+  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getUTCDate()).padStart(2, "0");
+  const year = String(parsed.getUTCFullYear()).slice(-2);
+  return `${month}/${day}/${year}`;
 }
 
 function dateToExcelSerial(date) {
@@ -731,9 +781,12 @@ function assetCountTableXml(ref) {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <table xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" id="2" name="AssetCountTbl" displayName="AssetCountTbl" ref="${ref}" totalsRowShown="0">
   <autoFilter ref="${ref}"/>
-  <tableColumns count="2">
+  <tableColumns count="5">
     <tableColumn id="1" name="Product Model"/>
     <tableColumn id="2" name="Count"/>
+    <tableColumn id="3" name="End of Order"/>
+    <tableColumn id="4" name="Last Service Extension"/>
+    <tableColumn id="5" name="End of Support"/>
   </tableColumns>
   <tableStyleInfo name="TableStyleMedium4" showFirstColumn="0" showLastColumn="0" showRowStripes="1" showColumnStripes="0"/>
 </table>`;

@@ -56,7 +56,7 @@ export function initAssetReportUI(handlers) {
   function setReadyState() {
     setLoading(false);
     clearStatus();
-    renderEmptyPreview("Upload a workbook to preview the summary.");
+    renderEmptyModelsPreview("Upload a workbook to preview the summary.");
     renderEmptyQuarterPreview("Upload a workbook to preview the summary.");
     outputNameEl.textContent = "—";
     sourceFileEl.textContent = "—";
@@ -75,8 +75,16 @@ export function initAssetReportUI(handlers) {
     rowCountEl.textContent = summary.rowCount.toLocaleString();
     modelCountEl.textContent = summary.assetCounts.length.toLocaleString();
     quarterCountEl.textContent = summary.renewalCounts.length.toLocaleString();
-    renderCountTable(modelsBody, summary.assetCounts.slice(0, 8), "No models found.");
-    renderCountTable(quartersBody, summary.renewalCounts.slice(0, 8), "No quarters found.");
+    renderModelsTable(
+      modelsBody,
+      sortRowsByCountDescending(summary.assetCounts),
+      summary.assetCountsEmptyMessage || "No models found."
+    );
+    renderCountTable(
+      quartersBody,
+      sortRowsByCountDescending(summary.renewalCounts),
+      "No quarters found."
+    );
     syncBuildState();
   }
 
@@ -165,7 +173,7 @@ function renderCountTable(body, rows, emptyMessage) {
   body.appendChild(fragment);
 }
 
-function renderEmptyPreview(message) {
+function renderEmptyModelsPreview(message) {
   const body = document.getElementById("ar-models-body");
   body.innerHTML = `<tr class="empty-row"><td colspan="2">${escapeHtml(message)}</td></tr>`;
 }
@@ -173,6 +181,92 @@ function renderEmptyPreview(message) {
 function renderEmptyQuarterPreview(message) {
   const body = document.getElementById("ar-quarters-body");
   body.innerHTML = `<tr class="empty-row"><td colspan="2">${escapeHtml(message)}</td></tr>`;
+}
+
+function renderModelsTable(body, rows, emptyMessage) {
+  body.innerHTML = "";
+  if (!rows.length) {
+    const tr = document.createElement("tr");
+    tr.className = "empty-row";
+    const td = document.createElement("td");
+    td.colSpan = 2;
+    td.textContent = emptyMessage;
+    tr.appendChild(td);
+    body.appendChild(tr);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  for (const row of rows) {
+    const tr = document.createElement("tr");
+
+    const product = document.createElement("td");
+    product.textContent = row.label;
+    const tooltipText = buildLifecycleTooltip(row);
+    if (tooltipText) {
+      const hint = document.createElement("button");
+      hint.type = "button";
+      hint.className = "lifecycle-hint";
+      hint.textContent = "i";
+      hint.setAttribute("aria-label", tooltipText);
+      const tooltip = document.createElement("span");
+      tooltip.className = "lifecycle-tooltip";
+      tooltip.textContent = tooltipText;
+      tooltip.setAttribute("aria-hidden", "true");
+      hint.appendChild(tooltip);
+      product.appendChild(hint);
+    }
+    tr.appendChild(product);
+
+    const count = document.createElement("td");
+    count.textContent = row.count.toLocaleString();
+    tr.appendChild(count);
+
+    fragment.appendChild(tr);
+  }
+
+  body.appendChild(fragment);
+}
+
+function sortRowsByCountDescending(rows) {
+  return [...(rows || [])].sort((left, right) => {
+    const countDiff = Number(right?.count || 0) - Number(left?.count || 0);
+    if (countDiff !== 0) {
+      return countDiff;
+    }
+
+    return String(left?.label || "").localeCompare(String(right?.label || ""), undefined, {
+      sensitivity: "base"
+    });
+  });
+}
+
+function buildLifecycleTooltip(row) {
+  const entries = [
+    ["End of Order", formatLifecycleDate(row.endOfOrderDate)],
+    ["End of Service Extension", formatLifecycleDate(row.lastServiceExtensionDate)],
+    ["End of Life", formatLifecycleDate(row.endOfSupportDate)]
+  ].filter(([, value]) => value);
+
+  if (!entries.length) {
+    return "";
+  }
+
+  return entries.map(([label, value]) => `${label}: ${value}`).join("\n");
+}
+
+function formatLifecycleDate(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!isoMatch) {
+    return text;
+  }
+
+  return `${isoMatch[2]}/${isoMatch[3]}/${isoMatch[1].slice(-2)}`;
 }
 
 function escapeHtml(value) {

@@ -10,7 +10,6 @@ const KEY_META = `${KEY_PREFIX}:meta:v${LIFECYCLE_RSS_SCHEMA_VERSION}`;
 export async function loadLifecycleRssPersisted() {
   const meta = await get(KEY_META);
   if (!meta || meta.schemaVersion !== LIFECYCLE_RSS_SCHEMA_VERSION) {
-    await clearLifecycleRssPersisted();
     return null;
   }
 
@@ -18,7 +17,6 @@ export async function loadLifecycleRssPersisted() {
   const indexJSON = await get(KEY_INDEX);
 
   if (!rows || !indexJSON) {
-    await clearLifecycleRssPersisted();
     return null;
   }
 

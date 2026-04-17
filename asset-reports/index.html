@@ -258,6 +258,11 @@
       background: var(--brand-surface-alt);
     }
 
+    .preview-table-scroll {
+      max-height: 24rem;
+      overflow: auto;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -272,6 +277,9 @@
     }
 
     th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
       font-size: 0.8rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -286,6 +294,53 @@
     .empty-row td {
       color: var(--brand-text-muted);
       font-style: italic;
+    }
+
+    .lifecycle-hint {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.1rem;
+      height: 1.1rem;
+      margin-left: 0.45rem;
+      border-radius: 999px;
+      background: rgba(200, 25, 46, 0.12);
+      color: var(--brand-red);
+      font-size: 0.72rem;
+      font-weight: 800;
+      line-height: 1;
+      cursor: help;
+      vertical-align: middle;
+    }
+
+    .lifecycle-tooltip {
+      position: absolute;
+      left: calc(100% + 0.55rem);
+      top: 50%;
+      z-index: 10;
+      min-width: 15.5rem;
+      max-width: 19rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 10px;
+      background: rgba(19, 24, 31, 0.96);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 500;
+      line-height: 1.45;
+      text-align: left;
+      white-space: pre-line;
+      box-shadow: 0 12px 28px rgba(19, 24, 31, 0.24);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-50%) translateX(-0.2rem);
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .lifecycle-hint:hover .lifecycle-tooltip,
+    .lifecycle-hint:focus-visible .lifecycle-tooltip {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
     }
 
     .note {
@@ -338,6 +393,17 @@
     body.theme-dark .upload-label:hover {
       background: #616161;
       color: #ffffff;
+    }
+
+    body.theme-dark .lifecycle-hint {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffd7dc;
+    }
+
+    body.theme-dark .lifecycle-tooltip {
+      background: rgba(245, 247, 250, 0.96);
+      color: #20262f;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
     }
 
     body.theme-dark .upload-state,
@@ -463,32 +529,36 @@
         <div class="preview-grid">
           <div class="preview-panel">
             <h3>Top Models</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Product Model</th>
-                  <th scope="col">Count</th>
-                </tr>
-              </thead>
-              <tbody id="ar-models-body">
-                <tr class="empty-row"><td colspan="2">Upload a workbook to preview the summary.</td></tr>
-              </tbody>
-            </table>
+            <div class="preview-table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Product Model</th>
+                    <th scope="col">Count</th>
+                  </tr>
+                </thead>
+                <tbody id="ar-models-body">
+                  <tr class="empty-row"><td colspan="2">Upload a workbook to preview the summary.</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div class="preview-panel">
             <h3>Renewal Schedule</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Quarter</th>
-                  <th scope="col">Count</th>
-                </tr>
-              </thead>
-              <tbody id="ar-quarters-body">
-                <tr class="empty-row"><td colspan="2">Upload a workbook to preview the summary.</td></tr>
-              </tbody>
-            </table>
+            <div class="preview-table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Quarter</th>
+                    <th scope="col">Count</th>
+                  </tr>
+                </thead>
+                <tbody id="ar-quarters-body">
+                  <tr class="empty-row"><td colspan="2">Upload a workbook to preview the summary.</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
