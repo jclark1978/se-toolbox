@@ -2,6 +2,8 @@ import { initThemeToggle } from "../ui/theme.js";
 import { initToolboxNav } from "../ui/nav.js";
 
 const MAX_RENDERED_ROWS = 200;
+const POPUP_WIDTH = 760;
+const POPUP_HEIGHT = 720;
 
 export function startLifecycleApp(config) {
   const {
@@ -139,7 +141,7 @@ export function startLifecycleApp(config) {
   }
 
   function handleOpenFeed() {
-    window.open(feedUrl, "_blank", "noopener,noreferrer");
+    openFeedWindow(feedUrl);
     ui.showStatus("info", messages.openFeedStatus, {
       dismissAfter: 6000
     });
@@ -233,4 +235,29 @@ export function startLifecycleApp(config) {
     handleClear,
     handleSearch
   };
+}
+
+function openFeedWindow(feedUrl) {
+  const dualScreenLeft = window.screenLeft ?? window.screenX ?? 0;
+  const dualScreenTop = window.screenTop ?? window.screenY ?? 0;
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || screen.width;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || screen.height;
+  const left = Math.max(0, dualScreenLeft + Math.round((viewportWidth - POPUP_WIDTH) / 2));
+  const top = Math.max(0, dualScreenTop + Math.round((viewportHeight - POPUP_HEIGHT) / 2));
+  const features = [
+    `width=${POPUP_WIDTH}`,
+    `height=${POPUP_HEIGHT}`,
+    `left=${left}`,
+    `top=${top}`,
+    "popup=yes",
+    "noopener=yes",
+    "noreferrer=yes",
+    "resizable=yes",
+    "scrollbars=yes"
+  ].join(",");
+
+  const popup = window.open(feedUrl, "_blank", features);
+  if (popup && typeof popup.focus === "function") {
+    popup.focus();
+  }
 }
