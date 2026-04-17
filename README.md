@@ -44,6 +44,7 @@ No backend or server-side computation is required.
 - `src/features/` groups browser logic by product surface:
   - `finder/`
   - `hardware-lifecycle/` for the RSS-based hardware lifecycle flow
+  - `software-lifecycle/` for the RSS-based software lifecycle flow
   - `ordering-guides/`
   - `asset-reports/`
 - `src/shared/data/` contains workbook/search/storage helpers shared across pages.
