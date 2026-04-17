@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placeholder – BOM Generator</title>
+<style>
+  :root {
+    --forti-red: #EE3124;
+    --forti-orange: #F7941D;
+    --forti-border: #DDE1E9;
+    --forti-bg: #F2F4F7;
+    --forti-white: #FFFFFF;
+    --forti-text: #2A2F3A;
+    --forti-text-secondary: #6B7589;
+    --forti-text-muted: #9BA5BA;
+    --forti-section-header: #F7F9FC;
+    --forti-input-border: #C8CDD9;
+    --forti-input-focus: #EE3124;
+    --forti-table-head: #EEF1F6;
+    --forti-table-stripe: #F7F9FC;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--forti-bg);
+    color: var(--forti-text);
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 20px;
+    min-height: 100vh;
+  }
+
+  /* ─── PAGE TITLE BLOCK ─── */
+  .page-header {
+    background: var(--forti-white);
+    border: 1px solid var(--forti-border);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .page-header .product-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--forti-red);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .page-header .product-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .page-header h1 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--forti-text);
+  }
+
+  .page-header .subtitle {
+    font-size: 12px;
+    color: var(--forti-text-secondary);
+    margin-top: 2px;
+  }
+
+  /* ─── CARD / SECTION ─── */
+  .card {
+    background: var(--forti-white);
+    border: 1px solid var(--forti-border);
+    border-radius: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    background: var(--forti-section-header);
+    border-bottom: 1px solid var(--forti-border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-header h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--forti-text);
+    letter-spacing: 0.01em;
+  }
+
+  .card-header .card-header-badge {
+    font-size: 10px;
+    background: var(--forti-red);
+    color: #fff;
+    border-radius: 2px;
+    padding: 1px 6px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-left: auto;
+  }
+
+  .card-body {
+    padding: 20px;
+  }
+
+  /* ─── FORM GRID ─── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--forti-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  label .required {
+    color: var(--forti-red);
+    margin-left: 2px;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea {
+    background: var(--forti-white);
+    border: 1px solid var(--forti-input-border);
+    border-radius: 3px;
+    padding: 7px 10px;
+    font-size: 13px;
+    color: var(--forti-text);
+    font-family: inherit;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--forti-input-focus);
+    box-shadow: 0 0 0 2px rgba(238, 49, 36, 0.12);
+  }
+
+  select { cursor: pointer; }
+  textarea { resize: vertical; min-height: 64px; }
+
+  input[type="number"] { width: 100%; }
+
+  /* ─── CHECKBOX ROWS ─── */
+  .check-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .check-row input[type="checkbox"] {
+    accent-color: var(--forti-red);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
+
+  .check-row .check-label {
+    font-size: 13px;
+    color: var(--forti-text);
+  }
+
+  .check-row .check-note {
+    font-size: 11px;
+    color: var(--forti-text-muted);
+    margin-left: 2px;
+  }
+
+  /* ─── DIVIDER ─── */
+  .form-divider {
+    height: 1px;
+    background: var(--forti-border);
+    margin: 16px 0;
+  }
+
+  /* ─── ACTION BUTTONS ─── */
+  .actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 14px 20px;
+    background: var(--forti-section-header);
+    border-top: 1px solid var(--forti-border);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-family: inherit;
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  .btn-primary {
+    background: var(--forti-red);
+    color: #fff;
+    border-color: var(--forti-red);
+  }
+
+  .btn-primary:hover { background: #d42a1e; border-color: #d42a1e; }
+  .btn-primary:active { background: #bc2319; }
+
+  .btn-secondary {
+    background: var(--forti-white);
+    color: var(--forti-text);
+    border-color: var(--forti-input-border);
+  }
+
+  .btn-secondary:hover {
+    background: var(--forti-section-header);
+    border-color: #9BA5BA;
+  }
+
+  .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  .btn-label-sub {
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.8;
+    margin-left: 2px;
+  }
+
+  /* ─── BOM OUTPUT TABLE ─── */
+  #bom-section { display: none; }
+
+  .bom-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .bom-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .bom-meta-item .meta-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--forti-text-muted);
+  }
+
+  .bom-meta-item .meta-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--forti-text);
+  }
+
+  table.bom-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+
+  table.bom-table thead th {
+    background: var(--forti-table-head);
+    border: 1px solid var(--forti-border);
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--forti-text-secondary);
+    white-space: nowrap;
+  }
+
+  table.bom-table tbody td {
+    border: 1px solid var(--forti-border);
+    padding: 8px 12px;
+    color: var(--forti-text);
+    vertical-align: top;
+  }
+
+  table.bom-table tbody tr:nth-child(even) td {
+    background: var(--forti-table-stripe);
+  }
+
+  table.bom-table tbody tr:hover td {
+    background: #EEF1F6;
+  }
+
+  .sku-code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: #1A4E82;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  td.qty-cell {
+    text-align: center;
+    font-weight: 600;
+    color: var(--forti-text);
+  }
+
+  .row-type-header td {
+    background: #F0F3F8 !important;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--forti-text-secondary);
+    padding: 6px 12px;
+    border-top: 2px solid var(--forti-border);
+  }
+
+  .note-cell {
+    color: var(--forti-text-muted);
+    font-size: 12px;
+  }
+
+  .badge-required {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: #FEF0EE;
+    color: #C0392B;
+    border: 1px solid #F5C6C2;
+    border-radius: 2px;
+    padding: 1px 5px;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  .badge-optional {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: #EEF3FF;
+    color: #3557A5;
+    border: 1px solid #B8CBF5;
+    border-radius: 2px;
+    padding: 1px 5px;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  /* ─── BOM TOTALS ─── */
+  .bom-totals {
+    margin-top: 12px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .total-card {
+    background: var(--forti-section-header);
+    border: 1px solid var(--forti-border);
+    border-radius: 3px;
+    padding: 10px 16px;
+    min-width: 140px;
+  }
+
+  .total-card .total-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--forti-text-muted);
+    margin-bottom: 4px;
+  }
+
+  .total-card .total-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--forti-text);
+  }
+
+  .total-card.highlight .total-value {
+    color: var(--forti-red);
+  }
+
+  /* ─── VALIDATION MESSAGES ─── */
+  .validation-msg {
+    display: none;
+    font-size: 12px;
+    color: #C0392B;
+    margin-top: 4px;
+  }
+
+  input.invalid, select.invalid {
+    border-color: var(--forti-red);
+  }
+
+  /* ─── PRINT / EXPORT ─── */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .card-header .card-header-badge, .actions, .page-header .product-icon { display: none; }
+    #config-section { display: none !important; }
+    #bom-section { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="product-icon">
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="14" height="14" rx="2" stroke="white" stroke-width="1.5"/>
+      <path d="M6 10h8M10 6v8" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Placeholder Product — BOM Generator</h1>
+    <div class="subtitle">Configure product specifics below, then click Preview BOM or Add to Project BOM</div>
+  </div>
+</div>
+
+<!-- ─── CONFIGURATION SECTION ─── -->
+<div class="card" id="config-section">
+  <!-- PRODUCT-SPECIFIC CONFIG SECTION (swap this block per product) -->
+  <div class="card-header">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="#6B7589" stroke-width="1.2"/><path d="M7 4v3l2 1" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Product Configuration</h2>
+    <span class="card-header-badge">Placeholder</span>
+  </div>
+  <div class="card-body">
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Device Count <span class="required">*</span></label>
+        <input type="number" id="f-count" min="1" max="9999" placeholder="1" value="1">
+        <span class="validation-msg" id="err-count">Enter a value between 1 and 9999</span>
+      </div>
+
+      <div class="form-group">
+        <label>Platform / Model <span class="required">*</span></label>
+        <select id="f-model">
+          <option value="">— Select —</option>
+          <option value="demo-sm">Demo Small (DEMO-SM)</option>
+          <option value="demo-md">Demo Medium (DEMO-MD)</option>
+          <option value="demo-lg">Demo Large (DEMO-LG)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Deployment Type</label>
+        <select id="f-deploy">
+          <option value="standalone">Standalone</option>
+          <option value="ha-aa">HA Active-Active</option>
+          <option value="ha-ap">HA Active-Passive</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Support Term</label>
+        <select id="f-support">
+          <option value="1yr">1 Year</option>
+          <option value="3yr">3 Year</option>
+          <option value="5yr">5 Year</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="form-divider"></div>
+
+    <div class="form-group">
+      <label>Optional Add-ons</label>
+      <div class="check-group" style="margin-top: 4px;">
+        <label class="check-row">
+          <input type="checkbox" id="f-addon-mgmt">
+          <span class="check-label">Central Management License <span class="check-note">(per device)</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="f-addon-syslog">
+          <span class="check-label">Syslog / Logging Appliance <span class="check-note">(1 per deployment)</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="f-addon-spare">
+          <span class="check-label">Cold Spare Unit <span class="check-note">(1 additional unit)</span></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="generateBOM()">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Preview BOM
+    </button>
+    <button class="btn btn-primary" onclick="addToProjectBOM()" style="background:#2E7D32;border-color:#2E7D32;">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v9M3.5 6.5l3.5 3.5 3.5-3.5" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 11v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Add to Project BOM
+    </button>
+    <button class="btn btn-secondary" onclick="resetForm()">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M2 7a5 5 0 1 0 1.5-3.5L2 2v3h3" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Reset
+    </button>
+    <span style="font-size:11px;color:var(--forti-text-muted);margin-left:8px;" id="status-msg"></span>
+  </div>
+</div>
+
+<!-- ─── BOM OUTPUT SECTION ─── -->
+<div class="card" id="bom-section">
+  <div class="card-header">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="10" rx="1.5" stroke="#6B7589" stroke-width="1.2"/><path d="M4 5h6M4 7h6M4 9h3" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Bill of Materials</h2>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="copyBOM()" style="padding:4px 10px;font-size:11px;">
+        <svg viewBox="0 0 14 14" fill="none"><rect x="4" y="1" width="9" height="10" rx="1" stroke="#6B7589" stroke-width="1.2"/><rect x="1" y="4" width="9" height="10" rx="1" stroke="#6B7589" stroke-width="1.2"/></svg>
+        Copy TSV
+      </button>
+      <button class="btn btn-secondary" onclick="window.print()" style="padding:4px 10px;font-size:11px;">
+        <svg viewBox="0 0 14 14" fill="none"><rect x="2" y="4" width="10" height="7" rx="1" stroke="#6B7589" stroke-width="1.2"/><path d="M4 4V2h6v2M4 11h6" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Print
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- BOM metadata row -->
+    <div class="bom-meta" id="bom-meta"></div>
+
+    <!-- BOM table -->
+    <table class="bom-table" id="bom-table">
+      <thead>
+        <tr>
+          <th style="width:200px;">Part Number / SKU</th>
+          <th>Description</th>
+          <th style="width:60px;text-align:center;">Qty</th>
+          <th style="width:80px;">Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-tbody">
+      </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="bom-totals" id="bom-totals"></div>
+  </div>
+</div>
+
+<script>
+  // ─── SKU catalog (PLACEHOLDER DATA – replace with real SKUs per product) ───
+  const MODEL_SKUS = {
+    "demo-sm": { base: "FC-10-SM001-000-00-01", description: "Demo Small Appliance" },
+    "demo-md": { base: "FC-10-MD001-000-00-01", description: "Demo Medium Appliance" },
+    "demo-lg": { base: "FC-10-LG001-000-00-01", description: "Demo Large Appliance" },
+  };
+
+  const SUPPORT_SUFFIX = {
+    "1yr": { suffix: "12-01-01", label: "1-Year 24x7 FortiCare" },
+    "3yr": { suffix: "12-01-03", label: "3-Year 24x7 FortiCare" },
+    "5yr": { suffix: "12-01-05", label: "5-Year 24x7 FortiCare" },
+  };
+
+  const ADDON_SKUS = {
+    "mgmt":   { sku: "FC-10-MGMT-000-00-XX", description: "FortiManager License (per device)", perUnit: true },
+    "syslog": { sku: "FC-10-SYSLOG-000-00-01", description: "FortiAnalyzer VM License (deployment)", perUnit: false },
+    "spare":  { sku: "SPARE-UNIT", description: "Cold Spare Unit (same model)", perUnit: false },
+  };
+
+  // ─── Shared state for postMessage ─────────────────────────────────────────
+  let _lastRows = [], _lastLabel = '', _lastMeta = {};
+
+  function addToProjectBOM() {
+    if (!generateBOM()) return;
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type:'FORTIBOM_ADD', product:'Placeholder', label:_lastLabel, rows:_lastRows, meta:_lastMeta }, '*');
+      document.getElementById('status-msg').textContent = '✓ Added to Project BOM.';
+      document.getElementById('status-msg').style.color = '#2E7D32';
+    }
+  }
+
+  // ─── Validate & generate ──────────────────────────────────────────────────
+  function generateBOM() {
+    let valid = true;
+
+    const model   = document.getElementById('f-model').value;
+    const count   = parseInt(document.getElementById('f-count').value, 10);
+    const deploy  = document.getElementById('f-deploy').value;
+    const support = document.getElementById('f-support').value;
+
+    if (!model) {
+      document.getElementById('f-model').classList.add('invalid');
+      valid = false;
+    } else {
+      document.getElementById('f-model').classList.remove('invalid');
+    }
+
+    if (!count || count < 1 || count > 9999) {
+      document.getElementById('f-count').classList.add('invalid');
+      document.getElementById('err-count').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('f-count').classList.remove('invalid');
+      document.getElementById('err-count').style.display = 'none';
+    }
+
+    if (!valid) {
+      document.getElementById('status-msg').textContent = '⚠ Please fill in all required fields.';
+      document.getElementById('status-msg').style.color = '#C0392B';
+      return false;
+    }
+
+    document.getElementById('status-msg').textContent = '';
+
+    // ─── Build BOM rows ──────────────────────────────────────────────────────
+    const modelInfo   = MODEL_SKUS[model];
+    const supportInfo = SUPPORT_SUFFIX[support];
+    const rows = [];
+
+    const haMultiplier = deploy.startsWith('ha') ? 2 : 1;
+    const unitQty = count * haMultiplier;
+
+    rows.push({ section: 'Hardware' });
+    rows.push({
+      sku:  modelInfo.base,
+      desc: modelInfo.description + (haMultiplier === 2 ? ' (HA pair)' : ''),
+      qty:  unitQty,
+      kind: 'req',
+      note: haMultiplier === 2 ? `HA ${deploy === 'ha-aa' ? 'Active-Active' : 'Active-Passive'} – quantity doubled` : ''
+    });
+
+    rows.push({ section: 'Licenses & Support' });
+    const supportSKU = modelInfo.base.replace('000-00-01', supportInfo.suffix);
+    rows.push({
+      sku:  supportSKU,
+      desc: supportInfo.label + ' – ' + modelInfo.description,
+      qty:  unitQty,
+      kind: 'req',
+      note: `Per unit · ${support}`
+    });
+
+    const addons = [];
+    if (document.getElementById('f-addon-mgmt').checked)  addons.push('mgmt');
+    if (document.getElementById('f-addon-syslog').checked) addons.push('syslog');
+    if (document.getElementById('f-addon-spare').checked)  addons.push('spare');
+
+    if (addons.length > 0) {
+      rows.push({ section: 'Optional Add-ons' });
+      for (const key of addons) {
+        const a = ADDON_SKUS[key];
+        const q = a.perUnit ? unitQty : 1;
+        rows.push({
+          sku:  a.sku.replace('XX', support === '1yr' ? '01' : support === '3yr' ? '03' : '05'),
+          desc: a.description,
+          qty:  q,
+          kind: 'opt',
+          note: a.perUnit ? 'Per unit' : 'Per deployment'
+        });
+      }
+    }
+
+    // ─── Store & render ──────────────────────────────────────────────────────
+    const deployLabel = deploy === 'standalone' ? 'Standalone' : deploy === 'ha-aa' ? 'HA-AA' : 'HA-AP';
+    _lastLabel = `Placeholder — ${model.toUpperCase()} ×${unitQty} (${deployLabel}, ${support})`;
+    _lastRows  = rows;
+    _lastMeta  = { model, deploy, support, count: unitQty };
+    renderBOM(rows, _lastMeta);
+    return true;
+  }
+
+  function renderBOM(rows, meta) {
+    const metaEl = document.getElementById('bom-meta');
+    const deployLabel = meta.deploy === 'standalone' ? 'Standalone' : meta.deploy === 'ha-aa' ? 'HA Active-Active' : 'HA Active-Passive';
+    metaEl.innerHTML = [
+      { label: 'Model',      value: meta.model ? meta.model.toUpperCase() : '—' },
+      { label: 'Deployment', value: deployLabel },
+      { label: 'Unit Count', value: meta.count },
+      { label: 'Support',    value: meta.support },
+    ].map(m => `
+      <div class="bom-meta-item">
+        <div class="meta-label">${m.label}</div>
+        <div class="meta-value">${m.value}</div>
+      </div>
+    `).join('');
+
+    const tbody = document.getElementById('bom-tbody');
+    tbody.innerHTML = '';
+    let totalLineItems = 0, totalQty = 0;
+
+    for (const row of rows) {
+      const tr = document.createElement('tr');
+      if (row.section !== undefined) {
+        tr.className = 'row-type-header';
+        tr.innerHTML = `<td colspan="5">${row.section}</td>`;
+      } else {
+        totalLineItems++;
+        totalQty += row.qty;
+        const badgeClass = row.kind === 'req' ? 'badge-required' : 'badge-optional';
+        const badgeLabel = row.kind === 'req' ? 'Required' : 'Optional';
+        tr.innerHTML = `
+          <td><span class="sku-code">${row.sku}</span></td>
+          <td>${row.desc}</td>
+          <td class="qty-cell">${row.qty}</td>
+          <td><span class="${badgeClass}">${badgeLabel}</span></td>
+          <td class="note-cell">${row.note || ''}</td>
+        `;
+      }
+      tbody.appendChild(tr);
+    }
+
+    document.getElementById('bom-totals').innerHTML = `
+      <div class="total-card">
+        <div class="total-label">Line Items</div>
+        <div class="total-value">${totalLineItems}</div>
+      </div>
+      <div class="total-card highlight">
+        <div class="total-label">Total Qty</div>
+        <div class="total-value">${totalQty}</div>
+      </div>
+    `;
+
+    document.getElementById('bom-section').style.display = 'block';
+    document.getElementById('bom-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('status-msg').textContent = '✓ BOM generated successfully.';
+    document.getElementById('status-msg').style.color = '#2E7D32';
+  }
+
+  function resetForm() {
+    document.getElementById('f-count').value = '1';
+    document.getElementById('f-model').value = '';
+    document.getElementById('f-deploy').value = 'standalone';
+    document.getElementById('f-support').value = '1yr';
+    document.getElementById('f-addon-mgmt').checked = false;
+    document.getElementById('f-addon-syslog').checked = false;
+    document.getElementById('f-addon-spare').checked = false;
+    document.getElementById('bom-section').style.display = 'none';
+    document.getElementById('status-msg').textContent = '';
+    document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+    document.querySelectorAll('.validation-msg').forEach(e => e.style.display = 'none');
+  }
+
+  function copyBOM() {
+    const rows = document.querySelectorAll('#bom-table tbody tr:not(.row-type-header)');
+    const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+    rows.forEach(r => {
+      const cells = r.querySelectorAll('td');
+      if (cells.length >= 5) {
+        lines.push([
+          cells[0].textContent.trim(),
+          cells[1].textContent.trim(),
+          cells[2].textContent.trim(),
+          cells[3].textContent.trim(),
+          cells[4].textContent.trim(),
+        ].join('\t'));
+      }
+    });
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      document.getElementById('status-msg').textContent = '✓ Copied to clipboard.';
+      document.getElementById('status-msg').style.color = '#2E7D32';
+    });
+  }
+</script>
+</body>
+</html>

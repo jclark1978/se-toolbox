@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiSASE – BOM Generator</title>
+<style>
+  :root {
+    --red:#EE3124; --border:#DDE1E9; --bg:#F2F4F7; --white:#FFFFFF;
+    --text:#2A2F3A; --text2:#6B7589; --textm:#9BA5BA;
+    --sh:#F7F9FC; --ib:#C8CDD9; --th:#EEF1F6; --ts:#F7F9FC;
+    --info-bg:#EEF3FF; --info-b:#B8CBF5; --info-t:#3557A5;
+    --warn-bg:#FFF8EE; --warn-b:#F5D9A0; --warn-t:#8A5800;
+    --ok-bg:#F0FAF0; --ok-b:#9FD8A0; --ok-t:#1E6B20;
+    /* Tier colors */
+    --std-bg:#F0F7FF; --std-b:#9EC8F5; --std-t:#1A4E82;
+    --adv-bg:#EEF3FF; --adv-b:#B8CBF5; --adv-t:#3557A5;
+    --cmp-bg:#F5F0FF; --cmp-b:#C8B8F5; --cmp-t:#4A2A8A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;padding:20px;min-height:100vh;}
+
+  /* PAGE HEADER */
+  .ph{background:var(--white);border:1px solid var(--border);border-radius:4px;padding:14px 20px;margin-bottom:14px;display:flex;align-items:center;gap:14px;}
+  .ph-icon{width:36px;height:36px;background:var(--red);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ph-icon svg{width:20px;height:20px;}
+  .ph h1{font-size:16px;font-weight:600;}
+  .ph .sub{font-size:11px;color:var(--text2);margin-top:2px;}
+
+  /* CARD */
+  .card{background:var(--white);border:1px solid var(--border);border-radius:4px;margin-bottom:14px;overflow:hidden;}
+  .ch{background:var(--sh);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:8px;}
+  .ch h2{font-size:11px;font-weight:700;color:var(--text);letter-spacing:.04em;text-transform:uppercase;}
+  .ch .badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--red);color:#fff;border-radius:2px;padding:1px 6px;margin-left:auto;}
+  .cb{padding:18px;}
+
+  /* FORM */
+  .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+  .fg.wide{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}
+  .grp{display:flex;flex-direction:column;gap:4px;}
+  .grp.full{grid-column:1/-1;}
+  label.lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;}
+  label.lbl .r{color:var(--red);margin-left:2px;}
+  input[type=text],input[type=number],select,textarea{background:var(--white);border:1px solid var(--ib);border-radius:3px;padding:6px 9px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(238,49,36,.1);}
+  .invalid{border-color:var(--red)!important;}
+  .err{display:none;font-size:11px;color:#C0392B;margin-top:2px;}
+  select{cursor:pointer;}
+
+  /* TOGGLES */
+  .trow{display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:5px 8px;border-radius:3px;margin-bottom:2px;transition:background .1s;}
+  .trow:hover{background:var(--sh);}
+  .trow input[type=checkbox]{accent-color:var(--red);width:14px;height:14px;margin-top:1px;flex-shrink:0;}
+  .tl{font-size:13px;color:var(--text);}
+  .tn{font-size:11px;color:var(--textm);}
+
+  /* CALLOUTS */
+  .callout{border-radius:3px;padding:9px 12px;font-size:12px;line-height:1.6;display:flex;gap:8px;align-items:flex-start;margin-bottom:14px;}
+  .callout svg{flex-shrink:0;margin-top:1px;}
+  .callout.info{background:var(--info-bg);border:1px solid var(--info-b);color:var(--info-t);}
+  .callout.warn{background:var(--warn-bg);border:1px solid var(--warn-b);color:var(--warn-t);}
+  .callout.ok{background:var(--ok-bg);border:1px solid var(--ok-b);color:var(--ok-t);}
+
+  /* DIVIDER / SECTION LABEL */
+  .divider{height:1px;background:var(--border);margin:14px 0;}
+  .sec-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--textm);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+  /* TIER COMPARISON TABLE */
+  .tier-panel{border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:14px;}
+  .tp-head{display:grid;grid-template-columns:1fr 110px 110px 110px;background:var(--sh);border-bottom:1px solid var(--border);}
+  .tph{padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;text-align:center;color:var(--text2);border-left:1px solid var(--border);}
+  .tph:first-child{text-align:left;border-left:none;}
+  .tph.std{background:var(--std-bg);color:var(--std-t);}
+  .tph.adv{background:var(--adv-bg);color:var(--adv-t);}
+  .tph.cmp{background:var(--cmp-bg);color:var(--cmp-t);}
+  .tp-row{display:grid;grid-template-columns:1fr 110px 110px 110px;border-top:1px solid var(--border);}
+  .tp-row:nth-child(even) .tp-cell{background:#FAFBFC;}
+  .tp-cat{background:#EAECF3;padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);grid-column:1/-1;border-top:2px solid #C5CAD9;}
+  .tp-cell{padding:6px 10px;font-size:11.5px;color:var(--text);border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+  .tp-cell:first-child{justify-content:flex-start;border-left:none;color:var(--text2);}
+  .chk{color:#2E7D32;font-size:13px;font-weight:700;}
+  .dash{color:var(--textm);}
+  .add-on{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#F0FAF0;color:#1E6B20;border:1px solid #9FD8A0;border-radius:2px;padding:1px 5px;}
+  .note-tag{font-size:10px;color:var(--warn-t);margin-left:4px;}
+
+  /* USER BAND INDICATOR */
+  .band-indicator{display:inline-flex;align-items:center;gap:6px;background:var(--info-bg);border:1px solid var(--info-b);border-radius:3px;padding:4px 10px;font-size:12px;color:var(--info-t);font-weight:500;margin-top:4px;}
+  .band-indicator .band-prefix{font-family:'Courier New',monospace;font-weight:700;}
+
+  /* ACTIONS */
+  .actions{display:flex;gap:10px;align-items:center;padding:12px 18px;background:var(--sh);border-top:1px solid var(--border);}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:3px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:background .12s;}
+  .btn svg{width:13px;height:13px;flex-shrink:0;}
+  .btn-p{background:var(--red);color:#fff;border-color:var(--red);}
+  .btn-p:hover{background:#d42a1e;}
+  .btn-s{background:var(--white);color:var(--text);border-color:var(--ib);}
+  .btn-s:hover{background:var(--sh);}
+  #smsg{font-size:11px;margin-left:6px;}
+
+  /* BOM TABLE */
+  #bom-section{display:none;}
+  .bom-meta{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
+  .bom-meta-item .ml{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--textm);}
+  .bom-meta-item .mv{font-size:13px;font-weight:500;color:var(--text);}
+  table.bt{width:100%;border-collapse:collapse;font-size:12px;}
+  table.bt thead th{background:var(--th);border:1px solid var(--border);padding:7px 11px;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);white-space:nowrap;}
+  table.bt tbody td{border:1px solid var(--border);padding:7px 11px;vertical-align:top;}
+  table.bt tbody tr:nth-child(even) td{background:var(--ts);}
+  table.bt tbody tr:hover td{background:#EEF1F6;}
+  .rs td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);padding:5px 11px;border-top:2px solid #C5CAD9;}
+  .sk{font-family:'Courier New',monospace;font-size:11.5px;color:#1A4E82;font-weight:700;white-space:nowrap;}
+  .qc{text-align:center;font-weight:700;}
+  .nc{color:var(--textm);font-size:11px;}
+  .br{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 5px;}
+  .br-r{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2;}
+  .br-o{background:var(--info-bg);color:var(--info-t);border:1px solid var(--info-b);}
+  .br-m{background:var(--warn-bg);color:var(--warn-t);border:1px solid var(--warn-b);}
+
+  /* TOTALS */
+  .bom-totals{margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;}
+  .tc{background:var(--sh);border:1px solid var(--border);border-radius:3px;padding:9px 14px;min-width:120px;}
+  .tc .tl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--textm);margin-bottom:3px;}
+  .tc .tv{font-size:18px;font-weight:600;color:var(--text);}
+  .tc.hi .tv{color:var(--red);}
+
+  @media print{body{background:#fff;padding:0;}#config-section,.actions{display:none!important;}#bom-section{display:block!important;}}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="ph">
+  <div class="ph-icon">
+    <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="white" stroke-width="1.4"/><circle cx="10" cy="3" r="1.5" stroke="white" stroke-width="1.2"/><circle cx="10" cy="17" r="1.5" stroke="white" stroke-width="1.2"/><circle cx="3" cy="10" r="1.5" stroke="white" stroke-width="1.2"/><circle cx="17" cy="10" r="1.5" stroke="white" stroke-width="1.2"/><path d="M10 5v2M10 13v2M5 10H7M13 10h2" stroke="white" stroke-width="1.2"/></svg>
+  </div>
+  <div>
+    <h1>FortiSASE – BOM Generator</h1>
+    <div class="sub">Secure Access Service Edge · Remote Users · Branch On-Ramp · Thin Edge · Based on FSS-OG-R39-20260320</div>
+  </div>
+</div>
+
+<div id="config-section">
+
+<!-- ══ IMPORTANT NOTES ════════════════════════════════════════════════════ -->
+<div class="callout info">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#3557A5" stroke-width="1.2"/><path d="M7 6.5v3.5M7 4.5v.5" stroke="#3557A5" stroke-width="1.4" stroke-linecap="round"/></svg>
+  <div><strong>FortiSASE SKUs use co-term date-driven pricing (suffix "-DD").</strong> Unlike appliance bundles, the term is set when the license is registered in FortiCare and aligned to your account's co-term date — not a fixed month count. All SKUs shown end in <code>-DD</code>. Start with a <strong>Remote User subscription</strong> — all other components (Branch, Thin Edge, add-ons) are registered on top of it.</div>
+</div>
+
+<!-- ══ SUBSCRIPTION TIER COMPARISON ══════════════════════════════════════ -->
+<div class="card">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="11" height="11" rx="1.5" stroke="#6B7589" stroke-width="1.2"/><path d="M3.5 4.5h6M3.5 6.5h4" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Subscription Tier Comparison</h2>
+  </div>
+  <div class="cb" style="padding:0;">
+    <div class="tier-panel" style="border:none;border-radius:0;margin-bottom:0;">
+      <div class="tp-head">
+        <div class="tph">Feature</div>
+        <div class="tph std">Standard<br><span style="font-size:9px;font-weight:400;opacity:.8;">-547-</span></div>
+        <div class="tph adv">Advanced<br><span style="font-size:9px;font-weight:400;opacity:.8;">-676-</span></div>
+        <div class="tph cmp">Comprehensive<br><span style="font-size:9px;font-weight:400;opacity:.8;">-759-</span></div>
+      </div>
+      <!-- Secure Internet Access -->
+      <div class="tp-row"><div class="tp-cat">Secure Internet Access (SIA)</div></div>
+      <div class="tp-row">
+        <div class="tp-cell">SSL Inspection, Inline AV, IPS, Web &amp; DNS Filtering, Botnet C&amp;C</div>
+        <div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <!-- Secure SaaS Access -->
+      <div class="tp-row"><div class="tp-cat">Secure SaaS Access (SSA)</div></div>
+      <div class="tp-row">
+        <div class="tp-cell">Inline CASB, Inline DLP, Cloud API CASB &amp; DLP (license included)</div>
+        <div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <!-- Secure Private Access -->
+      <div class="tp-row"><div class="tp-cat">Secure Private Access (SPA)</div></div>
+      <div class="tp-row">
+        <div class="tp-cell">FortiGate Private Access <span class="note-tag">† requires SD-WAN bundle</span></div>
+        <div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <div class="tp-row">
+        <div class="tp-cell">Zero Trust Network Access (ZTNA)</div>
+        <div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <div class="tp-row">
+        <div class="tp-cell">Agentless ZTNA</div>
+        <div class="tp-cell"><span class="dash">–</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <!-- License -->
+      <div class="tp-row"><div class="tp-cat">License Includes</div></div>
+      <div class="tp-row">
+        <div class="tp-cell">Devices per User (up to 3), Dedicated Public IPs</div>
+        <div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <div class="tp-row">
+        <div class="tp-cell">Sandbox, Vulnerability Mgmt, Endpoint Protection Platform <span class="note-tag">† agent-based</span></div>
+        <div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <!-- NOC/SOC -->
+      <div class="tp-row"><div class="tp-cat">NOC / SOC Integration</div></div>
+      <div class="tp-row">
+        <div class="tp-cell">SASE Cloud Logging, Reporting &amp; Log Forwarding</div>
+        <div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <div class="tp-row">
+        <div class="tp-cell">Digital Experience Monitoring (DEM) <span class="note-tag">† agent-based</span></div>
+        <div class="tp-cell"><span class="dash">–</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <div class="tp-row">
+        <div class="tp-cell">SOC-as-a-Service Integration, FortiGuard Forensics</div>
+        <div class="tp-cell"><span class="dash">–</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <!-- Data Center -->
+      <div class="tp-row"><div class="tp-cat">Data Center / Locations</div></div>
+      <div class="tp-row">
+        <div class="tp-cell">Locations (Standard &amp; Advanced include up to 4; Comprehensive &lt;200 users = 1–2)</div>
+        <div class="tp-cell" style="font-size:10px;text-align:center;">Fortinet Cloud</div>
+        <div class="tp-cell" style="font-size:10px;text-align:center;">Fortinet &amp; Public Cloud</div>
+        <div class="tp-cell" style="font-size:10px;text-align:center;">Fortinet &amp; Public Cloud</div>
+      </div>
+      <div class="tp-row">
+        <div class="tp-cell">Global Security PoP Coverage</div>
+        <div class="tp-cell"><span class="dash">–</span></div><div class="tp-cell"><span class="dash">–</span></div><div class="tp-cell"><span class="add-on">Add-on</span></div>
+      </div>
+      <!-- Support -->
+      <div class="tp-row"><div class="tp-cat">Customer Support</div></div>
+      <div class="tp-row">
+        <div class="tp-cell">24×7 Premium Support (included)</div>
+        <div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+      <div class="tp-row">
+        <div class="tp-cell">Assisted On-boarding (included)</div>
+        <div class="tp-cell"><span class="dash">–</span></div><div class="tp-cell"><span class="chk">✓</span></div><div class="tp-cell"><span class="chk">✓</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REMOTE USERS ═══════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="2.5" stroke="#6B7589" stroke-width="1.2"/><path d="M1 11.5C1 9 3.5 7 6.5 7s5.5 2 5.5 4.5" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Remote User Subscription</h2>
+    <span class="badge">Required — Start Here</span>
+  </div>
+  <div class="cb">
+
+    <div class="callout ok" style="margin-bottom:14px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#1E6B20" stroke-width="1.2"/><path d="M4 7l2 2 4-4" stroke="#1E6B20" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>All new FortiSASE deployments begin with a <strong>Remote User license</strong>. All other components (branch, thin edge, add-ons) are registered on top of this base subscription. Each user can register up to 3 devices (agent-based and/or proxy-based).</div>
+    </div>
+
+    <div class="fg" style="margin-bottom:14px;">
+      <div class="grp">
+        <label class="lbl">Subscription Tier <span class="r">*</span></label>
+        <select id="f-tier">
+          <option value="">— Select tier —</option>
+          <option value="547">Standard — SIA + SSA + ZTNA + Fortinet Cloud PoPs</option>
+          <option value="676">Advanced — All Standard + Agentless ZTNA + DEM + SOCaaS + Public Cloud PoPs</option>
+          <option value="759">Comprehensive — All Advanced + FortiGuard Forensics + Assisted On-boarding</option>
+        </select>
+        <span class="err" id="err-tier">Please select a tier</span>
+      </div>
+      <div class="grp">
+        <label class="lbl">Number of Remote Users <span class="r">*</span></label>
+        <input type="number" id="f-users" min="50" max="999999" placeholder="e.g. 250" oninput="updateBandIndicator()">
+        <span class="err" id="err-users">Minimum 50 users</span>
+        <div id="band-indicator" style="display:none;" class="band-indicator">
+          Band prefix: <span class="band-prefix" id="band-prefix-text">FC2</span> &nbsp;·&nbsp; <span id="band-range-text">50–499 users</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SD-WAN Starter Kit note -->
+    <div class="callout warn" style="margin-bottom:14px;" id="sdwan-note" style="display:none;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2L13 12H1L7 2Z" stroke="#8A5800" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 6v3M7 10.5v.5" stroke="#8A5800" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div><strong>SD-WAN Service Bundle — SASE Starter Kit:</strong> If the customer already has FortiGate SD-WAN, the SD-WAN service bundle (<code>-1329-</code>) includes a starter kit of FortiSASE Standard users (10 users on 100F+, 50 on 700G+, 100 on 1800F+) plus Secure Private Access (SPA) connectivity. Add the SD-WAN starter kit below in add-ons if applicable.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ BRANCH LOCATIONS ════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="4" width="11" height="7" rx="1" stroke="#6B7589" stroke-width="1.2"/><path d="M4 4V3a2 2 0 0 1 4 0v1" stroke="#6B7589" stroke-width="1.2"/></svg>
+    <h2>Branch Locations (Optional)</h2>
+  </div>
+  <div class="cb">
+
+    <div class="sec-label">Branch On-Ramp — connect FortiGate / 3rd-party via IPsec</div>
+    <div class="callout info" style="margin-bottom:10px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#3557A5" stroke-width="1.2"/><path d="M7 6.5v3.5M7 4.5v.5" stroke="#3557A5" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div>Each Branch On-Ramp Location provides <strong>1 Gbps shared bandwidth, up to 2,000 connections</strong>. Max 20 locations per account (minimum 2 for redundancy). Standard license → Fortinet Cloud PoPs only. Advanced/Comprehensive → Fortinet + Public Cloud PoPs. <strong>Note: a user seat license is still required with branch deployments.</strong></div>
+    </div>
+    <div class="fg" style="margin-bottom:14px;">
+      <div class="grp">
+        <label class="lbl">Fortinet Cloud PoP Locations</label>
+        <input type="number" id="f-br-fortinet" min="0" max="20" value="0" placeholder="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">SKU: FC1-10-EMS05-769-02-DD per location</div>
+      </div>
+      <div class="grp">
+        <label class="lbl">Public Cloud PoP Locations <span style="font-size:9px;color:var(--warn-t);">(Adv/Comp only)</span></label>
+        <input type="number" id="f-br-public" min="0" max="20" value="0" placeholder="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">SKU: FC1-10-EMS05-770-02-DD per location</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">FortiSASE Branch Thin Edge — managed in FortiSASE portal</div>
+    <div class="callout info" style="margin-bottom:10px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#3557A5" stroke-width="1.2"/><path d="M7 6.5v3.5M7 4.5v.5" stroke="#3557A5" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div>Thin Edge devices are managed directly in the FortiSASE portal. Two ordering options: <strong>FortiSASE Cloud Management only</strong> (security subscription + FortiCare), or <strong>Bundle</strong> (includes additional features). Max 1,024 FortiBranchSASE/FortiExtender per account, max 240 FortiAP.</div>
+    </div>
+    <div class="fg wide" style="margin-bottom:8px;">
+
+      <div class="grp">
+        <label class="lbl">FortiExtender-200F units</label>
+        <input type="number" id="f-ext200f" min="0" value="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">FC-10-X200F-595-02-DD (cloud mgmt only)</div>
+      </div>
+      <div class="grp">
+        <label class="lbl">FortiBranchSASE-10F-WiFi</label>
+        <input type="number" id="f-bs10fw" min="0" value="0">
+        <div style="margin-top:3px;display:flex;gap:8px;">
+          <label class="trow" style="padding:3px 0;"><input type="radio" name="bs10fw-opt" value="mgmt" checked style="accent-color:var(--red);"> <span class="tn">Mgmt only (-595-)</span></label>
+          <label class="trow" style="padding:3px 0;"><input type="radio" name="bs10fw-opt" value="bundle"> <span class="tn">Bundle (-1070-)</span></label>
+        </div>
+      </div>
+      <div class="grp">
+        <label class="lbl">FortiBranchSASE-20G</label>
+        <input type="number" id="f-bs20g" min="0" value="0">
+        <div style="margin-top:3px;display:flex;gap:8px;">
+          <label class="trow" style="padding:3px 0;"><input type="radio" name="bs20g-opt" value="mgmt" checked style="accent-color:var(--red);"> <span class="tn">Mgmt only (-595-)</span></label>
+          <label class="trow" style="padding:3px 0;"><input type="radio" name="bs20g-opt" value="bundle"> <span class="tn">Bundle (-1070-)</span></label>
+        </div>
+      </div>
+      <div class="grp">
+        <label class="lbl">FortiBranchSASE-20G-WiFi</label>
+        <input type="number" id="f-bs20gw" min="0" value="0">
+        <div style="margin-top:3px;display:flex;gap:8px;">
+          <label class="trow" style="padding:3px 0;"><input type="radio" name="bs20gw-opt" value="mgmt" checked style="accent-color:var(--red);"> <span class="tn">Mgmt only (-595-)</span></label>
+          <label class="trow" style="padding:3px 0;"><input type="radio" name="bs20gw-opt" value="bundle"> <span class="tn">Bundle (-1070-)</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">FortiAP Thin Edge</div>
+    <div class="fg">
+      <div class="grp">
+        <label class="lbl">FAP-831F units</label>
+        <input type="number" id="f-fap831f" min="0" value="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">FC-10-P831F-595-02-DD</div>
+      </div>
+      <div class="grp">
+        <label class="lbl">FAP-432G units</label>
+        <input type="number" id="f-fap432g" min="0" value="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">FC-10-P432G-595-02-DD</div>
+      </div>
+      <div class="grp">
+        <label class="lbl">FAP-443K units</label>
+        <input type="number" id="f-fap443k" min="0" value="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">FC-10-FP43K-595-02-DD</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ ACCOUNT ADD-ONS ═════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round"/></svg>
+    <h2>Account Add-Ons (Optional)</h2>
+  </div>
+  <div class="cb">
+
+    <div class="sec-label">Network Add-Ons</div>
+    <div class="fg" style="margin-bottom:14px;">
+      <div class="grp">
+        <label class="lbl">Dedicated Public IPs <span style="font-size:9px;color:var(--warn-t);">(500+ users req.)</span></label>
+        <input type="number" id="f-dips" min="0" value="0" placeholder="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">FC1-10-EMS05-658-02-DD · 4 public IPs per unit</div>
+      </div>
+      <div class="grp">
+        <label class="lbl">Fortinet Location Add-on (1–16 PoPs)</label>
+        <input type="number" id="f-loc-fortinet" min="0" max="16" value="0" placeholder="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">FC1-10-EMS05-752-02-DD per unit (each = 1–16 PoPs)</div>
+      </div>
+      <div class="grp">
+        <label class="lbl">Public Cloud Location Add-on (1–16 PoPs)</label>
+        <input type="number" id="f-loc-public" min="0" max="16" value="0" placeholder="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">FC1-10-EMS05-766-02-DD per unit</div>
+      </div>
+      <div class="grp">
+        <label class="lbl">FortiSASE Global Add-On</label>
+        <select id="f-global">
+          <option value="0">None</option>
+          <option value="1">Yes — all existing + future PoPs</option>
+        </select>
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">FC-10-EMS05-1136-02-DD</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">SD-WAN Service Bundle — SASE Starter Kit (for existing FortiGate SD-WAN customers)</div>
+    <div class="callout info" style="margin-bottom:10px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#3557A5" stroke-width="1.2"/><path d="M7 6.5v3.5M7 4.5v.5" stroke="#3557A5" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div>If the customer has existing FortiGate SD-WAN hardware, the <strong>SD-WAN Service Bundle</strong> adds Secure Private Access (SPA) connectivity. On 100F+ it also includes a FortiSASE Standard user starter kit (10/50/100 users depending on model tier). One SKU per FortiGate: <code>FC-10-XXXXX-1329-02-DD</code> where XXXXX = model code.</div>
+    </div>
+    <div class="fg" style="margin-bottom:4px;">
+      <div class="grp">
+        <label class="lbl">Number of FortiGate units needing SD-WAN bundle</label>
+        <input type="number" id="f-sdwan-units" min="0" value="0" placeholder="0">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">SKU requires the FortiGate model code — enter model below</div>
+      </div>
+      <div class="grp">
+        <label class="lbl">FortiGate model code <span style="font-size:9px;color:var(--textm);">(e.g. F200G, 0400F)</span></label>
+        <input type="text" id="f-sdwan-model" placeholder="e.g. F200G" style="text-transform:uppercase;">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">Used to build FC-10-{model}-1329-02-DD</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">FortiIdentity Cloud — Identity &amp; Access Management as a Service (IDaaS)</div>
+    <div class="fg" style="margin-bottom:4px;">
+      <div class="grp">
+        <label class="lbl">FortiIdentity Cloud Users</label>
+        <input type="number" id="f-fid-users" min="0" value="0" placeholder="0" oninput="updateFIDIndicator()">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">FC1–FC4-10-IDCLD-445-02-DD (band auto-selected)</div>
+        <div id="fid-indicator" style="display:none;" class="band-indicator" style="margin-top:4px;">
+          <span class="band-prefix" id="fid-prefix-text">FC1</span> · <span id="fid-range-text">100–499 users</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ ACTIONS ════════════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="actions">
+    <button class="btn btn-p" onclick="generateBOM()">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5h10M7 2l4.5 4.5L7 11" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Preview BOM
+    </button>
+    <button class="btn btn-p" onclick="addToProjectBOM()" style="background:#2E7D32;border-color:#2E7D32;">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6l3 3 3-3" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Add to Project BOM
+    </button>
+    <button class="btn btn-s" onclick="resetForm()">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5a5 5 0 1 0 1.2-3.2L1.5 2v3h3" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Reset
+    </button>
+    <span id="smsg" style="color:#C0392B;"></span>
+  </div>
+</div>
+
+</div><!-- end config-section -->
+
+<!-- ══ BOM OUTPUT ════════════════════════════════════════════════════════ -->
+<div class="card" id="bom-section">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1.5" width="11" height="10" rx="1.5" stroke="#6B7589" stroke-width="1.2"/><path d="M3.5 5h6M3.5 7h6M3.5 9h3.5" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Bill of Materials — FortiSASE</h2>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-s" onclick="copyTSV()" style="padding:4px 10px;font-size:11px;">
+        <svg viewBox="0 0 13 13" fill="none"><rect x="3.5" y="1" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/><rect x="1" y="3" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/></svg>
+        Copy TSV
+      </button>
+      <button class="btn btn-s" onclick="window.print()" style="padding:4px 10px;font-size:11px;">
+        <svg viewBox="0 0 13 13" fill="none"><rect x="1.5" y="4" width="10" height="6" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M3.5 4V2h6v2M3.5 10h6" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>
+        Print
+      </button>
+    </div>
+  </div>
+  <div class="cb">
+    <div class="bom-meta" id="bom-meta"></div>
+    <table class="bt" id="bom-table">
+      <thead><tr>
+        <th style="width:215px;">Part Number</th>
+        <th>Description</th>
+        <th style="width:55px;text-align:center;">Qty</th>
+        <th style="width:82px;">Type</th>
+        <th>Notes</th>
+      </tr></thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+    <div class="bom-totals" id="bom-totals"></div>
+  </div>
+</div>
+
+<script>
+// ── SKU HELPERS ───────────────────────────────────────────────────────────────
+// All FortiSASE SKUs use literal -DD (co-term date-driven), not a month suffix.
+// User band prefix is driven by count ranges:
+//   50–499   → FC2
+//   500–1999 → FC3
+//   2000–9999 → FC4
+//   10000+   → FC5
+function userBandPrefix(users) {
+  if (users >= 10000) return 'FC5';
+  if (users >= 2000)  return 'FC4';
+  if (users >= 500)   return 'FC3';
+  return 'FC2';
+}
+function userBandLabel(users) {
+  if (users >= 10000) return '10,000+ users';
+  if (users >= 2000)  return '2,000–9,999 users';
+  if (users >= 500)   return '500–1,999 users';
+  return '50–499 users';
+}
+
+// FortiIdentity Cloud band (different ranges: 100-499, 500-1999, 2000-9999, 10000+)
+function fidBandPrefix(users) {
+  if (users >= 10000) return 'FC4';
+  if (users >= 2000)  return 'FC3';
+  if (users >= 500)   return 'FC2';
+  return 'FC1';
+}
+function fidBandLabel(users) {
+  if (users >= 10000) return '10,000+ users';
+  if (users >= 2000)  return '2,000–9,999 users';
+  if (users >= 500)   return '500–1,999 users';
+  return '100–499 users';
+}
+
+// ── UI HELPERS ────────────────────────────────────────────────────────────────
+function updateBandIndicator() {
+  const users = parseInt(document.getElementById('f-users').value, 10);
+  const ind = document.getElementById('band-indicator');
+  if (!users || users < 50) { ind.style.display = 'none'; return; }
+  document.getElementById('band-prefix-text').textContent = userBandPrefix(users);
+  document.getElementById('band-range-text').textContent = userBandLabel(users);
+  ind.style.display = 'inline-flex';
+}
+
+function updateFIDIndicator() {
+  const users = parseInt(document.getElementById('f-fid-users').value, 10);
+  const ind = document.getElementById('fid-indicator');
+  if (!users || users < 100) { ind.style.display = 'none'; return; }
+  document.getElementById('fid-prefix-text').textContent = fidBandPrefix(users);
+  document.getElementById('fid-range-text').textContent = fidBandLabel(users);
+  ind.style.display = 'inline-flex';
+}
+
+// ── TIER LABELS ───────────────────────────────────────────────────────────────
+const TIER_CODE = { '547':'Standard', '676':'Advanced', '759':'Comprehensive' };
+
+// ── SHARED STATE ──────────────────────────────────────────────────────────────
+let _lastRows = [], _lastLabel = '', _lastMeta = {};
+
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'FORTIBOM_ADD', product:'FortiSASE', label:_lastLabel, rows:_lastRows, meta:_lastMeta }, '*');
+    document.getElementById('smsg').textContent = '✓ Added to Project BOM.';
+    document.getElementById('smsg').style.color = '#2E7D32';
+  }
+}
+
+// ── MAIN GENERATE ─────────────────────────────────────────────────────────────
+function generateBOM() {
+  // Read all fields
+  const tier       = document.getElementById('f-tier').value;
+  const users      = parseInt(document.getElementById('f-users').value, 10) || 0;
+  const brFortinet = parseInt(document.getElementById('f-br-fortinet').value, 10) || 0;
+  const brPublic   = parseInt(document.getElementById('f-br-public').value, 10) || 0;
+  const ext200f    = parseInt(document.getElementById('f-ext200f').value, 10) || 0;
+  const bs10fw     = parseInt(document.getElementById('f-bs10fw').value, 10) || 0;
+  const bs10fw_opt = document.querySelector('input[name="bs10fw-opt"]:checked').value;
+  const bs20g      = parseInt(document.getElementById('f-bs20g').value, 10) || 0;
+  const bs20g_opt  = document.querySelector('input[name="bs20g-opt"]:checked').value;
+  const bs20gw     = parseInt(document.getElementById('f-bs20gw').value, 10) || 0;
+  const bs20gw_opt = document.querySelector('input[name="bs20gw-opt"]:checked').value;
+  const fap831f    = parseInt(document.getElementById('f-fap831f').value, 10) || 0;
+  const fap432g    = parseInt(document.getElementById('f-fap432g').value, 10) || 0;
+  const fap443k    = parseInt(document.getElementById('f-fap443k').value, 10) || 0;
+  const dips       = parseInt(document.getElementById('f-dips').value, 10) || 0;
+  const locFortinet= parseInt(document.getElementById('f-loc-fortinet').value, 10) || 0;
+  const locPublic  = parseInt(document.getElementById('f-loc-public').value, 10) || 0;
+  const globalAddon= parseInt(document.getElementById('f-global').value, 10) || 0;
+  const sdwanUnits = parseInt(document.getElementById('f-sdwan-units').value, 10) || 0;
+  const sdwanModel = document.getElementById('f-sdwan-model').value.trim().toUpperCase();
+  const fidUsers   = parseInt(document.getElementById('f-fid-users').value, 10) || 0;
+
+  // Validate
+  let valid = true;
+  if (!tier) { document.getElementById('f-tier').classList.add('invalid'); document.getElementById('err-tier').style.display='block'; valid=false; }
+  else { document.getElementById('f-tier').classList.remove('invalid'); document.getElementById('err-tier').style.display='none'; }
+  if (users < 50) { document.getElementById('f-users').classList.add('invalid'); document.getElementById('err-users').style.display='block'; valid=false; }
+  else { document.getElementById('f-users').classList.remove('invalid'); document.getElementById('err-users').style.display='none'; }
+  if (!valid) { document.getElementById('smsg').textContent='⚠ Please complete all required fields.'; document.getElementById('smsg').style.color='#C0392B'; return false; }
+  document.getElementById('smsg').textContent='';
+
+  const band = userBandPrefix(users);
+  const tierName = TIER_CODE[tier];
+  const rows = [];
+
+  // ═══ SECTION: Remote User Subscription ═══════════════════════════════════
+  rows.push({ section: `Remote User Subscription — ${tierName}` });
+  rows.push({
+    sku:  `${band}-10-EMS05-${tier}-02-DD`,
+    desc: `FortiSASE ${tierName} Remote User Subscription — ${users.toLocaleString()} users. Includes SIA (SSL Inspection, AV, IPS, Web/DNS Filtering, Botnet C&C), SSA (Inline CASB, DLP, Cloud API CASB), SPA (ZTNA), 24×7 Premium Support, SASE Cloud Management & Logging.${tier === '676' ? ' + Agentless ZTNA, DEM, SOCaaS, Assisted On-boarding.' : tier === '759' ? ' + Agentless ZTNA, DEM, SOCaaS, FortiGuard Forensics, Assisted On-boarding.' : ''}`,
+    qty:  1,
+    kind: 'req',
+    note: `${band} band · ${userBandLabel(users)} · co-term -DD suffix`,
+  });
+
+  // Comprehensive <200 user warning note
+  if (tier === '759' && users < 200) {
+    rows.push({
+      sku:  '⚠',
+      desc: 'NOTE: Comprehensive subscriptions of fewer than 200 users have limited PoP availability (1–2 locations). Refer to Fortinet FAQ before ordering.',
+      qty:  null,
+      kind: 'note',
+      note: 'Limited PoP availability',
+    });
+  }
+
+  // ═══ SECTION: Branch On-Ramp ═════════════════════════════════════════════
+  if (brFortinet > 0 || brPublic > 0) {
+    rows.push({ section: 'Branch On-Ramp Locations (1 Gbps / 2,000 connections each)' });
+    if (brFortinet > 0) {
+      rows.push({
+        sku:  'FC1-10-EMS05-769-02-DD',
+        desc: 'FortiSASE Branch On-Ramp Location — Fortinet Cloud PoP (1 Gbps shared bandwidth, up to 2,000 connections). Available with Standard, Advanced, and Comprehensive licenses.',
+        qty:  brFortinet,
+        kind: 'opt',
+        note: `Fortinet Cloud PoP · max 20 locations/account · min 2 for redundancy`,
+      });
+    }
+    if (brPublic > 0) {
+      rows.push({
+        sku:  'FC1-10-EMS05-770-02-DD',
+        desc: 'FortiSASE Branch On-Ramp Location — Public Cloud PoP (1 Gbps shared bandwidth, up to 2,000 connections). Requires Advanced or Comprehensive license.',
+        qty:  brPublic,
+        kind: 'opt',
+        note: `Public Cloud PoP · requires Advanced or Comprehensive tier`,
+      });
+    }
+    const totalBranch = brFortinet + brPublic;
+    if (totalBranch > 20) {
+      rows.push({ sku:'⚠', desc:`WARNING: Total branch locations (${totalBranch}) exceeds maximum of 20 per account.`, qty:null, kind:'note', note:'Reduce to 20 or fewer' });
+    }
+    if (totalBranch === 1) {
+      rows.push({ sku:'⚠', desc:'NOTE: Minimum 2 Branch On-Ramp Locations required for redundancy.', qty:null, kind:'note', note:'Add at least one more location' });
+    }
+  }
+
+  // ═══ SECTION: Branch Thin Edge ═══════════════════════════════════════════
+  const hasThinEdge = ext200f > 0 || bs10fw > 0 || bs20g > 0 || bs20gw > 0 || fap831f > 0 || fap432g > 0 || fap443k > 0;
+  if (hasThinEdge) {
+    rows.push({ section: 'FortiSASE Branch Thin Edge' });
+    if (ext200f > 0) rows.push({ sku:'FC-10-X200F-595-02-DD', desc:'FortiExtender-200F — FortiSASE Cloud Management (includes security subscription and FortiCare Premium)', qty:ext200f, kind:'opt', note:'Cloud mgmt only option' });
+    if (bs10fw > 0) {
+      const skuCode = bs10fw_opt === 'bundle' ? 'FC-10-BS10F-1070-02-DD' : 'FC-10-BS10F-595-02-DD';
+      rows.push({ sku:skuCode, desc:`FortiBranchSASE-10F-WiFi — FortiSASE ${bs10fw_opt === 'bundle' ? 'Bundle (incl. additional features)' : 'Cloud Management'}`, qty:bs10fw, kind:'opt', note:bs10fw_opt === 'bundle' ? 'Bundle option' : 'Cloud mgmt only' });
+    }
+    if (bs20g > 0) {
+      const skuCode = bs20g_opt === 'bundle' ? 'FC-10-BS20G-1070-02-DD' : 'FC-10-BS20G-595-02-DD';
+      rows.push({ sku:skuCode, desc:`FortiBranchSASE-20G — FortiSASE ${bs20g_opt === 'bundle' ? 'Bundle' : 'Cloud Management'}`, qty:bs20g, kind:'opt', note:bs20g_opt === 'bundle' ? 'Bundle option' : 'Cloud mgmt only' });
+    }
+    if (bs20gw > 0) {
+      const skuCode = bs20gw_opt === 'bundle' ? 'FC-10-BS20W-1070-02-DD' : 'FC-10-BS20W-595-02-DD';
+      rows.push({ sku:skuCode, desc:`FortiBranchSASE-20G-WiFi — FortiSASE ${bs20gw_opt === 'bundle' ? 'Bundle' : 'Cloud Management'}`, qty:bs20gw, kind:'opt', note:bs20gw_opt === 'bundle' ? 'Bundle option' : 'Cloud mgmt only' });
+    }
+    if (fap831f > 0) rows.push({ sku:'FC-10-P831F-595-02-DD', desc:'FAP-831F FortiAP Thin Edge — FortiSASE Cloud Management (includes security subscription and FortiCare Premium)', qty:fap831f, kind:'opt', note:'FortiAP thin edge; max 240 FortiAP/account' });
+    if (fap432g > 0) rows.push({ sku:'FC-10-P432G-595-02-DD', desc:'FAP-432G FortiAP Thin Edge — FortiSASE Cloud Management', qty:fap432g, kind:'opt', note:'FortiAP thin edge' });
+    if (fap443k > 0) rows.push({ sku:'FC-10-FP43K-595-02-DD', desc:'FAP-443K FortiAP Thin Edge — FortiSASE Cloud Management', qty:fap443k, kind:'opt', note:'FortiAP thin edge' });
+  }
+
+  // ═══ SECTION: Account Add-Ons ════════════════════════════════════════════
+  const hasAddons = dips > 0 || locFortinet > 0 || locPublic > 0 || globalAddon > 0 || (sdwanUnits > 0 && sdwanModel) || fidUsers >= 100;
+  if (hasAddons) {
+    rows.push({ section: 'Account Add-Ons' });
+
+    if (dips > 0) {
+      if (users < 500) {
+        rows.push({ sku:'⚠', desc:'WARNING: Dedicated Public IPs require a minimum of 500 users. Current user count does not meet this requirement.', qty:null, kind:'note', note:'500+ users required' });
+      }
+      rows.push({ sku:'FC1-10-EMS05-658-02-DD', desc:'Dedicated Public IP Address Add-on — 4 x Public IP addresses per unit (up to 5 DEIPs per Security PoP, 4 usable for source IP anchoring)', qty:dips, kind:'opt', note:`${dips * 4} public IPs total · 500+ users required` });
+    }
+    if (locFortinet > 0) rows.push({ sku:'FC1-10-EMS05-752-02-DD', desc:'Fortinet Location Add-on — 1–16 additional Fortinet Security PoPs (max 20 total locations per account)', qty:locFortinet, kind:'opt', note:'Each unit adds 1–16 PoPs' });
+    if (locPublic > 0)   rows.push({ sku:'FC1-10-EMS05-766-02-DD', desc:'Public Cloud Location Add-on — 1–16 additional Public Cloud Security PoPs', qty:locPublic, kind:'opt', note:'Each unit adds 1–16 PoPs' });
+    if (globalAddon > 0) rows.push({ sku:'FC-10-EMS05-1136-02-DD', desc:'FortiSASE Global Add-On — all existing Security PoPs plus all future PoPs as they become available', qty:1, kind:'opt', note:'All current + future PoPs included' });
+
+    if (sdwanUnits > 0) {
+      const modelCode = sdwanModel || 'XXXXX';
+      rows.push({ sku:`FC-10-${modelCode}-1329-02-DD`, desc:`FortiGate SD-WAN Service Bundle — SASE Starter Kit. Adds Secure Private Access (SPA) connectivity. On 100F+ includes FortiSASE Standard user starter kit (10/50/100 users depending on model tier). One license per FortiGate.`, qty:sdwanUnits, kind:'opt', note:`Model code: ${modelCode} · Replace XXXXX with actual model code if shown` });
+    }
+
+    if (fidUsers >= 100) {
+      const fidBand = fidBandPrefix(fidUsers);
+      rows.push({ sku:`${fidBand}-10-IDCLD-445-02-DD`, desc:`FortiIdentity Cloud — Identity & Access Management as a Service (IDaaS). ${fidUsers.toLocaleString()} users.`, qty:1, kind:'opt', note:`${fidBand} band · ${fidBandLabel(fidUsers)}` });
+    }
+  }
+
+  // ── Store & render ──────────────────────────────────────────────────────────
+  _lastLabel = `FortiSASE ${tierName} — ${users.toLocaleString()} users${brFortinet + brPublic > 0 ? ` + ${brFortinet + brPublic} branch` : ''}`;
+  _lastRows  = rows;
+  _lastMeta  = { tier: tierName, users, band };
+  renderBOM(rows, _lastMeta);
+  return true;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderBOM(rows, meta) {
+  document.getElementById('bom-meta').innerHTML = [
+    { label:'Tier',    value:meta.tier },
+    { label:'Users',   value:meta.users.toLocaleString() },
+    { label:'Band',    value:`${meta.band} (${userBandLabel(meta.users)})` },
+    { label:'SKU Suffix', value:'-DD (co-term date-driven)' },
+  ].map(m=>`<div class="bom-meta-item"><div class="ml">${m.label}</div><div class="mv">${m.value}</div></div>`).join('');
+
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+  let lines=0, totalQty=0;
+
+  for (const row of rows) {
+    const tr = document.createElement('tr');
+    if (row.section !== undefined) {
+      tr.className = 'rs';
+      tr.innerHTML = `<td colspan="5">${row.section}</td>`;
+    } else {
+      lines++;
+      if (typeof row.qty === 'number') totalQty += row.qty;
+      const bm={req:'<span class="br br-r">Required</span>',opt:'<span class="br br-o">Optional</span>',note:''};
+      tr.innerHTML = `<td><span class="sk">${row.sku}</span></td><td>${row.desc}</td><td class="qc">${row.qty??''}</td><td>${bm[row.kind]||''}</td><td class="nc">${row.note||''}</td>`;
+    }
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('bom-totals').innerHTML = `
+    <div class="tc"><div class="tl">Line Items</div><div class="tv">${lines}</div></div>
+    <div class="tc hi"><div class="tl">Total Qty</div><div class="tv">${totalQty}</div></div>
+  `;
+
+  document.getElementById('bom-section').style.display='block';
+  document.getElementById('bom-section').scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('smsg').textContent='✓ BOM generated.';
+  document.getElementById('smsg').style.color='#2E7D32';
+}
+
+// ── RESET ─────────────────────────────────────────────────────────────────────
+function resetForm() {
+  document.getElementById('f-tier').value='';
+  document.getElementById('f-users').value='';
+  ['f-br-fortinet','f-br-public','f-ext200f','f-bs10fw','f-bs20g','f-bs20gw',
+   'f-fap831f','f-fap432g','f-fap443k','f-dips','f-loc-fortinet','f-loc-public',
+   'f-sdwan-units','f-fid-users'].forEach(id=>{ document.getElementById(id).value='0'; });
+  document.getElementById('f-global').value='0';
+  document.getElementById('f-sdwan-model').value='';
+  document.querySelectorAll('input[name="bs10fw-opt"]')[0].checked=true;
+  document.querySelectorAll('input[name="bs20g-opt"]')[0].checked=true;
+  document.querySelectorAll('input[name="bs20gw-opt"]')[0].checked=true;
+  document.getElementById('band-indicator').style.display='none';
+  document.getElementById('fid-indicator').style.display='none';
+  document.getElementById('bom-section').style.display='none';
+  document.getElementById('smsg').textContent='';
+  document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
+  document.querySelectorAll('.err').forEach(e=>e.style.display='none');
+}
+
+// ── COPY TSV ──────────────────────────────────────────────────────────────────
+function copyTSV() {
+  const rows = document.querySelectorAll('#bom-table tbody tr');
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  rows.forEach(r=>{
+    if(r.classList.contains('rs')){lines.push(`\t${r.querySelector('td').textContent.trim()}\t\t\t`);}
+    else{
+      const c=r.querySelectorAll('td');
+      if(c.length>=5) lines.push([c[0].textContent.trim(),c[1].textContent.trim(),c[2].textContent.trim(),c[3].textContent.trim(),c[4].textContent.trim()].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    document.getElementById('smsg').textContent='✓ Copied.';
+    document.getElementById('smsg').style.color='#2E7D32';
+  });
+}
+</script>
+</body>
+</html>

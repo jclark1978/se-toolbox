@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiFlex BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  background: var(--forti-bg);
+  color: var(--forti-text);
+  padding: 20px;
+}
+/* ── Page header ── */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.page-icon {
+  width: 44px; height: 44px;
+  background: var(--forti-red);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.page-icon svg { fill: #fff; }
+.page-title { font-size: 20px; font-weight: 700; color: var(--forti-text); }
+.page-sub   { font-size: 11px; color: var(--forti-text-muted); margin-top: 2px; }
+
+/* ── Cards ── */
+.card {
+  background: var(--forti-white);
+  border: 1px solid var(--forti-border);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.card-head {
+  background: var(--forti-section-header);
+  border-bottom: 1px solid var(--forti-border);
+  padding: 9px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--forti-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.card-body { padding: 16px 18px; }
+
+/* ── Form elements ── */
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--forti-text);
+  margin-bottom: 4px;
+}
+label .req { color: var(--forti-red); margin-left: 2px; }
+label .sub { font-weight: 400; color: var(--forti-text-muted); margin-left: 4px; }
+input[type=number], input[type=text], select {
+  background: white;
+  border: 1px solid var(--forti-input-border);
+  border-radius: 3px;
+  padding: 6px 9px;
+  font-size: 13px;
+  width: 100%;
+  font-family: inherit;
+  color: var(--forti-text);
+  transition: border-color .15s, box-shadow .15s;
+}
+input[type=number]:focus, input[type=text]:focus, select:focus {
+  outline: none;
+  border-color: var(--forti-red);
+  box-shadow: 0 0 0 2px rgba(238,49,36,.1);
+}
+input.invalid, select.invalid {
+  border-color: var(--forti-red);
+  box-shadow: 0 0 0 2px rgba(238,49,36,.15);
+}
+.field-err {
+  display: none;
+  color: var(--forti-red);
+  font-size: 11px;
+  margin-top: 3px;
+}
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr));
+  gap: 14px;
+}
+.field { margin-bottom: 0; }
+
+/* ── Program type cards ── */
+.prog-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 0;
+}
+.prog-card {
+  border: 2px solid var(--forti-border);
+  border-radius: 4px;
+  padding: 13px 15px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.prog-card:hover { border-color: #B8CBF5; background: #F7F9FF; }
+.prog-card.selected { border-color: var(--forti-red); background: #FEF8F8; }
+.prog-card-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+.prog-card-sub   { font-size: 11px; color: var(--forti-text-secondary); }
+.prog-card-sku   { font-family: 'Courier New', monospace; font-size: 10px; color: #1A4E82; margin-top: 5px; }
+
+/* ── Points packs ── */
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.pack-btn {
+  border: 1px solid var(--forti-border);
+  border-radius: 3px;
+  background: white;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.pack-btn:hover { border-color: var(--forti-red); background: #FEF8F8; }
+.pack-btn-label { font-weight: 700; font-size: 13px; color: var(--forti-text); }
+.pack-btn-sku   { font-family: 'Courier New', monospace; font-size: 10px; color: #1A4E82; margin-top: 3px; }
+
+/* ── MSSP billing tier cards ── */
+.billing-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+  gap: 8px;
+}
+.billing-card {
+  border: 2px solid var(--forti-border);
+  border-radius: 4px;
+  padding: 11px 13px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.billing-card:hover  { border-color: #B8CBF5; background: #F7F9FF; }
+.billing-card.selected { border-color: var(--forti-red); background: #FEF8F8; }
+.billing-card-title { font-weight: 700; font-size: 12px; }
+.billing-card-sku   { font-family: 'Courier New', monospace; font-size: 10px; color: #1A4E82; margin-top: 4px; }
+.billing-card-sub   { font-size: 11px; color: var(--forti-text-secondary); margin-top: 2px; }
+
+/* ── Collapsible sub-sections ── */
+.sub-section {
+  display: none;
+}
+.sub-section.visible { display: block; }
+
+/* ── Points summary box ── */
+.points-summary {
+  background: var(--forti-info-bg);
+  border: 1px solid var(--forti-info-border);
+  border-radius: 3px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--forti-info-text);
+  margin-top: 12px;
+  display: none;
+}
+.points-summary.visible { display: block; }
+.points-summary strong { font-size: 15px; }
+
+/* ── Callouts ── */
+.callout { border-radius:3px; padding:9px 12px; font-size:12px; line-height:1.6; display:flex; gap:8px; margin-bottom: 10px; }
+.info { background:var(--forti-info-bg); border:1px solid var(--forti-info-border); color:var(--forti-info-text); }
+.warn { background:var(--forti-warn-bg); border:1px solid var(--forti-warn-border); color:var(--forti-warn-text); }
+
+/* ── Action buttons ── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+button {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity .15s;
+}
+button:hover { opacity: .85; }
+.btn-primary  { background: var(--forti-red);  color: #fff; }
+.btn-success  { background: #2E7D32;             color: #fff; }
+.btn-neutral  { background: #E2E5EC;             color: var(--forti-text); }
+.btn-sm       { padding: 5px 10px; font-size: 11px; }
+#smsg { font-size: 12px; color: #2E7D32; font-weight: 600; }
+
+/* ── BOM table ── */
+#bom-section { display: none; }
+#bom-section.visible { display: block; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th {
+  background: var(--forti-table-head);
+  border: 1px solid var(--forti-border);
+  padding: 7px 11px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+  text-align: left;
+}
+tbody td { border:1px solid var(--forti-border); padding:7px 11px; vertical-align:top; }
+tbody tr:nth-child(even) td { background: var(--forti-table-stripe); }
+.section-row td {
+  background: #EAECF3 !important;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--forti-text-secondary);
+  padding: 5px 11px;
+  border-top: 2px solid #C5CAD9;
+}
+.badge { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-radius:2px; padding:1px 4px; display:inline-block; white-space:nowrap; }
+.badge-req  { background:#FEF0EE; color:#C0392B; border:1px solid #F5C6C2; }
+.badge-opt  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.badge-mand { background:#FFF8EE; color:#8A5800; border:1px solid #F5D9A0; }
+.badge-inc  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.sku-mono { font-family:'Courier New',monospace; font-size:11px; color:#1A4E82; }
+.nc { color: var(--forti-text-muted); }
+.bom-actions { display:flex; gap:8px; margin-bottom:10px; align-items:center; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     PAGE HEADER
+══════════════════════════════════════ -->
+<div class="page-header">
+  <div class="page-icon">
+    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+  </div>
+  <div>
+    <div class="page-title">FortiFlex</div>
+    <div class="page-sub">Points-Based Flexible Licensing Program &nbsp;·&nbsp; FVM-OG-R10-20260409</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OVERVIEW TABLE
+══════════════════════════════════════ -->
+<div class="card">
+  <div class="card-head">Program Overview</div>
+  <div class="card-body">
+    <table>
+      <thead>
+        <tr>
+          <th>Program</th>
+          <th>Billing Model</th>
+          <th>Audience</th>
+          <th>Min. Commitment</th>
+          <th>Points Rollover</th>
+          <th>Points Expiry</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>FortiFlex Enterprise</strong></td>
+          <td>Prepaid</td>
+          <td>Enterprise orgs</td>
+          <td>None specified</td>
+          <td>100%</td>
+          <td>3–5 yrs from registration</td>
+        </tr>
+        <tr>
+          <td><strong>FortiFlex MSSP</strong></td>
+          <td>Postpaid (monthly)</td>
+          <td>MSSPs / Telcos</td>
+          <td>50,000 pts/yr</td>
+          <td>N/A</td>
+          <td>N/A (monthly billing)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:14px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Stackable Point Pack SKU</th>
+            <th>Points Included</th>
+            <th>Rollover</th>
+            <th>Expiry</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="sku-mono">LIC-FLXPTS-1K</td>  <td>1,000</td>  <td>100%</td><td>3 yrs from registration</td><td class="nc">Standard pack</td></tr>
+          <tr><td class="sku-mono">LIC-FLXPTS-10K</td> <td>10,000</td> <td>100%</td><td>3 yrs from registration</td><td class="nc">Standard pack</td></tr>
+          <tr><td class="sku-mono">LIC-FLXPTS-50K</td> <td>50,000</td> <td>100%</td><td>3 yrs from registration</td><td class="nc">Standard pack</td></tr>
+          <tr><td class="sku-mono">LIC-FLXPTS-100K</td><td>100,000</td><td>100%</td><td>3 yrs from registration</td><td class="nc">Standard pack</td></tr>
+          <tr><td class="sku-mono">LIC-FLXPTS-BULK</td><td>≥1,000,000</td><td>100%</td><td>5 yrs from registration</td><td class="nc">Bulk / MOQ 1,000,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CONFIGURATION FORM
+══════════════════════════════════════ -->
+<div class="card">
+  <div class="card-head">1 · Program Type</div>
+  <div class="card-body">
+    <div class="prog-cards">
+      <div class="prog-card selected" id="prog-enterprise" onclick="selectProgram('enterprise')">
+        <div class="prog-card-title">FortiFlex Enterprise</div>
+        <div class="prog-card-sub">Prepaid · Points-based · Enterprise &amp; SMB</div>
+        <div class="prog-card-sku">FC-10-ELAVR-221-02-DD</div>
+      </div>
+      <div class="prog-card" id="prog-mssp" onclick="selectProgram('mssp')">
+        <div class="prog-card-title">FortiFlex MSSP</div>
+        <div class="prog-card-sub">Postpaid · Monthly billing · MSSPs &amp; Telcos</div>
+        <div class="prog-card-sku">FC-10-ELAVS-221-02-DD</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Enterprise config ── -->
+<div class="card sub-section visible" id="section-enterprise">
+  <div class="card-head">2 · FortiFlex Enterprise — Points &amp; Packs</div>
+  <div class="card-body">
+
+    <div class="callout info">
+      <span>ℹ</span>
+      <span>All purchased SKUs must be registered within <strong>365 days</strong> of purchase. Points roll over 100%. If consumption exceeds your balance, a 90-day grace period applies before services are suspended.</span>
+    </div>
+
+    <div class="field-row" style="margin-bottom:16px;">
+      <div class="field">
+        <label for="ent-qty">Program Enrollment Quantity <span class="req">*</span></label>
+        <input type="number" id="ent-qty" min="1" value="1" oninput="updatePointsSummary()">
+        <div class="field-err" id="err-ent-qty">Enter a quantity ≥ 1</div>
+      </div>
+      <div class="field">
+        <label for="ent-pts">Total FortiFlex Points Needed <span class="req">*</span>
+          <span class="sub">(for pack calculation)</span></label>
+        <input type="number" id="ent-pts" min="0" value="" placeholder="e.g. 25000" oninput="updatePointsSummary()">
+        <div class="field-err" id="err-ent-pts">Enter a positive number of points</div>
+      </div>
+    </div>
+
+    <!-- Point Pack Type -->
+    <label style="margin-bottom:8px;">Point Pack Type <span class="req">*</span></label>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:400;">
+        <input type="radio" name="pack-type" value="standard" checked onchange="updatePointsSummary()"> Standard (Stackable Packs — up to 100K)
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-weight:400;">
+        <input type="radio" name="pack-type" value="bulk" onchange="updatePointsSummary()"> Bulk Pack (MOQ 1,000,000 pts — 5yr expiry)
+      </label>
+    </div>
+
+    <!-- Points summary / packing result -->
+    <div class="points-summary" id="points-summary"></div>
+
+    <div style="margin-top:14px;">
+      <div class="callout warn">
+        <span>⚠</span>
+        <span><strong>FortiPoints Transfer:</strong> Below 50,000 FortiFlex points: 1 FortiFlex = 1.2 FortiPoints (3-yr expiry). 50K–999,999: 1:1 (3-yr). ≥1,000,000: 1:1 (5-yr). Transfers are <strong>final and non-reversible</strong>.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MSSP config ── -->
+<div class="card sub-section" id="section-mssp">
+  <div class="card-head">2 · FortiFlex MSSP — Billing Tier</div>
+  <div class="card-body">
+    <div class="callout warn">
+      <span>⚠</span>
+      <span>MSSP program requires a <strong>minimum annual consumption commitment of 50,000 points</strong>. If annual consumption is below the minimum, a true-up adjustment is applied.</span>
+    </div>
+
+    <div class="field-row" style="margin-bottom:16px;">
+      <div class="field">
+        <label for="mssp-qty">Program Enrollment Quantity <span class="req">*</span></label>
+        <input type="number" id="mssp-qty" min="1" value="1">
+        <div class="field-err" id="err-mssp-qty">Enter a quantity ≥ 1</div>
+      </div>
+    </div>
+
+    <label style="margin-bottom:8px;">Monthly Billing Tier <span class="req">*</span></label>
+    <div class="billing-cards">
+      <div class="billing-card selected" id="bt-01" onclick="selectBillingTier('01')">
+        <div class="billing-card-title">Tier 1</div>
+        <div class="billing-card-sku">FCB-ELAVM-01</div>
+        <div class="billing-card-sub">Monthly postpaid billing</div>
+      </div>
+      <div class="billing-card" id="bt-02" onclick="selectBillingTier('02')">
+        <div class="billing-card-title">Tier 2</div>
+        <div class="billing-card-sku">FCB-ELAVM-02</div>
+        <div class="billing-card-sub">Monthly postpaid billing</div>
+      </div>
+      <div class="billing-card" id="bt-03" onclick="selectBillingTier('03')">
+        <div class="billing-card-title">Tier 3</div>
+        <div class="billing-card-sku">FCB-ELAVM-03</div>
+        <div class="billing-card-sub">Monthly postpaid billing</div>
+      </div>
+    </div>
+    <div class="field-err" id="err-mssp-tier" style="margin-top:6px;">Select a billing tier</div>
+
+    <div class="callout info" style="margin-top:14px;">
+      <span>ℹ</span>
+      <span>Monthly billing SKUs (FCB-ELAVM-0x) are postpaid and billed based on actual consumption. No term suffix applies — consumption is tracked and charged monthly.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ACTION BUTTONS
+══════════════════════════════════════ -->
+<div class="actions">
+  <button class="btn-primary"  onclick="generateBOM()">▶ Preview BOM</button>
+  <button class="btn-success"  onclick="addToProjectBOM()">＋ Add to Project BOM</button>
+  <button class="btn-neutral"  onclick="resetForm()">↺ Reset</button>
+  <span id="smsg"></span>
+</div>
+
+<!-- ══════════════════════════════════════
+     BOM PREVIEW
+══════════════════════════════════════ -->
+<div class="card" id="bom-section">
+  <div class="card-head">BOM Preview</div>
+  <div class="card-body">
+    <div class="bom-actions">
+      <button class="btn-neutral btn-sm" onclick="copyTSV()">⎘ Copy TSV</button>
+      <button class="btn-neutral btn-sm" onclick="window.print()">⎙ Print</button>
+    </div>
+    <table id="bom-table">
+      <thead>
+        <tr>
+          <th style="width:200px;">Part Number</th>
+          <th>Description</th>
+          <th style="width:50px;">Qty</th>
+          <th style="width:80px;">Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let _program       = 'enterprise';
+let _billingTier   = '01';
+let _lastRows      = [];
+let _lastLabel     = '';
+let _lastMeta      = {};
+
+// ══════════════════════════════════════
+// PROGRAM SELECTION
+// ══════════════════════════════════════
+function selectProgram(prog) {
+  _program = prog;
+  document.getElementById('prog-enterprise').classList.toggle('selected', prog === 'enterprise');
+  document.getElementById('prog-mssp').classList.toggle('selected', prog === 'mssp');
+  document.getElementById('section-enterprise').classList.toggle('visible', prog === 'enterprise');
+  document.getElementById('section-mssp').classList.toggle('visible', prog === 'mssp');
+  hideBOM();
+}
+
+// ══════════════════════════════════════
+// BILLING TIER SELECTION (MSSP)
+// ══════════════════════════════════════
+function selectBillingTier(tier) {
+  _billingTier = tier;
+  ['01','02','03'].forEach(t => {
+    document.getElementById('bt-' + t).classList.toggle('selected', t === tier);
+  });
+  document.getElementById('err-mssp-tier').style.display = 'none';
+}
+
+// ══════════════════════════════════════
+// POINTS PACK CALCULATOR (ENTERPRISE)
+// ══════════════════════════════════════
+const PACK_TIERS = [
+  { pts: 100000, sku: 'LIC-FLXPTS-100K', desc: 'FortiFlex Points Pack — 100,000 Points' },
+  { pts:  50000, sku: 'LIC-FLXPTS-50K',  desc: 'FortiFlex Points Pack — 50,000 Points' },
+  { pts:  10000, sku: 'LIC-FLXPTS-10K',  desc: 'FortiFlex Points Pack — 10,000 Points' },
+  { pts:   1000, sku: 'LIC-FLXPTS-1K',   desc: 'FortiFlex Points Pack — 1,000 Points' },
+];
+
+function packPoints(total) {
+  let remaining = total;
+  const result = [];
+  for (const tier of PACK_TIERS) {
+    const qty = Math.floor(remaining / tier.pts);
+    if (qty > 0) {
+      result.push({ ...tier, qty });
+      remaining -= qty * tier.pts;
+    }
+  }
+  // Round up remainder to 1K pack
+  if (remaining > 0) {
+    const smallest = PACK_TIERS[PACK_TIERS.length - 1];
+    const existing = result.find(r => r.sku === smallest.sku);
+    if (existing) { existing.qty += 1; } else { result.push({ ...smallest, qty: 1 }); }
+  }
+  return result;
+}
+
+function updatePointsSummary() {
+  const ptsRaw  = parseInt(document.getElementById('ent-pts').value, 10);
+  const packType = document.querySelector('input[name="pack-type"]:checked').value;
+  const summaryEl = document.getElementById('points-summary');
+
+  if (!ptsRaw || ptsRaw <= 0) {
+    summaryEl.classList.remove('visible');
+    return;
+  }
+
+  if (packType === 'bulk') {
+    summaryEl.innerHTML = `<strong>LIC-FLXPTS-BULK</strong> &nbsp;—&nbsp; ${ptsRaw.toLocaleString()} points via Bulk Pack (MOQ 1,000,000 · 5-yr expiry). Contact your Fortinet account team for bulk pricing.`;
+    summaryEl.classList.add('visible');
+    return;
+  }
+
+  const packs = packPoints(ptsRaw);
+  const totalCovered = packs.reduce((s, p) => s + p.pts * p.qty, 0);
+  let html = `<strong>Recommended Pack Allocation</strong> for ${ptsRaw.toLocaleString()} points (covers ${totalCovered.toLocaleString()}):<br><br>`;
+  packs.forEach(p => {
+    html += `<span style="font-family:'Courier New',monospace;font-size:11px;color:#1A4E82;">${p.sku}</span> &nbsp;×${p.qty}&nbsp; — ${p.desc}<br>`;
+  });
+  summaryEl.innerHTML = html;
+  summaryEl.classList.add('visible');
+}
+
+// ══════════════════════════════════════
+// VALIDATION
+// ══════════════════════════════════════
+function validate(fieldId, errId, condition) {
+  const field = document.getElementById(fieldId);
+  const err   = document.getElementById(errId);
+  if (!condition) {
+    field.classList.add('invalid');
+    err.style.display = 'block';
+    return false;
+  }
+  field.classList.remove('invalid');
+  err.style.display = 'none';
+  return true;
+}
+
+// ══════════════════════════════════════
+// GENERATE BOM
+// ══════════════════════════════════════
+function generateBOM() {
+  let ok = true;
+
+  if (_program === 'enterprise') {
+    const qty    = parseInt(document.getElementById('ent-qty').value, 10);
+    const pts    = parseInt(document.getElementById('ent-pts').value, 10);
+    const packType = document.querySelector('input[name="pack-type"]:checked').value;
+
+    ok = validate('ent-qty', 'err-ent-qty', qty >= 1) && ok;
+    ok = validate('ent-pts', 'err-ent-pts', pts > 0) && ok;
+    if (!ok) return false;
+
+    const rows = [];
+    rows.push({ section: 'FortiFlex Enterprise — Program Enrollment' });
+    rows.push({
+      sku:  'FC-10-ELAVR-221-02-DD',
+      desc: 'FortiFlex Enterprise Prepaid Program Subscription',
+      qty,
+      kind: 'req',
+      note: 'Program enrollment · co-term -DD'
+    });
+
+    rows.push({ section: 'FortiFlex Point Packs' });
+
+    if (packType === 'bulk') {
+      rows.push({
+        sku:  'LIC-FLXPTS-BULK',
+        desc: 'FortiFlex Points Bulk Pack (MOQ 1,000,000 points · 5-yr expiry)',
+        qty:  1,
+        kind: 'req',
+        note: `${pts.toLocaleString()} pts requested · 100% rollover · 5 yrs from registration`
+      });
+      rows.push({
+        sku:  '⚠',
+        desc: 'Bulk Pack requires MOQ of 1,000,000 points. Contact Fortinet account team for pricing.',
+        qty:  null,
+        kind: 'note',
+        note: ''
+      });
+    } else {
+      const packs = packPoints(pts);
+      packs.forEach(p => {
+        rows.push({
+          sku:  p.sku,
+          desc: p.desc,
+          qty:  p.qty,
+          kind: 'req',
+          note: `${(p.pts * p.qty).toLocaleString()} pts · 100% rollover · 3 yrs from registration`
+        });
+      });
+      const totalCovered = packs.reduce((s, p) => s + p.pts * p.qty, 0);
+      if (totalCovered > pts) {
+        rows.push({
+          sku:  '⚠',
+          desc: `Pack allocation covers ${totalCovered.toLocaleString()} pts (rounded up from ${pts.toLocaleString()} pts — smallest pack = 1,000 pts).`,
+          qty:  null,
+          kind: 'note',
+          note: ''
+        });
+      }
+    }
+
+    rows.push({
+      sku:  '⚠',
+      desc: 'All purchased SKUs must be registered within 365 days of purchase. Points activate upon registration in FortiCloud.',
+      qty:  null,
+      kind: 'note',
+      note: ''
+    });
+
+    _lastRows  = rows;
+    _lastLabel = `FortiFlex Enterprise ×${qty} · ${pts.toLocaleString()} pts (${packType})`;
+    _lastMeta  = { Program: 'Enterprise (Prepaid)', 'Enrollments': qty, 'Points Requested': pts.toLocaleString(), 'Pack Type': packType === 'bulk' ? 'Bulk (LIC-FLXPTS-BULK)' : 'Standard Stackable' };
+
+  } else {
+    // MSSP
+    const qty = parseInt(document.getElementById('mssp-qty').value, 10);
+    ok = validate('mssp-qty', 'err-mssp-qty', qty >= 1) && ok;
+    if (!_billingTier) {
+      document.getElementById('err-mssp-tier').style.display = 'block';
+      ok = false;
+    }
+    if (!ok) return false;
+
+    const rows = [];
+    rows.push({ section: 'FortiFlex MSSP — Program Enrollment' });
+    rows.push({
+      sku:  'FC-10-ELAVS-221-02-DD',
+      desc: 'FortiFlex MSSP Postpaid Program Subscription',
+      qty,
+      kind: 'req',
+      note: 'Program enrollment · co-term -DD'
+    });
+
+    rows.push({ section: 'MSSP Monthly Billing' });
+    rows.push({
+      sku:  `FCB-ELAVM-${_billingTier}`,
+      desc: `FortiFlex MSSP Monthly Billing — Tier ${parseInt(_billingTier, 10)}`,
+      qty:  1,
+      kind: 'req',
+      note: 'Postpaid · billed monthly based on actual consumption'
+    });
+
+    rows.push({
+      sku:  '⚠',
+      desc: 'MSSP program requires minimum annual consumption of 50,000 points. True-up adjustments apply if below minimum.',
+      qty:  null,
+      kind: 'note',
+      note: ''
+    });
+    rows.push({
+      sku:  '⚠',
+      desc: 'All purchased SKUs must be registered within 365 days of purchase.',
+      qty:  null,
+      kind: 'note',
+      note: ''
+    });
+
+    _lastRows  = rows;
+    _lastLabel = `FortiFlex MSSP ×${qty} · Tier ${parseInt(_billingTier, 10)} Billing`;
+    _lastMeta  = { Program: 'MSSP (Postpaid)', 'Enrollments': qty, 'Billing Tier': `FCB-ELAVM-${_billingTier}`, 'Min. Commitment': '50,000 pts/yr' };
+  }
+
+  renderBOM(_lastRows);
+  return true;
+}
+
+// ══════════════════════════════════════
+// RENDER BOM
+// ══════════════════════════════════════
+const BADGE_MAP = {
+  req:  '<span class="badge badge-req">Required</span>',
+  mand: '<span class="badge badge-mand">Mandatory</span>',
+  opt:  '<span class="badge badge-opt">Optional</span>',
+  inc:  '<span class="badge badge-inc">Included</span>',
+  note: ''
+};
+
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.section !== undefined) {
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${row.section}</td>`;
+    } else {
+      const skuHtml  = row.sku === '⚠'
+        ? `<span style="color:var(--forti-warn-text);">⚠</span>`
+        : `<span class="sku-mono">${row.sku}</span>`;
+      const descHtml = `<span class="${row.kind === 'note' ? 'nc' : ''}">${row.desc}</span>`;
+      const qtyHtml  = row.qty != null ? row.qty : '';
+      const badge    = BADGE_MAP[row.kind] || '';
+      const noteHtml = row.note ? `<span class="nc">${row.note}</span>` : '';
+      tr.innerHTML = `<td>${skuHtml}</td><td>${descHtml}</td><td>${qtyHtml}</td><td>${badge}</td><td>${noteHtml}</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+
+  const section = document.getElementById('bom-section');
+  section.classList.add('visible');
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ══════════════════════════════════════
+// ADD TO PROJECT BOM
+// ══════════════════════════════════════
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  window.parent.postMessage({
+    type:    'FORTIBOM_ADD',
+    product: 'FortiFlex',
+    label:   _lastLabel,
+    rows:    _lastRows,
+    meta:    _lastMeta
+  }, '*');
+  const smsg = document.getElementById('smsg');
+  smsg.textContent = '✓ Added to Project BOM';
+  setTimeout(() => { smsg.textContent = ''; }, 3000);
+}
+
+// ══════════════════════════════════════
+// RESET
+// ══════════════════════════════════════
+function resetForm() {
+  selectProgram('enterprise');
+  document.getElementById('ent-qty').value  = '1';
+  document.getElementById('ent-pts').value  = '';
+  document.querySelector('input[name="pack-type"][value="standard"]').checked = true;
+  document.getElementById('mssp-qty').value = '1';
+  selectBillingTier('01');
+  document.getElementById('points-summary').classList.remove('visible');
+  hideBOM();
+  ['err-ent-qty','err-ent-pts','err-mssp-qty','err-mssp-tier'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  ['ent-qty','ent-pts','mssp-qty'].forEach(id => {
+    document.getElementById(id).classList.remove('invalid');
+  });
+  document.getElementById('smsg').textContent = '';
+}
+
+function hideBOM() {
+  const section = document.getElementById('bom-section');
+  section.classList.remove('visible');
+  document.getElementById('bom-tbody').innerHTML = '';
+  _lastRows = [];
+}
+
+// ══════════════════════════════════════
+// COPY TSV
+// ══════════════════════════════════════
+function copyTSV() {
+  const lines = [];
+  lines.push(['Part Number','Description','Qty','Type','Notes'].join('\t'));
+  _lastRows.forEach(r => {
+    if (r.section) {
+      lines.push([`## ${r.section}`,'','','',''].join('\t'));
+    } else {
+      lines.push([r.sku, r.desc, r.qty != null ? r.qty : '', r.kind || '', r.note || ''].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const smsg = document.getElementById('smsg');
+    smsg.textContent = '✓ TSV copied to clipboard';
+    setTimeout(() => { smsg.textContent = ''; }, 2000);
+  });
+}
+</script>
+</body>
+</html>

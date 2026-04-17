@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FortiADC BOM Generator</title>
+<style>
+:root{
+  --forti-red:#EE3124;
+  --forti-border:#DDE1E9;
+  --forti-bg:#F2F4F7;
+  --forti-white:#FFFFFF;
+  --forti-text:#2A2F3A;
+  --forti-text-secondary:#6B7589;
+  --forti-text-muted:#9BA5BA;
+  --forti-section-header:#F7F9FC;
+  --forti-input-border:#C8CDD9;
+  --forti-table-head:#EEF1F6;
+  --forti-table-stripe:#F7F9FC;
+  --forti-info-bg:#EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:#3557A5;
+  --forti-warn-bg:#FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:#8A5800;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.5;color:var(--forti-text);background:var(--forti-bg);padding:20px}
+h2{font-size:16px;font-weight:600;color:var(--forti-text)}
+h3{font-size:13px;font-weight:600;color:var(--forti-text)}
+.card{background:var(--forti-white);border:1px solid var(--forti-border);border-radius:4px;margin-bottom:14px;overflow:hidden}
+.card-header{background:var(--forti-section-header);border-bottom:1px solid var(--forti-border);padding:9px 18px;display:flex;align-items:center;gap:8px}
+.card-body{padding:14px 18px}
+label{display:block;font-size:12px;font-weight:600;color:var(--forti-text-secondary);margin-bottom:4px}
+label .req{color:var(--forti-red)}
+input[type=number],select{background:white;border:1px solid var(--forti-input-border);border-radius:3px;padding:6px 9px;font-size:13px;width:100%}
+input[type=number]:focus,select:focus{outline:none;border-color:var(--forti-red);box-shadow:0 0 0 2px rgba(238,49,36,.1)}
+input.invalid,select.invalid{border-color:var(--forti-red)!important}
+.err{color:var(--forti-red);font-size:11px;margin-top:2px;display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr));gap:14px}
+.model-card{border:2px solid var(--forti-border);border-radius:4px;padding:10px 12px;cursor:pointer;transition:border-color .15s,background .15s;background:white}
+.model-card:hover{border-color:#aab0bf}
+.model-card.selected{border:2px solid var(--forti-red);background:#FEF8F8}
+.model-card .mc-name{font-weight:700;font-size:13px;color:var(--forti-text)}
+.model-card .mc-sub{font-size:11px;color:var(--forti-text-secondary);margin-top:2px}
+.model-card .mc-badge{font-size:9px;font-weight:700;background:#F2F4F7;color:#6B7589;border:1px solid #DDE1E9;border-radius:2px;padding:1px 5px;display:inline-block;margin-top:4px}
+.callout{border-radius:3px;padding:9px 12px;font-size:12px;line-height:1.6;display:flex;gap:8px}
+.info{background:var(--forti-info-bg);border:1px solid var(--forti-info-border);color:var(--forti-info-text)}
+.warn{background:var(--forti-warn-bg);border:1px solid var(--forti-warn-border);color:var(--forti-warn-text)}
+.btn{padding:7px 18px;border:none;border-radius:3px;cursor:pointer;font-size:13px;font-weight:600}
+.btn-primary{background:var(--forti-red);color:white}
+.btn-primary:hover{background:#c8271c}
+.btn-success{background:#2E7D32;color:white}
+.btn-success:hover{background:#1b5e20}
+.btn-ghost{background:#e0e4ec;color:var(--forti-text)}
+.btn-ghost:hover{background:#d0d5e0}
+#smsg{font-size:12px;color:#2E7D32;margin-left:10px;display:inline-block}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--forti-table-head);border:1px solid var(--forti-border);padding:7px 11px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--forti-text-secondary);text-align:left}
+tbody td{border:1px solid var(--forti-border);padding:7px 11px;vertical-align:top}
+tbody tr:nth-child(even) td{background:var(--forti-table-stripe)}
+.section-row td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--forti-text-secondary);padding:5px 11px;border-top:2px solid #C5CAD9}
+.badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 4px;display:inline-block}
+.badge-req{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2}
+.badge-opt{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5}
+.badge-mand{background:#FFF8EE;color:#8A5800;border:1px solid #F5D9A0}
+.badge-inc{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5}
+.sku{font-family:'Courier New',monospace;font-size:11px;color:#1A4E82}
+.nc{color:var(--forti-text-muted);font-size:11px}
+.page-header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.icon-box{width:42px;height:42px;background:var(--forti-red);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-box svg{fill:white}
+.page-title{font-size:20px;font-weight:700;color:var(--forti-text);line-height:1.2}
+.page-sub{font-size:11px;color:var(--forti-text-muted)}
+.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--forti-text-secondary);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--forti-border)}
+.cb-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--forti-border)}
+.cb-row:last-child{border-bottom:none}
+.cb-row input[type=checkbox]{width:14px;height:14px;margin-top:2px;accent-color:var(--forti-red);flex-shrink:0}
+.cb-label{flex:1}
+.cb-label strong{font-size:12px;color:var(--forti-text)}
+.cb-label .nc{display:block;margin-top:1px}
+.feat-table{width:100%;border-collapse:collapse;font-size:11px}
+.feat-table th{background:var(--forti-table-head);border:1px solid var(--forti-border);padding:5px 8px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--forti-text-secondary)}
+.feat-table th.left{text-align:left}
+.feat-table td{border:1px solid var(--forti-border);padding:4px 8px;text-align:center;vertical-align:middle}
+.feat-table td.left{text-align:left;font-weight:500;color:var(--forti-text)}
+.feat-table tr:nth-child(even) td{background:var(--forti-table-stripe)}
+.check{color:#2E7D32;font-size:13px}
+.dash{color:var(--forti-text-muted)}
+.bundle-hero{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px}
+.bundle-card{border:2px solid var(--forti-border);border-radius:4px;padding:10px;cursor:pointer;transition:.15s;background:white;text-align:center}
+.bundle-card:hover{border-color:#aab0bf}
+.bundle-card.selected{border:2px solid var(--forti-red);background:#FEF8F8}
+.bundle-card .bn{font-size:12px;font-weight:700;color:var(--forti-text)}
+.bundle-card .bs{font-size:10px;color:var(--forti-text-muted);margin-top:2px}
+.tab-bar{display:flex;gap:2px;margin-bottom:12px}
+.tab{padding:5px 14px;border:1px solid var(--forti-border);border-radius:3px 3px 0 0;cursor:pointer;font-size:12px;background:var(--forti-section-header);color:var(--forti-text-secondary)}
+.tab.active{background:white;color:var(--forti-red);border-bottom-color:white;font-weight:600}
+#bom-section{display:none;margin-top:4px}
+.bom-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="icon-box">
+    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+  </div>
+  <div>
+    <div class="page-title">FortiADC</div>
+    <div class="page-sub">Application Delivery Controller · BOM Generator · FADC-OG-R18-20251211</div>
+  </div>
+</div>
+
+<!-- BUNDLE COMPARISON TABLE -->
+<div class="card">
+  <div class="card-header"><h2>Bundle Feature Comparison</h2></div>
+  <div class="card-body">
+    <table class="feat-table" style="margin-bottom:10px">
+      <thead>
+        <tr>
+          <th class="left" style="width:42%">Feature</th>
+          <th>Network Security</th>
+          <th>Application Security</th>
+          <th>AI Security</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="left">Geo-IP Protection &amp; IP Reputation</td><td><span class="check">✔</span></td><td><span class="check">✔</span></td><td><span class="check">✔</span></td></tr>
+        <tr><td class="left">FortiGuard Antivirus</td><td><span class="check">✔</span></td><td><span class="check">✔</span></td><td><span class="check">✔</span></td></tr>
+        <tr><td class="left">Intrusion Prevention System (IPS)</td><td><span class="check">✔</span></td><td><span class="check">✔</span></td><td><span class="check">✔</span></td></tr>
+        <tr><td class="left">Web Security Signatures &amp; Adaptive Learning</td><td><span class="dash">—</span></td><td><span class="check">✔</span></td><td><span class="check">✔</span></td></tr>
+        <tr><td class="left">Credential Stuffing Defense</td><td><span class="dash">—</span></td><td><span class="check">✔</span></td><td><span class="check">✔</span></td></tr>
+        <tr><td class="left">FortiGuard Sandbox Cloud</td><td><span class="dash">—</span></td><td><span class="check">✔</span></td><td><span class="check">✔</span></td></tr>
+        <tr><td class="left">FortiGuard Data Loss Prevention</td><td><span class="dash">—</span></td><td><span class="check">✔</span></td><td><span class="check">✔</span></td></tr>
+        <tr><td class="left">Threat Analytics</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="check">✔</span></td></tr>
+        <tr><td class="left">FortiGuard Advanced Bot Protection</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="check">✔</span></td></tr>
+        <tr><td class="left">FortiCare Premium Support</td><td><span class="check">✔</span></td><td><span class="check">✔</span></td><td><span class="check">✔</span></td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">ℹ️ All bundles include FortiCare Premium Support. The AI Security bundle adds Threat Analytics, Advanced Bot Protection, and AI-Assist tokens on top of all Application Security features.</div>
+  </div>
+</div>
+
+<!-- DEPLOYMENT TYPE -->
+<div class="card">
+  <div class="card-header"><h2>Step 1 — Deployment Type</h2></div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <div class="tab active" id="tab-hw" onclick="switchTab('hw')">Hardware Appliance</div>
+      <div class="tab" id="tab-vm" onclick="switchTab('vm')">Virtual Machine</div>
+    </div>
+    <div id="pane-hw">
+      <div class="section-label">Select Hardware Model</div>
+      <div class="grid" id="hw-model-grid"></div>
+      <div style="margin-top:14px">
+        <div class="callout info" style="margin-bottom:10px">ℹ️ Hardware appliances include hardware-accelerated SSL offloading on 420F and above. 220F and 320F use software SSL.</div>
+        <div id="hw-spec-table"></div>
+      </div>
+    </div>
+    <div id="pane-vm" style="display:none">
+      <div class="section-label">Select VM Tier</div>
+      <div class="grid" id="vm-model-grid"></div>
+      <div style="margin-top:14px">
+        <div class="callout info">ℹ️ VM subscriptions are available as annual subscription (OPEX) or via FortiFlex. VMUL provides unlimited throughput.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUANTITY & BUNDLE -->
+<div class="card">
+  <div class="card-header"><h2>Step 2 — Quantity &amp; Bundle</h2></div>
+  <div class="card-body">
+    <div class="grid">
+      <div>
+        <label for="f-qty">Quantity <span class="req">*</span></label>
+        <input type="number" id="f-qty" min="1" value="1">
+        <div class="err" id="e-qty">Enter a valid quantity (≥1)</div>
+      </div>
+      <div>
+        <label for="f-ha">High Availability</label>
+        <select id="f-ha">
+          <option value="standalone">Standalone</option>
+          <option value="ha">HA Pair (×2)</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="section-label">Bundle Tier</div>
+      <div class="bundle-hero">
+        <div class="bundle-card selected" id="bcard-730" onclick="selectBundle('730','Network Security')">
+          <div class="bn">Network Security</div>
+          <div class="bs">Geo-IP · AV · IPS · FortiCare Premium</div>
+        </div>
+        <div class="bundle-card" id="bcard-731" onclick="selectBundle('731','Application Security')">
+          <div class="bn">Application Security</div>
+          <div class="bs">+ WAF · Sandbox · DLP · Cred Stuffing</div>
+        </div>
+        <div class="bundle-card" id="bcard-732" onclick="selectBundle('732','AI Security')">
+          <div class="bn">AI Security</div>
+          <div class="bs">+ Threat Analytics · Bot Protection · AI-Assist</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD-ONS -->
+<div class="card">
+  <div class="card-header"><h2>Step 3 — Add-On Options</h2></div>
+  <div class="card-body">
+    <div class="section-label">FortiADC Manager (optional)</div>
+    <div class="cb-row">
+      <input type="checkbox" id="cb-mgr-base">
+      <div class="cb-label">
+        <strong>FortiADC Manager — Base (FAD-CM-BASE)</strong>
+        <span class="nc">Virtual management appliance · manages up to 10 FortiADC appliances · VMware vSphere</span>
+      </div>
+    </div>
+    <div class="cb-row">
+      <input type="checkbox" id="cb-mgr-ul">
+      <div class="cb-label">
+        <strong>FortiADC Manager — Unlimited (FAD-CM-UL)</strong>
+        <span class="nc">Manages unlimited appliances · requires BASE license · VMware vSphere</span>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:12px">AI-Assist Token Top-Up (optional — AI Security bundle only)</div>
+    <div class="cb-row" id="row-ai1m">
+      <input type="checkbox" id="cb-ai1m">
+      <div class="cb-label">
+        <strong>FortiAI-Assist Token Top-Up 1M (LIC-FAITOKEN-1M)</strong>
+        <span class="nc">1 million additional monthly tokens</span>
+      </div>
+    </div>
+    <div class="cb-row" id="row-ai5m">
+      <input type="checkbox" id="cb-ai5m">
+      <div class="cb-label">
+        <strong>FortiAI-Assist Token Top-Up 5M (LIC-FAITOKEN-5M)</strong>
+        <span class="nc">5 million additional monthly tokens</span>
+      </div>
+    </div>
+    <div class="cb-row" id="row-ai10m">
+      <input type="checkbox" id="cb-ai10m">
+      <div class="cb-label">
+        <strong>FortiAI-Assist Token Top-Up 10M (LIC-FAITOKEN-10M)</strong>
+        <span class="nc">10 million additional monthly tokens</span>
+      </div>
+    </div>
+    <div id="ai-warn" class="callout warn" style="margin-top:8px;display:none">⚠ AI-Assist token top-ups apply only to the AI Security bundle. Select the AI Security bundle to enable these options.</div>
+  </div>
+</div>
+
+<!-- ACTION BUTTONS -->
+<div class="card">
+  <div class="card-body">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="generateBOM()">Preview BOM</button>
+      <button class="btn btn-success" onclick="addToProjectBOM()">Add to Project BOM</button>
+      <button class="btn btn-ghost" onclick="resetForm()">Reset</button>
+      <span id="smsg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- BOM PREVIEW -->
+<div id="bom-section" class="card">
+  <div class="card-header" style="justify-content:space-between">
+    <h2>BOM Preview</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="copyTSV()">Copy TSV</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0">
+    <table id="bom-table">
+      <thead>
+        <tr>
+          <th style="width:26%">Part Number</th>
+          <th style="width:38%">Description</th>
+          <th style="width:6%">Qty</th>
+          <th style="width:9%">Type</th>
+          <th style="width:21%">Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ─── DATA MODEL ───────────────────────────────────────────────────────────────
+
+const HW_MODELS = [
+  { id:'220F', name:'FAD-220F', l4:'5 Gbps', l7:'4 Gbps', ssl:'1.2 Gbps', sslNote:'No ASIC', form:'1RU', badge:'Entry',
+    bundleSku: { '730':'FAD-220F-BDL730-DD', '731':'FAD-220F-BDL731-DD', '732':'FAD-220F-BDL732-DD' } },
+  { id:'320F', name:'FAD-320F', l4:'10 Gbps', l7:'10 Gbps', ssl:'5 Gbps', sslNote:'No ASIC', form:'1RU', badge:'Mid',
+    bundleSku: { '730':'FAD-320F-BDL730-DD', '731':'FAD-320F-BDL731-DD', '732':'FAD-320F-BDL732-DD' } },
+  { id:'420F', name:'FAD-420F', l4:'20 Gbps', l7:'20 Gbps', ssl:'10 Gbps', sslNote:'SSL ASIC', form:'1RU', badge:'Mid',
+    bundleSku: { '730':'FAD-420F-BDL730-DD', '731':'FAD-420F-BDL731-DD', '732':'FAD-420F-BDL732-DD' } },
+  { id:'1200F', name:'FAD-1200F', l4:'40 Gbps', l7:'30 Gbps', ssl:'19 Gbps', sslNote:'SSL ASIC', form:'1RU', badge:'High',
+    bundleSku: { '730':'FAD-1200F-BDL730-DD', '731':'FAD-1200F-BDL731-DD', '732':'FAD-1200F-BDL732-DD' } },
+  { id:'2200F', name:'FAD-2200F', l4:'60 Gbps', l7:'35 Gbps', ssl:'22 Gbps', sslNote:'SSL ASIC', form:'1RU', badge:'High',
+    bundleSku: { '730':'FAD-2200F-BDL730-DD', '731':'FAD-2200F-BDL731-DD', '732':'FAD-2200F-BDL732-DD' } },
+  { id:'4200F', name:'FAD-4200F', l4:'100 Gbps', l7:'80 Gbps', ssl:'37 Gbps', sslNote:'SSL ASIC', form:'2RU', badge:'Enterprise',
+    bundleSku: { '730':'FAD-4200F-BDL730-DD', '731':'FAD-4200F-BDL731-DD', '732':'FAD-4200F-BDL732-DD' } },
+  { id:'5000G', name:'FAD-5000G', l4:'350 Gbps', l7:'300 Gbps', ssl:'200 Gbps', sslNote:'SSL ASIC', form:'2RU', badge:'Hyperscale',
+    bundleSku: { '730':'FAD-5000G-BDL730-DD', '731':'FAD-5000G-BDL731-DD', '732':'FAD-5000G-BDL732-DD' } },
+];
+
+const VM_MODELS = [
+  { id:'VM01', name:'FAD-VM01', l4:'1 Gbps', l7:'500 Mbps', ssl:'500 Mbps', badge:'Entry',
+    bundleSku: { '740':'FC1-10-ADVMS740-02-DD', '741':'FC1-10-ADVMS741-02-DD', '742':'FC1-10-ADVMS742-02-DD' } },
+  { id:'VM02', name:'FAD-VM02', l4:'2 Gbps', l7:'1 Gbps', ssl:'1 Gbps', badge:'Small',
+    bundleSku: { '740':'FC2-10-ADVMS740-02-DD', '741':'FC2-10-ADVMS741-02-DD', '742':'FC2-10-ADVMS742-02-DD' } },
+  { id:'VM04', name:'FAD-VM04', l4:'4 Gbps', l7:'2 Gbps', ssl:'2 Gbps', badge:'Medium',
+    bundleSku: { '740':'FC3-10-ADVMS740-02-DD', '741':'FC3-10-ADVMS741-02-DD', '742':'FC3-10-ADVMS742-02-DD' } },
+  { id:'VM08', name:'FAD-VM08', l4:'8 Gbps', l7:'4 Gbps', ssl:'3 Gbps', badge:'Medium',
+    bundleSku: { '740':'FC4-10-ADVMS740-02-DD', '741':'FC4-10-ADVMS741-02-DD', '742':'FC4-10-ADVMS742-02-DD' } },
+  { id:'VM16', name:'FAD-VM16', l4:'16 Gbps', l7:'8 Gbps', ssl:'4.5 Gbps', badge:'Large',
+    bundleSku: { '740':'FC5-10-ADVMS740-02-DD', '741':'FC5-10-ADVMS741-02-DD', '742':'FC5-10-ADVMS742-02-DD' } },
+  { id:'VM32', name:'FAD-VM32', l4:'24 Gbps', l7:'12 Gbps', ssl:'6 Gbps', badge:'XL',
+    bundleSku: { '740':'FC6-10-ADVMS740-02-DD', '741':'FC6-10-ADVMS741-02-DD', '742':'FC6-10-ADVMS742-02-DD' } },
+  { id:'VMUL', name:'FAD-VMUL', l4:'Unlimited', l7:'Unlimited', ssl:'Unlimited', badge:'Unlimited',
+    bundleSku: { '740':'FC7-10-ADVMS740-02-DD', '741':'FC7-10-ADVMS741-02-DD', '742':'FC7-10-ADVMS742-02-DD' } },
+];
+
+const BUNDLE_NAMES = { '730':'Network Security', '731':'Application Security', '732':'AI Security', '740':'Network Security', '741':'Application Security', '742':'AI Security' };
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let _tab = 'hw';
+let _hwModel = '220F';
+let _vmModel = 'VM01';
+let _bundle = '730'; // HW uses 730/731/732, VM uses 740/741/742
+let _lastRows = [], _lastLabel = '', _lastMeta = {};
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(function init(){
+  // Build HW model cards
+  const hwGrid = document.getElementById('hw-model-grid');
+  HW_MODELS.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'model-card' + (m.id === _hwModel ? ' selected' : '');
+    d.id = 'hwcard-' + m.id;
+    d.innerHTML = `<div class="mc-name">${m.name}</div><div class="mc-sub">L4 ${m.l4} · L7 ${m.l7}</div><div class="mc-sub">SSL ${m.ssl} (${m.sslNote})</div><div class="mc-badge">${m.badge} · ${m.form}</div>`;
+    d.onclick = () => selectHWModel(m.id);
+    hwGrid.appendChild(d);
+  });
+  renderHWSpec();
+
+  // Build VM model cards
+  const vmGrid = document.getElementById('vm-model-grid');
+  VM_MODELS.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'model-card' + (m.id === _vmModel ? ' selected' : '');
+    d.id = 'vmcard-' + m.id;
+    d.innerHTML = `<div class="mc-name">${m.name}</div><div class="mc-sub">L4 ${m.l4} · L7 ${m.l7}</div><div class="mc-sub">SSL ${m.ssl}</div><div class="mc-badge">${m.badge}</div>`;
+    d.onclick = () => selectVMModel(m.id);
+    vmGrid.appendChild(d);
+  });
+
+  updateAIAddons();
+})();
+
+function renderHWSpec(){
+  const m = HW_MODELS.find(x => x.id === _hwModel);
+  if(!m) return;
+  document.getElementById('hw-spec-table').innerHTML = `
+    <table class="feat-table">
+      <thead><tr><th class="left">Spec</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td class="left">L4 Throughput</td><td>${m.l4}</td></tr>
+        <tr><td class="left">L7 Throughput</td><td>${m.l7}</td></tr>
+        <tr><td class="left">SSL Throughput</td><td>${m.ssl} (${m.sslNote})</td></tr>
+        <tr><td class="left">Form Factor</td><td>${m.form}</td></tr>
+      </tbody>
+    </table>`;
+}
+
+// ─── TAB & MODEL SELECTION ────────────────────────────────────────────────────
+function switchTab(t){
+  _tab = t;
+  document.getElementById('pane-hw').style.display = t === 'hw' ? '' : 'none';
+  document.getElementById('pane-vm').style.display = t === 'vm' ? '' : 'none';
+  document.getElementById('tab-hw').className = 'tab' + (t === 'hw' ? ' active' : '');
+  document.getElementById('tab-vm').className = 'tab' + (t === 'vm' ? ' active' : '');
+  // Sync bundle codes
+  if(t === 'hw') { _bundle = _bundle.replace('74','73'); }
+  else           { _bundle = _bundle.replace('73','74'); }
+  updateAIAddons();
+}
+
+function selectHWModel(id){
+  _hwModel = id;
+  HW_MODELS.forEach(m => {
+    const el = document.getElementById('hwcard-' + m.id);
+    if(el) el.className = 'model-card' + (m.id === id ? ' selected' : '');
+  });
+  renderHWSpec();
+}
+
+function selectVMModel(id){
+  _vmModel = id;
+  VM_MODELS.forEach(m => {
+    const el = document.getElementById('vmcard-' + m.id);
+    if(el) el.className = 'model-card' + (m.id === id ? ' selected' : '');
+  });
+}
+
+function selectBundle(code, name){
+  // Translate code to correct prefix for current tab
+  let base = code; // 730/731/732
+  _bundle = _tab === 'vm' ? base.replace('73','74') : base;
+  ['730','731','732'].forEach(c => {
+    const el = document.getElementById('bcard-' + c);
+    if(el) el.className = 'bundle-card' + (c === code ? ' selected' : '');
+  });
+  updateAIAddons();
+}
+
+function updateAIAddons(){
+  const isAI = _bundle === '732' || _bundle === '742';
+  ['row-ai1m','row-ai5m','row-ai10m'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.opacity = isAI ? '1' : '0.4';
+    el.style.pointerEvents = isAI ? '' : 'none';
+    el.querySelector('input').checked = false;
+  });
+  document.getElementById('ai-warn').style.display = isAI ? 'none' : 'block';
+}
+
+// ─── BOM GENERATION ───────────────────────────────────────────────────────────
+function generateBOM(){
+  // Validate
+  const qtyEl = document.getElementById('f-qty');
+  const qty = parseInt(qtyEl.value, 10);
+  let valid = true;
+  if(!qty || qty < 1){ qtyEl.classList.add('invalid'); document.getElementById('e-qty').style.display='block'; valid=false; }
+  else { qtyEl.classList.remove('invalid'); document.getElementById('e-qty').style.display='none'; }
+  if(!valid) return false;
+
+  const ha = document.getElementById('f-ha').value === 'ha';
+  const unitQty = ha ? qty * 2 : qty;
+  const isVM = _tab === 'vm';
+  const model = isVM ? VM_MODELS.find(m => m.id === _vmModel) : HW_MODELS.find(m => m.id === _hwModel);
+  const bundleName = isVM ? BUNDLE_NAMES[_bundle] : BUNDLE_NAMES[_bundle];
+  const bundleSku = model.bundleSku[_bundle];
+  const rows = [];
+
+  // Main bundle SKU
+  rows.push({ section: isVM ? 'Virtual Machine Subscription' : 'Hardware Appliance Bundle' });
+  const skuDesc = `FortiADC ${model.name} — ${bundleName} Bundle${isVM ? ' Subscription' : ''}`;
+  rows.push({ sku: bundleSku, desc: skuDesc, qty: unitQty, kind: 'req', note: ha ? 'HA pair (×2 per unit)' : 'Per unit' });
+
+  if(ha){
+    rows.push({ sku:'⚠', desc:'HA configuration requires matching models. Verify HA licensing is enabled.', qty:null, kind:'note', note:'' });
+  }
+
+  // FortiADC Manager
+  const mgrBase = document.getElementById('cb-mgr-base').checked;
+  const mgrUL   = document.getElementById('cb-mgr-ul').checked;
+  if(mgrBase || mgrUL){
+    rows.push({ section: 'FortiADC Manager' });
+    if(mgrBase)  rows.push({ sku:'FAD-CM-BASE', desc:'FortiADC Manager — Virtual Appliance, up to 10 FortiADC (VMware vSphere)', qty:1, kind:'opt', note:'Requires vSphere' });
+    if(mgrUL)    rows.push({ sku:'FAD-CM-UL',   desc:'FortiADC Manager — Unlimited appliances (requires BASE license)', qty:1, kind:'opt', note:'Requires FAD-CM-BASE' });
+    if(mgrUL && !mgrBase) rows.push({ sku:'⚠', desc:'FAD-CM-UL requires FAD-CM-BASE. Please also add the BASE license.', qty:null, kind:'note', note:'' });
+  }
+
+  // AI Token Top-Ups
+  const ai1m  = document.getElementById('cb-ai1m').checked;
+  const ai5m  = document.getElementById('cb-ai5m').checked;
+  const ai10m = document.getElementById('cb-ai10m').checked;
+  if(ai1m || ai5m || ai10m){
+    rows.push({ section: 'AI-Assist Token Top-Up' });
+    if(ai1m)  rows.push({ sku:'LIC-FAITOKEN-1M',  desc:'FortiAI-Assist Token Top-Up — 1 Million tokens/month', qty:unitQty, kind:'opt', note:'AI Security bundle only' });
+    if(ai5m)  rows.push({ sku:'LIC-FAITOKEN-5M',  desc:'FortiAI-Assist Token Top-Up — 5 Million tokens/month', qty:unitQty, kind:'opt', note:'AI Security bundle only' });
+    if(ai10m) rows.push({ sku:'LIC-FAITOKEN-10M', desc:'FortiAI-Assist Token Top-Up — 10 Million tokens/month', qty:unitQty, kind:'opt', note:'AI Security bundle only' });
+  }
+
+  // Summary note
+  rows.push({ section: 'Notes' });
+  rows.push({ sku:'ℹ', desc:`All SKUs use -DD suffix. Term (1yr/3yr/5yr) is applied globally in the Project BOM term selector.`, qty:null, kind:'note', note:'' });
+
+  _lastRows = rows;
+  _lastLabel = `${model.name} ×${unitQty}${ha ? ' (HA)' : ''} — ${bundleName}`;
+  _lastMeta = {
+    'Model': model.name,
+    'Type': isVM ? 'Virtual Machine' : 'Hardware Appliance',
+    'Bundle': bundleName,
+    'Quantity': unitQty + (ha ? ' (HA pair)' : ''),
+    'L4 Throughput': model.l4,
+    'L7 Throughput': model.l7,
+  };
+
+  renderBOM(rows);
+  const bomSec = document.getElementById('bom-section');
+  bomSec.style.display = 'block';
+  bomSec.scrollIntoView({ behavior:'smooth', block:'start' });
+  document.getElementById('smsg').textContent = '';
+  return true;
+}
+
+function renderBOM(rows){
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    if(r.section !== undefined){
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${r.section}</td>`;
+    } else {
+      const badgeMap = { req:'<span class="badge badge-req">Required</span>', opt:'<span class="badge badge-opt">Optional</span>', mand:'<span class="badge badge-mand">Mandatory</span>', inc:'<span class="badge badge-inc">Included</span>', note:'' };
+      tr.innerHTML = `
+        <td><span class="sku">${r.sku}</span></td>
+        <td class="nc">${r.desc}</td>
+        <td>${r.qty !== null ? r.qty : ''}</td>
+        <td>${badgeMap[r.kind] || ''}</td>
+        <td class="nc">${r.note || ''}</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+function addToProjectBOM(){
+  if(!generateBOM()) return;
+  window.parent.postMessage({
+    type:    'FORTIBOM_ADD',
+    product: 'FortiADC',
+    label:   _lastLabel,
+    rows:    _lastRows,
+    meta:    _lastMeta
+  }, '*');
+  const s = document.getElementById('smsg');
+  s.textContent = '✔ Added to Project BOM';
+  s.style.color = '#2E7D32';
+  setTimeout(() => s.textContent = '', 3000);
+}
+
+function resetForm(){
+  _tab = 'hw'; _hwModel = '220F'; _vmModel = 'VM01'; _bundle = '730';
+  switchTab('hw');
+  selectHWModel('220F');
+  selectVMModel('VM01');
+  selectBundle('730', 'Network Security');
+  document.getElementById('f-qty').value = 1;
+  document.getElementById('f-ha').value = 'standalone';
+  ['cb-mgr-base','cb-mgr-ul','cb-ai1m','cb-ai5m','cb-ai10m'].forEach(id => document.getElementById(id).checked = false);
+  document.getElementById('bom-section').style.display = 'none';
+  document.getElementById('smsg').textContent = '';
+  document.getElementById('f-qty').classList.remove('invalid');
+  document.getElementById('e-qty').style.display = 'none';
+}
+
+function copyTSV(){
+  const rows = _lastRows.filter(r => r.section === undefined && r.sku !== '⚠' && r.sku !== 'ℹ');
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  rows.forEach(r => lines.push(`${r.sku}\t${r.desc}\t${r.qty || ''}\t${r.kind}\t${r.note || ''}`));
+  navigator.clipboard.writeText(lines.join('\n')).catch(() => {});
+  const s = document.getElementById('smsg');
+  s.textContent = '✔ TSV copied';
+  s.style.color = '#2E7D32';
+  setTimeout(() => s.textContent = '', 2000);
+}
+</script>
+</body>
+</html>

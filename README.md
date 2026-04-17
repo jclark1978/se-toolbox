@@ -1,10 +1,11 @@
 # Fortinet SE Toolbox
 
-Fortinet SE Toolbox is a static, browser-only suite of utilities for common Fortinet SE workflows. It currently includes FortiSKU Finder, Hardware LifeCycle lookup, Software LifeCycle lookup, Ordering Guides lookup, Asset Reports, and the Lab Portal Generator.
+Fortinet SE Toolbox is a static, browser-only suite of utilities for common Fortinet SE workflows. It currently includes FortiSKU Finder, BOM Builder, Hardware LifeCycle lookup, Software LifeCycle lookup, Ordering Guides lookup, Asset Reports, and the Lab Portal Generator.
 
 ## Features
 
 - FortiSKU Finder for pricelist ingestion, search, export, and BOM building
+- BOM Builder as an upstream-friendly FortiBOM integration wrapped in the Fortisku shell
 - Hardware LifeCycle lookup for milestone and support-planning searches using the Fortinet RSS feed
 - Software LifeCycle lookup for release and support milestone searches using the Fortinet RSS feed
 - Ordering Guides lookup for cross-referencing guides and related products
@@ -41,9 +42,10 @@ No backend or server-side computation is required.
 ## Project Layout
 
 - `index.html` is the main FortiSKU Finder experience and current landing page for the toolbox.
-- `hardware-lifecycle/`, `software-lifecycle/`, `ordering-guides/`, `asset-reports/`, and `lab-portal/` each contain a page entrypoint for a separate workflow.
+- `bom-builder/`, `hardware-lifecycle/`, `software-lifecycle/`, `ordering-guides/`, `asset-reports/`, and `lab-portal/` each contain a page entrypoint for a separate workflow.
 - `src/features/` groups browser logic by product surface:
   - `finder/`
+  - `bom-builder/` for the FortiBOM-backed BOM Builder wrapper and bridge assets
   - `hardware-lifecycle/` for the RSS-based hardware lifecycle flow
   - `software-lifecycle/` for the RSS-based software lifecycle flow
   - `ordering-guides/`
@@ -56,6 +58,7 @@ No backend or server-side computation is required.
 Primary routes are:
 
 - `/`
+- `/bom-builder/`
 - `/hardware-lifecycle/`
 - `/software-lifecycle/`
 - `/ordering-guides/`
@@ -69,12 +72,13 @@ Legacy top-level page URLs such as `asset-report.html` are kept only as lightwei
 ## Usage Notes
 
 1. Open `/` to use FortiSKU Finder, or jump to the other tools from the shared top navigation.
-2. In FortiSKU Finder, upload an Excel workbook (.xlsx). By default, the app targets the `DataSet` sheet; provide an alternative sheet name if needed.
-3. The workbook is parsed entirely in the browser. FortiSKU Finder auto-detects the first row containing SKU/Description headers (so banner rows can stay) and skips rows lacking SKU or Description #1.
-4. After the first upload, the normalized rows, MiniSearch index, and metadata persist in IndexedDB. Reloading the page resumes instantly.
-5. Use spaces for AND searches across Description #1/#2 (e.g. `FortiGate 90G Enterprise bdl`). Add `OR` (or `|`) for alternatives, such as `FortiGate (90G OR 70F) Enterprise bdl`. Results are capped at 200 rows for fast rendering.
-6. Use the `+` button beside any SKU to add it to the BOM. Quantities are prompted on add, and you can adjust them from the drawer. A `–` button removes the SKU; the drawer also offers a trash icon per line.
-7. Export either the full dataset or the visible search results to CSV at any time.
+2. Open `/bom-builder/` for the BOM Builder integration preview, which wraps a vendored FortiBOM workspace inside the Fortisku shell.
+3. In FortiSKU Finder, upload an Excel workbook (.xlsx). By default, the app targets the `DataSet` sheet; provide an alternative sheet name if needed.
+4. The workbook is parsed entirely in the browser. FortiSKU Finder auto-detects the first row containing SKU/Description headers (so banner rows can stay) and skips rows lacking SKU or Description #1.
+5. After the first upload, the normalized rows, MiniSearch index, and metadata persist in IndexedDB. Reloading the page resumes instantly.
+6. Use spaces for AND searches across Description #1/#2 (e.g. `FortiGate 90G Enterprise bdl`). Add `OR` (or `|`) for alternatives, such as `FortiGate (90G OR 70F) Enterprise bdl`. Results are capped at 200 rows for fast rendering.
+7. Use the `+` button beside any SKU to add it to the BOM. Quantities are prompted on add, and you can adjust them from the drawer. A `–` button removes the SKU; the drawer also offers a trash icon per line.
+8. Export either the full dataset or the visible search results to CSV at any time.
 
 ## Storage & Clearing Data
 

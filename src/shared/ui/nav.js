@@ -1,5 +1,6 @@
 const TOOLBOX_ITEMS = [
   { key: "finder", label: "FortiSKU Finder", href: "" },
+  { key: "bom-builder", label: "BOM Builder", href: "bom-builder/" },
   {
     key: "lifecycle",
     label: "LifeCycle",

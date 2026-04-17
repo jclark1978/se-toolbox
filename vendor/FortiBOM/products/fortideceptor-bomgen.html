@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiDeceptor — BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size:13px; color:var(--forti-text); background:var(--forti-bg); padding:20px; line-height:1.5; }
+
+/* Header */
+.page-header { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+.header-icon { width:42px; height:42px; background:var(--forti-red); border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.header-icon svg { width:24px; height:24px; fill:white; }
+.header-title { font-size:20px; font-weight:700; color:var(--forti-text); line-height:1.2; }
+.header-sub { font-size:11px; color:var(--forti-text-muted); margin-top:2px; }
+
+/* Cards */
+.card { background:var(--forti-white); border:1px solid var(--forti-border); border-radius:4px; margin-bottom:14px; overflow:hidden; }
+.card-header { background:var(--forti-section-header); border-bottom:1px solid var(--forti-border); padding:9px 18px; font-weight:600; font-size:12px; color:var(--forti-text-secondary); text-transform:uppercase; letter-spacing:.05em; }
+.card-body { padding:14px 18px; }
+
+/* Grid */
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr)); gap:14px; }
+
+/* Model cards */
+.model-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:8px; margin-bottom:6px; }
+.model-card { border:2px solid var(--forti-border); border-radius:4px; padding:10px 12px; cursor:pointer; background:white; transition:border-color .15s, background .15s; }
+.model-card:hover { border-color:#aaa; }
+.model-card.selected { border:2px solid var(--forti-red); background:#FEF8F8; }
+.model-card .mc-name { font-weight:600; font-size:13px; color:var(--forti-text); }
+.model-card .mc-sub { font-size:11px; color:var(--forti-text-secondary); margin-top:2px; }
+.model-card .mc-badge { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:2px; margin-top:4px; text-transform:uppercase; letter-spacing:.04em; }
+.badge-hw { background:#FEF0EE; color:#C0392B; border:1px solid #F5C6C2; }
+.badge-vm { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.badge-daas { background:#EDFDF0; color:#1A6E2C; border:1px solid #A3D9B0; }
+
+/* Form elements */
+label { display:block; font-size:12px; font-weight:600; color:var(--forti-text-secondary); margin-bottom:4px; }
+.req-star { color:var(--forti-red); }
+input[type=number], select { background:white; border:1px solid var(--forti-input-border); border-radius:3px; padding:6px 9px; font-size:13px; width:100%; font-family:inherit; color:var(--forti-text); }
+input[type=number]:focus, select:focus { border-color:var(--forti-red); box-shadow:0 0 0 2px rgba(238,49,36,.1); outline:none; }
+input.invalid, select.invalid { border-color:var(--forti-red); }
+.err { color:var(--forti-red); font-size:11px; margin-top:3px; display:none; }
+
+/* Callouts */
+.callout { border-radius:3px; padding:9px 12px; font-size:12px; line-height:1.6; display:flex; gap:8px; margin-bottom:10px; }
+.info { background:var(--forti-info-bg); border:1px solid var(--forti-info-border); color:var(--forti-info-text); }
+.warn { background:var(--forti-warn-bg); border:1px solid var(--forti-warn-border); color:var(--forti-warn-text); }
+
+/* Checkboxes */
+.addon-item { display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid var(--forti-border); }
+.addon-item:last-child { border-bottom:none; }
+.addon-item input[type=checkbox] { margin-top:2px; flex-shrink:0; accent-color:var(--forti-red); }
+.addon-label { font-size:12px; font-weight:600; color:var(--forti-text); }
+.addon-sku { font-family:'Courier New',monospace; font-size:11px; color:#1A4E82; }
+.addon-note { font-size:11px; color:var(--forti-text-muted); }
+.addon-item.disabled { opacity:.4; pointer-events:none; }
+
+/* Quantity with note */
+.qty-note { font-size:11px; color:var(--forti-text-muted); margin-top:4px; }
+
+/* Buttons */
+.btn-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:4px; }
+button { padding:8px 18px; font-size:13px; font-family:inherit; border:none; border-radius:3px; cursor:pointer; font-weight:600; }
+.btn-primary { background:var(--forti-red); color:white; }
+.btn-primary:hover { background:#CC2A1F; }
+.btn-add { background:#2E7D32; color:white; }
+.btn-add:hover { background:#1B5E20; }
+.btn-reset { background:white; color:var(--forti-text-secondary); border:1px solid var(--forti-border); }
+.btn-reset:hover { background:var(--forti-bg); }
+.btn-sm { padding:5px 10px; font-size:11px; background:white; border:1px solid var(--forti-border); color:var(--forti-text-secondary); border-radius:3px; cursor:pointer; }
+.btn-sm:hover { background:var(--forti-bg); }
+#smsg { font-size:12px; color:#2E7D32; font-weight:600; }
+
+/* BOM Table */
+#bom-section { display:none; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th { background:var(--forti-table-head); border:1px solid var(--forti-border); padding:7px 11px; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); text-align:left; }
+tbody td { border:1px solid var(--forti-border); padding:7px 11px; vertical-align:top; }
+tbody tr:nth-child(even) td { background:var(--forti-table-stripe); }
+.section-row td { background:#EAECF3!important; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--forti-text-secondary); padding:5px 11px; border-top:2px solid #C5CAD9; }
+.badge { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-radius:2px; padding:1px 4px; display:inline-block; }
+.badge-req  { background:#FEF0EE; color:#C0392B; border:1px solid #F5C6C2; }
+.badge-opt  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.badge-mand { background:#FFF8EE; color:#8A5800; border:1px solid #F5D9A0; }
+.badge-inc  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.sku-cell { font-family:'Courier New',monospace; font-size:11px; color:#1A4E82; white-space:nowrap; }
+.nc { color:var(--forti-text-muted); }
+
+/* Feature comparison table */
+.cmp-table { width:100%; border-collapse:collapse; font-size:11px; }
+.cmp-table th { background:var(--forti-table-head); border:1px solid var(--forti-border); padding:6px 10px; text-align:center; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); }
+.cmp-table th.feature-col { text-align:left; }
+.cmp-table td { border:1px solid var(--forti-border); padding:6px 10px; vertical-align:middle; }
+.cmp-table td.feature-col { font-weight:600; color:var(--forti-text); }
+.cmp-table td.val-col { text-align:center; color:var(--forti-text-secondary); }
+.cmp-table .sec-row td { background:#EAECF3!important; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); }
+.cmp-table tbody tr:nth-child(even) td { background:var(--forti-table-stripe); }
+.check { color:#2E7D32; font-size:13px; }
+.addon-tag { font-size:10px; color:var(--forti-warn-text); }
+
+/* VLAN counter */
+#vlan-indicator { display:none; background:var(--forti-info-bg); border:1px solid var(--forti-info-border); border-radius:3px; padding:4px 10px; font-size:12px; color:var(--forti-info-text); margin-top:4px; }
+</style>
+</head>
+<body>
+
+<!-- ─── PAGE HEADER ──────────────────────────────────────────────── -->
+<div class="page-header">
+  <div class="header-icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+    </svg>
+  </div>
+  <div>
+    <div class="header-title">FortiDeceptor</div>
+    <div class="header-sub">Distributed Deception Platform (DDP) — BOM Generator · FDC-OG-R27-2026002</div>
+  </div>
+</div>
+
+<!-- ─── FEATURE COMPARISON TABLE ─────────────────────────────────── -->
+<div class="card">
+  <div class="card-header">Platform Comparison</div>
+  <div class="card-body" style="overflow-x:auto; padding:0;">
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th class="feature-col">Feature</th>
+          <th>FDC-1000G<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;">HW · Enterprise</span></th>
+          <th>FDR-100G<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;">HW · Rugged</span></th>
+          <th>FDC-100G<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;">HW · Edge/DaaS</span></th>
+          <th>FDC-VM<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;">Virtual</span></th>
+          <th>FDC-VME<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;">VM Edge/DaaS</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="sec-row"><td colspan="6">Decoys</td></tr>
+        <tr><td class="feature-col">Max Decoys</td><td class="val-col">480</td><td class="val-col">192</td><td class="val-col">480</td><td class="val-col">480</td><td class="val-col">480</td></tr>
+        <tr><td class="feature-col">Max Decoy VMs</td><td class="val-col">20</td><td class="val-col">8</td><td class="val-col">20</td><td class="val-col">20</td><td class="val-col">20</td></tr>
+        <tr><td class="feature-col">Max IPs per Decoy</td><td class="val-col">24</td><td class="val-col">24</td><td class="val-col">24</td><td class="val-col">24</td><td class="val-col">24</td></tr>
+        <tr><td class="feature-col">Linux / SCADA / IoT / Custom Decoys</td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td></tr>
+        <tr><td class="feature-col">Cloud Decoys (AWS/Azure/GCP)</td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td></tr>
+        <tr><td class="feature-col">Windows Decoys</td><td class="val-col"><span class="addon-tag">Add-on</span></td><td class="val-col"><span class="addon-tag">Add-on</span></td><td class="val-col"><span class="addon-tag">Add-on</span></td><td class="val-col"><span class="addon-tag">Add-on</span></td><td class="val-col"><span class="check">✓</span> (DaaS)</td></tr>
+        <tr class="sec-row"><td colspan="6">Network VLAN Support</td></tr>
+        <tr><td class="feature-col">Min / Max VLANs</td><td class="val-col">2 / 128</td><td class="val-col">2 / 48</td><td class="val-col">2 / 128</td><td class="val-col">2 / 128</td><td class="val-col">2 / 128</td></tr>
+        <tr><td class="feature-col">ARAE Service</td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td></tr>
+        <tr class="sec-row"><td colspan="6">Deployment &amp; Management</td></tr>
+        <tr><td class="feature-col">Central Manager (multi-appliance)</td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col"><span class="check">✓</span></td><td class="val-col">—</td></tr>
+        <tr><td class="feature-col">DaaS (Cloud-Managed)</td><td class="val-col">—</td><td class="val-col">—</td><td class="val-col"><span class="check">✓</span></td><td class="val-col">—</td><td class="val-col"><span class="check">✓</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ─── DEPLOYMENT TYPE ───────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header">Step 1 — Deployment Type</div>
+  <div class="card-body">
+    <div class="callout info">
+      <span>ℹ</span>
+      <span>Select your deployment model. <b>On-Premises</b> uses hardware or VM appliances managed locally. <b>DaaS (Deception as a Service)</b> uses cloud-hosted management — only FDC-100G (Edge HW) and FDC-VME apply.</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="model-card selected" id="dep-onprem" onclick="selectDeployment('onprem')">
+        <div class="mc-name">On-Premises</div>
+        <div class="mc-sub">HW or VM · Local FDC Manager</div>
+        <span class="mc-badge badge-hw">HW / VM</span>
+      </div>
+      <div class="model-card" id="dep-daas" onclick="selectDeployment('daas')">
+        <div class="mc-name">DaaS</div>
+        <div class="mc-sub">Deception as a Service · Cloud-managed</div>
+        <span class="mc-badge badge-daas">Cloud Managed</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODEL SELECTION ───────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header">Step 2 — Appliance / VM Model</div>
+  <div class="card-body">
+
+    <!-- On-Premises models -->
+    <div id="models-onprem">
+      <div style="font-size:12px; color:var(--forti-text-secondary); margin-bottom:8px;">Select the FortiDeceptor appliance or VM:</div>
+      <div class="model-grid" id="mg-onprem">
+        <div class="model-card selected" id="mc-fdc1000g" onclick="selectModel('fdc1000g')">
+          <div class="mc-name">FDC-1000G</div>
+          <div class="mc-sub">480 Decoys · 128 VLANs · Enterprise HW</div>
+          <span class="mc-badge badge-hw">Hardware</span>
+        </div>
+        <div class="model-card" id="mc-fdr100g" onclick="selectModel('fdr100g')">
+          <div class="mc-name">FDR-100G</div>
+          <div class="mc-sub">192 Decoys · 48 VLANs · Rugged HW</div>
+          <span class="mc-badge badge-hw">Rugged</span>
+        </div>
+        <div class="model-card" id="mc-fdc100g" onclick="selectModel('fdc100g')">
+          <div class="mc-name">FDC-100G</div>
+          <div class="mc-sub">480 Decoys · 128 VLANs · Edge HW</div>
+          <span class="mc-badge badge-hw">Hardware</span>
+        </div>
+        <div class="model-card" id="mc-fdcvm" onclick="selectModel('fdcvm')">
+          <div class="mc-name">FDC-VM</div>
+          <div class="mc-sub">480 Decoys · 128 VLANs · Virtual</div>
+          <span class="mc-badge badge-vm">Virtual</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DaaS models -->
+    <div id="models-daas" style="display:none;">
+      <div class="callout warn" style="margin-bottom:8px;">
+        <span>⚠</span>
+        <span>DaaS products do <b>not</b> require a Central Management License or a Windows Decoy License — both are included in the subscription. FortiDeceptor DAAS can manage <b>FDC-100G (Edge)</b> only.</span>
+      </div>
+      <div class="model-grid" id="mg-daas">
+        <div class="model-card selected" id="mc-fdc100g-daas" onclick="selectModel('fdc100g-daas')">
+          <div class="mc-name">FDC-100G (Edge)</div>
+          <div class="mc-sub">480 Decoys · 128 VLANs · DaaS HW</div>
+          <span class="mc-badge badge-daas">DaaS</span>
+        </div>
+        <div class="model-card" id="mc-fdcvme" onclick="selectModel('fdcvme')">
+          <div class="mc-name">FDC-VME</div>
+          <div class="mc-sub">480 Decoys · 128 VLANs · DaaS VM</div>
+          <span class="mc-badge badge-daas">DaaS VM</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── QUANTITY & VLANS ──────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header">Step 3 — Quantity &amp; VLAN Subscriptions</div>
+  <div class="card-body">
+    <div class="grid">
+      <div>
+        <label>Number of Appliances / VMs <span class="req-star">*</span></label>
+        <input type="number" id="f-qty" min="1" max="99" value="1" oninput="updateVlanNote()">
+        <div class="err" id="err-qty">Enter a valid quantity (1–99).</div>
+      </div>
+      <div>
+        <label>VLANs per Appliance <span class="req-star">*</span> <span id="vlan-max-hint" style="font-weight:400;color:var(--forti-text-muted);">(max 128)</span></label>
+        <input type="number" id="f-vlans" min="2" max="128" value="2" oninput="updateVlanNote()">
+        <div class="err" id="err-vlans">Minimum 2 VLANs. Maximum is shown above.</div>
+        <div id="vlan-indicator">
+          Total VLAN subscriptions: <strong id="vlan-total">2</strong> (qty × vlans)
+        </div>
+      </div>
+    </div>
+    <div class="callout info" style="margin-top:12px;">
+      <span>ℹ</span>
+      <span>Each VLAN subscription covers one Class C (/24) network segment. Networks larger than /24 (e.g., /23, /22) count as <b>2 VLAN licenses</b> per segment. Cloud VPCs/VNETs count as a single VLAN license each. Minimum 2 VLANs per appliance.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CENTRAL MANAGER (On-Premises only) ───────────────────────── -->
+<div class="card" id="card-cm">
+  <div class="card-header">Step 4 — Central Management</div>
+  <div class="card-body">
+    <div class="callout warn" style="margin-bottom:10px;">
+      <span>⚠</span>
+      <span>The Central Management License <b>FC1-10-FDCCM-497-02-DD</b> is required when your deployment has <b>more than one HW/VM appliance</b>. Price it per total appliance count (including the manager itself). Upload to the manager appliance only. Not applicable for DaaS products.</span>
+    </div>
+    <div class="addon-item" id="addon-cm">
+      <input type="checkbox" id="chk-cm" onchange="onCmChange()">
+      <div>
+        <div class="addon-label">Central Management License</div>
+        <div class="addon-sku">FC1-10-FDCCM-497-02-DD</div>
+        <div class="addon-note">Qty auto-set to total appliance count. Required for multi-appliance deployments.</div>
+      </div>
+    </div>
+    <div id="cm-qty-row" style="display:none; margin-top:10px; max-width:260px;">
+      <label>Central Manager Seat Count (= total appliances incl. manager)</label>
+      <input type="number" id="f-cm-qty" min="1" max="999" value="1">
+      <div class="qty-note">Upload to the FortiDeceptor manager appliance only.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── ADD-ON LICENSES ───────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header" id="addon-header">Step 5 — Add-on Licenses</div>
+  <div class="card-body">
+
+    <!-- Windows Decoy License (On-Premises only) -->
+    <div id="addon-win-wrap">
+      <div class="addon-item" id="addon-win">
+        <input type="checkbox" id="chk-win" onchange="onWinChange()">
+        <div>
+          <div class="addon-label">Windows Decoy License</div>
+          <div class="addon-sku">LIC-FDC-WIN</div>
+          <div class="addon-note">Adds 2× Windows 10 licenses (48 Windows decoys, 24 IPs each). Not applicable for DaaS — Windows included. Not co-term — perpetual/one-time.</div>
+        </div>
+      </div>
+      <div id="win-qty-row" style="display:none; margin-top:6px; margin-left:24px; max-width:240px;">
+        <label>Windows License Packs (each = 2× Win 10)</label>
+        <input type="number" id="f-win-qty" min="1" max="99" value="1">
+      </div>
+    </div>
+
+    <!-- ARAE Add-on (per VLAN) -->
+    <div class="addon-item" id="addon-arae" style="margin-top:6px;">
+      <input type="checkbox" id="chk-arae" disabled>
+      <div>
+        <div class="addon-label">ARAE — Anti-Reconnaissance &amp; Anti-Exploit (per-VLAN add-on)</div>
+        <div class="addon-sku">Included in all subscriptions</div>
+        <div class="addon-note">ARAE is included in all FortiDeceptor VLAN subscriptions. No separate SKU required.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── ACTION BUTTONS ───────────────────────────────────────────── -->
+<div class="btn-row" style="margin-bottom:20px;">
+  <button class="btn-primary" onclick="generateBOM()">&#9654; Preview BOM</button>
+  <button class="btn-add" onclick="addToProjectBOM()">＋ Add to Project BOM</button>
+  <button class="btn-reset" onclick="resetForm()">↺ Reset</button>
+  <span id="smsg"></span>
+</div>
+
+<!-- ─── BOM PREVIEW ───────────────────────────────────────────────── -->
+<div id="bom-section" class="card">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>BOM Preview</span>
+    <div style="display:flex; gap:6px;">
+      <button class="btn-sm" onclick="copyTSV()">&#128203; Copy TSV</button>
+      <button class="btn-sm" onclick="window.print()">&#128438; Print</button>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0; overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Part Number</th>
+          <th>Description</th>
+          <th>Qty</th>
+          <th>Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ─── JAVASCRIPT ────────────────────────────────────────────────── -->
+<script>
+/* ──────────────── State ──────────────── */
+let _deployment = 'onprem';   // 'onprem' | 'daas'
+let _model      = 'fdc1000g'; // active model id
+let _lastRows   = [];
+let _lastLabel  = '';
+let _lastMeta   = {};
+
+/* ──────────────── Model Data ──────────────── */
+const MODELS = {
+  // On-Premises Hardware / VM
+  fdc1000g: {
+    label:       'FDC-1000G',
+    hwSku:       'FDC-1000G',
+    hwDesc:      'FortiDeceptor 1000G Hardware Appliance',
+    careSku:     'FC-10-DC1KG-247-02-DD',
+    careDesc:    '24×7 FortiCare for FDC-1000G',
+    vlanSku:     'FC1-10-DC1KG-495-02-DD',
+    vlanDesc:    'FortiDeceptor 1000G — Add 1 VLAN Subscription (all FortiGuard services)',
+    maxVlans:    128,
+    maxDecoys:   480,
+    isHW:        true,
+    isDaas:      false,
+    vlanUpload:  false,
+    careNote:    'Per appliance · co-term -DD',
+    vlanNote:    'Per VLAN · per appliance · co-term -DD',
+  },
+  fdr100g: {
+    label:       'FDR-100G',
+    hwSku:       'FDR-100G',
+    hwDesc:      'FortiDeceptor Rugged 100G Hardware Appliance',
+    careSku:     'FC-10-DR1HG-247-02-DD',
+    careDesc:    '24×7 FortiCare for FDR-100G',
+    vlanSku:     'FC-10-DR1HG-495-02-DD',
+    vlanDesc:    'FortiDeceptor Rugged 100G — Add 1 VLAN Subscription (upload to FDC manager)',
+    maxVlans:    48,
+    maxDecoys:   192,
+    isHW:        true,
+    isDaas:      false,
+    vlanUpload:  true,
+    careNote:    'Per appliance · co-term -DD',
+    vlanNote:    'Per VLAN · per appliance · upload to FDC manager',
+  },
+  fdc100g: {
+    label:       'FDC-100G (Edge)',
+    hwSku:       'FDC-100G',
+    hwDesc:      'FortiDeceptor 100G Edge Hardware Appliance',
+    careSku:     'FC-10-DC1HG-247-02-DD',
+    careDesc:    '24×7 FortiCare for FDC-100G',
+    vlanSku:     'FC1-10-DCVMS-496-02-DD',
+    vlanDesc:    'FortiDeceptor 100G — Add 1 VLAN Subscription (upload to FDC manager)',
+    maxVlans:    128,
+    maxDecoys:   480,
+    isHW:        true,
+    isDaas:      false,
+    vlanUpload:  true,
+    careNote:    'Per appliance · co-term -DD',
+    vlanNote:    'Per VLAN · per appliance · upload to FDC manager',
+  },
+  fdcvm: {
+    label:       'FDC-VM',
+    hwSku:       null,
+    hwDesc:      null,
+    careSku:     null,
+    careDesc:    null,
+    vlanSku:     'FC1-10-DCVMS-496-02-DD',
+    vlanDesc:    'FortiDeceptor VM — Add 1 VLAN Subscription (all FortiGuard services)',
+    maxVlans:    128,
+    maxDecoys:   480,
+    isHW:        false,
+    isDaas:      false,
+    vlanUpload:  false,
+    careNote:    '',
+    vlanNote:    'Per VLAN · per VM instance · co-term -DD',
+  },
+  // DaaS
+  'fdc100g-daas': {
+    label:       'FDC-100G (DaaS)',
+    hwSku:       'FDC-100G',
+    hwDesc:      'FortiDeceptor 100G Hardware Appliance (DaaS)',
+    careSku:     'FC-10-DC1HG-247-02-DD',
+    careDesc:    '24×7 FortiCare for FDC-100G',
+    vlanSku:     'FC1-10-DCDAS-496-02-DD',
+    vlanDesc:    'FortiDeceptor DaaS — Add 1 VLAN Subscription (all FortiGuard services)',
+    maxVlans:    128,
+    maxDecoys:   480,
+    isHW:        true,
+    isDaas:      true,
+    vlanUpload:  false,
+    careNote:    'Per appliance · co-term -DD',
+    vlanNote:    'Per VLAN · DaaS subscription · co-term -DD',
+  },
+  fdcvme: {
+    label:       'FDC-VME (DaaS)',
+    hwSku:       null,
+    hwDesc:      null,
+    // FDC-VME includes FortiCare in the VM license
+    careSku:     'FC-10-DCVME-248-02-DD',
+    careDesc:    'FortiDeceptor VME — VM License incl. FortiCare',
+    vlanSku:     'FC1-10-DCDAS-496-02-DD',
+    vlanDesc:    'FortiDeceptor DaaS — Add 1 VLAN Subscription (all FortiGuard services)',
+    maxVlans:    128,
+    maxDecoys:   480,
+    isHW:        false,
+    isDaas:      true,
+    vlanUpload:  false,
+    careNote:    'VM license incl. FortiCare · per VM · co-term -DD',
+    vlanNote:    'Per VLAN · DaaS subscription · co-term -DD',
+  },
+};
+
+/* ──────────────── UI helpers ──────────────── */
+function selectDeployment(dep) {
+  _deployment = dep;
+  ['onprem','daas'].forEach(d => {
+    document.getElementById('dep-'+d).classList.toggle('selected', d === dep);
+  });
+  document.getElementById('models-onprem').style.display = dep === 'onprem' ? '' : 'none';
+  document.getElementById('models-daas').style.display   = dep === 'daas'   ? '' : 'none';
+  document.getElementById('card-cm').style.display       = dep === 'onprem' ? '' : 'none';
+  document.getElementById('addon-win-wrap').style.display = dep === 'onprem' ? '' : 'none';
+
+  // Default model for each deployment
+  if (dep === 'onprem') selectModel('fdc1000g');
+  else                  selectModel('fdc100g-daas');
+}
+
+function selectModel(id) {
+  _model = id;
+  // Clear all selections in both grids
+  document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+  const el = document.getElementById('mc-'+id);
+  if (el) el.classList.add('selected');
+
+  const m = MODELS[id];
+  const maxV = m.maxVlans;
+  document.getElementById('f-vlans').max = maxV;
+  document.getElementById('vlan-max-hint').textContent = '(max '+maxV+')';
+  // Clamp current value
+  const cur = parseInt(document.getElementById('f-vlans').value)||2;
+  if (cur > maxV) document.getElementById('f-vlans').value = maxV;
+
+  updateVlanNote();
+}
+
+function updateVlanNote() {
+  const qty   = parseInt(document.getElementById('f-qty').value)||0;
+  const vlans = parseInt(document.getElementById('f-vlans').value)||0;
+  const ind = document.getElementById('vlan-indicator');
+  if (qty > 0 && vlans > 0) {
+    document.getElementById('vlan-total').textContent = qty * vlans;
+    ind.style.display = '';
+  } else {
+    ind.style.display = 'none';
+  }
+}
+
+function onCmChange() {
+  const chk = document.getElementById('chk-cm').checked;
+  document.getElementById('cm-qty-row').style.display = chk ? '' : 'none';
+  if (chk) {
+    const qty = parseInt(document.getElementById('f-qty').value)||1;
+    document.getElementById('f-cm-qty').value = qty;
+  }
+}
+
+function onWinChange() {
+  const chk = document.getElementById('chk-win').checked;
+  document.getElementById('win-qty-row').style.display = chk ? '' : 'none';
+}
+
+/* ──────────────── BOM Generation ──────────────── */
+function generateBOM() {
+  // Clear previous errors
+  ['f-qty','f-vlans'].forEach(id => {
+    document.getElementById(id).classList.remove('invalid');
+  });
+  ['err-qty','err-vlans'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  const qty   = parseInt(document.getElementById('f-qty').value);
+  const vlans = parseInt(document.getElementById('f-vlans').value);
+  const m     = MODELS[_model];
+
+  let valid = true;
+  if (!qty || qty < 1 || qty > 99) {
+    document.getElementById('f-qty').classList.add('invalid');
+    document.getElementById('err-qty').style.display = 'block';
+    valid = false;
+  }
+  if (!vlans || vlans < 2 || vlans > m.maxVlans) {
+    document.getElementById('f-vlans').classList.add('invalid');
+    document.getElementById('err-vlans').textContent = 'Minimum 2 VLANs. Maximum '+m.maxVlans+' for '+m.label+'.';
+    document.getElementById('err-vlans').style.display = 'block';
+    valid = false;
+  }
+  if (!valid) return false;
+
+  const rows = [];
+
+  /* ── HARDWARE ── */
+  rows.push({ section: 'Hardware / Platform' });
+
+  if (m.isHW && m.hwSku) {
+    rows.push({
+      sku:  m.hwSku,
+      desc: m.hwDesc,
+      qty:  qty,
+      kind: 'req',
+      note: 'Physical appliance · qty '+qty,
+    });
+  }
+
+  /* ── FORTICARE / VM LICENSE ── */
+  if (m.careSku) {
+    if (_model === 'fdcvme') {
+      // VME license includes FortiCare
+      rows.push({
+        sku:  m.careSku,
+        desc: m.careDesc,
+        qty:  qty,
+        kind: 'req',
+        note: m.careNote,
+      });
+    } else if (!m.isHW) {
+      // FDC-VM: no hardware SKU, but we still note it's a VM
+      rows.push({
+        sku:  '—',
+        desc: 'FortiDeceptor VM — deploy from Fortinet support portal',
+        qty:  qty,
+        kind: 'note',
+        note: 'VM image — no hardware SKU',
+      });
+      rows.push({
+        sku:  m.careSku || '—',
+        desc: m.careDesc || '24×7 FortiCare (if applicable)',
+        qty:  qty,
+        kind: m.careSku ? 'req' : 'note',
+        note: m.careNote,
+      });
+    } else {
+      rows.push({
+        sku:  m.careSku,
+        desc: m.careDesc,
+        qty:  qty,
+        kind: 'req',
+        note: m.careNote,
+      });
+    }
+  } else if (_model === 'fdcvm') {
+    // FDC-VM has no separate hardware or care SKU listed; covered by VLAN subscription
+    rows.push({
+      sku:  '—',
+      desc: 'FortiDeceptor VM — deploy from Fortinet support portal; FortiCare included via VLAN subscription',
+      qty:  qty,
+      kind: 'note',
+      note: 'No standalone FortiCare SKU for FDC-VM',
+    });
+  }
+
+  /* ── VLAN SUBSCRIPTIONS ── */
+  rows.push({ section: 'VLAN Subscriptions (FortiGuard Bundled)' });
+  const totalVlans = qty * vlans;
+  rows.push({
+    sku:  m.vlanSku,
+    desc: m.vlanDesc,
+    qty:  totalVlans,
+    kind: 'req',
+    note: m.vlanNote + (m.vlanUpload ? ' · upload to FDC manager' : ''),
+  });
+  rows.push({
+    sku:  '⚠',
+    desc: 'VLAN count = appliances ('+qty+') × VLANs each ('+vlans+') = '+totalVlans+'. Min 2 / max '+m.maxVlans+' per appliance. /23 or larger networks = 2 VLAN licenses each. Cloud VPCs count as 1 each.',
+    qty:  null,
+    kind: 'note',
+    note: '',
+  });
+
+  /* ── CENTRAL MANAGEMENT (on-prem only) ── */
+  if (_deployment === 'onprem' && document.getElementById('chk-cm').checked) {
+    const cmQty = parseInt(document.getElementById('f-cm-qty').value)||qty;
+    rows.push({ section: 'Central Management' });
+    rows.push({
+      sku:  'FC1-10-FDCCM-497-02-DD',
+      desc: 'FortiDeceptor Central Management License',
+      qty:  cmQty,
+      kind: 'req',
+      note: 'Upload to manager appliance only · 1 seat per managed appliance incl. manager · co-term -DD',
+    });
+    if (qty > 1 && cmQty < qty) {
+      rows.push({
+        sku:  '⚠',
+        desc: 'Central Manager seat count should equal total appliances including the manager itself. Current value: '+cmQty+'. Total appliances: '+qty+'.',
+        qty:  null,
+        kind: 'note',
+        note: '',
+      });
+    }
+  }
+
+  /* ── WINDOWS DECOY LICENSES (on-prem only) ── */
+  if (_deployment === 'onprem' && document.getElementById('chk-win').checked) {
+    const winQty = parseInt(document.getElementById('f-win-qty').value)||1;
+    rows.push({ section: 'Windows Decoy Licenses' });
+    rows.push({
+      sku:  'LIC-FDC-WIN',
+      desc: 'FortiDeceptor Windows Decoy License (2× Win 10)',
+      qty:  winQty,
+      kind: 'opt',
+      note: 'Each pack = 2× Win 10 licenses = 48 decoys (24 IPs each). Perpetual/one-time, not co-term.',
+    });
+    rows.push({
+      sku:  '⚠',
+      desc: 'You cannot use your own Windows license for built-in decoys. For custom Win decoys (10/2016/2019/2022) using your org license, use the custom decoy feature instead.',
+      qty:  null,
+      kind: 'note',
+      note: '',
+    });
+  }
+
+  /* ── DaaS INFO ── */
+  if (m.isDaas) {
+    rows.push({ section: 'DaaS Notes' });
+    rows.push({
+      sku:  '⚠',
+      desc: 'DaaS deployment: Windows Decoy License not required (included). Central Management License not required. FortiDeceptor DAAS manages FDC-100G (Edge) only.',
+      qty:  null,
+      kind: 'note',
+      note: '',
+    });
+  }
+
+  _lastRows  = rows;
+  _lastLabel = m.label + ' ×' + qty + ' · ' + totalVlans + ' VLANs' + (m.isDaas ? ' (DaaS)' : '');
+  _lastMeta  = {
+    'Deployment': m.isDaas ? 'DaaS (Cloud-Managed)' : 'On-Premises',
+    'Model':      m.label,
+    'Appliances': qty,
+    'VLANs/unit': vlans,
+    'Total VLANs': totalVlans,
+    'Max Decoys': m.maxDecoys * qty,
+  };
+
+  renderBOM(rows);
+  document.getElementById('bom-section').style.display = '';
+  document.getElementById('bom-section').scrollIntoView({ behavior:'smooth', block:'start' });
+  document.getElementById('smsg').textContent = '';
+  return true;
+}
+
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    if (r.section !== undefined) {
+      tr.className = 'section-row';
+      tr.innerHTML = '<td colspan="5">'+r.section+'</td>';
+    } else {
+      const badge = r.kind === 'req'  ? '<span class="badge badge-req">Required</span>'
+                  : r.kind === 'mand' ? '<span class="badge badge-mand">Mandatory</span>'
+                  : r.kind === 'opt'  ? '<span class="badge badge-opt">Optional</span>'
+                  : r.kind === 'inc'  ? '<span class="badge badge-inc">Included</span>'
+                  : '';
+      tr.innerHTML =
+        '<td class="sku-cell">'+(r.sku||'')+'</td>'+
+        '<td class="nc">'+escHtml(r.desc||'')+'</td>'+
+        '<td style="text-align:center;">'+(r.qty !== null && r.qty !== undefined ? r.qty : '')+'</td>'+
+        '<td>'+badge+'</td>'+
+        '<td class="nc" style="font-size:11px;">'+escHtml(r.note||'')+'</td>';
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  try {
+    window.parent.postMessage({
+      type:    'FORTIBOM_ADD',
+      product: 'FortiDeceptor',
+      label:   _lastLabel,
+      rows:    _lastRows,
+      meta:    _lastMeta,
+    }, '*');
+    document.getElementById('smsg').textContent = '✓ Added to Project BOM';
+    setTimeout(() => { document.getElementById('smsg').textContent = ''; }, 3000);
+  } catch(e) {
+    document.getElementById('smsg').textContent = 'postMessage failed: '+e.message;
+  }
+}
+
+function copyTSV() {
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  _lastRows.forEach(r => {
+    if (r.section !== undefined) {
+      lines.push('### '+r.section+'\t\t\t\t');
+    } else {
+      const t = r.kind === 'req' ? 'REQUIRED' : r.kind === 'opt' ? 'OPTIONAL' : r.kind === 'inc' ? 'INCLUDED' : r.kind === 'mand' ? 'MANDATORY' : '';
+      lines.push([r.sku||'', r.desc||'', r.qty !== null && r.qty !== undefined ? r.qty : '', t, r.note||''].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = '📋 Copy TSV'; }, 2000);
+  });
+}
+
+function resetForm() {
+  _deployment = 'onprem';
+  _model      = 'fdc1000g';
+  _lastRows   = [];
+  _lastLabel  = '';
+  _lastMeta   = {};
+  document.getElementById('f-qty').value   = 1;
+  document.getElementById('f-vlans').value = 2;
+  document.getElementById('chk-cm').checked  = false;
+  document.getElementById('chk-win').checked = false;
+  document.getElementById('cm-qty-row').style.display  = 'none';
+  document.getElementById('win-qty-row').style.display = 'none';
+  document.getElementById('bom-section').style.display = 'none';
+  document.getElementById('smsg').textContent = '';
+  selectDeployment('onprem');
+  ['f-qty','f-vlans'].forEach(id => document.getElementById(id).classList.remove('invalid'));
+  ['err-qty','err-vlans'].forEach(id => document.getElementById(id).style.display = 'none');
+  updateVlanNote();
+}
+
+/* ──────────────── Init ──────────────── */
+updateVlanNote();
+</script>
+</body>
+</html>

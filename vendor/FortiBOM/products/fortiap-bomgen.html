@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiAP – BOM Generator</title>
+<style>
+  :root {
+    --red:#EE3124; --border:#DDE1E9; --bg:#F2F4F7; --white:#FFFFFF;
+    --text:#2A2F3A; --text2:#6B7589; --textm:#9BA5BA;
+    --sh:#F7F9FC; --ib:#C8CDD9; --th:#EEF1F6; --ts:#F7F9FC;
+    --info-bg:#EEF3FF; --info-b:#B8CBF5; --info-t:#3557A5;
+    --warn-bg:#FFF8EE; --warn-b:#F5D9A0; --warn-t:#8A5800;
+    --ok-bg:#F0FAF0; --ok-b:#9FD8A0; --ok-t:#1E6B20;
+    --w7-bg:#F5F0FF; --w7-b:#C8B8F5; --w7-t:#4A2A8A;
+    --w6e-bg:#EEF3FF; --w6e-b:#B8CBF5; --w6e-t:#2A4A8A;
+    --w6-bg:#F0F7FF; --w6-b:#9EC8F5; --w6-t:#1A4E82;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;padding:20px;min-height:100vh;}
+
+  .ph{background:var(--white);border:1px solid var(--border);border-radius:4px;padding:14px 20px;margin-bottom:14px;display:flex;align-items:center;gap:14px;}
+  .ph-icon{width:36px;height:36px;background:var(--red);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ph-icon svg{width:20px;height:20px;}
+  .ph h1{font-size:16px;font-weight:600;}
+  .ph .sub{font-size:11px;color:var(--text2);margin-top:2px;}
+
+  .card{background:var(--white);border:1px solid var(--border);border-radius:4px;margin-bottom:14px;overflow:hidden;}
+  .ch{background:var(--sh);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .ch h2{font-size:11px;font-weight:700;color:var(--text);letter-spacing:.04em;text-transform:uppercase;}
+  .ch .badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--red);color:#fff;border-radius:2px;padding:1px 6px;margin-left:auto;}
+  .cb{padding:18px;}
+
+  /* FILTER BAR */
+  .seg-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .seg-btn{padding:5px 12px;border-radius:3px;border:1px solid var(--ib);background:var(--white);color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;transition:all .12s;}
+  .seg-btn:hover{background:var(--sh);border-color:#9BA5BA;}
+  .seg-btn.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:500;}
+
+  /* MODEL CARDS */
+  .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+  .mc{border:1px solid var(--border);border-radius:3px;padding:10px 12px;cursor:pointer;background:var(--white);transition:all .12s;}
+  .mc:hover{border-color:#9BA5BA;background:#FAFBFC;}
+  .mc.selected{border-color:var(--red);border-width:2px;background:#FEF8F8;}
+  .mc .mn{font-size:13px;font-weight:600;color:var(--text);}
+  .mc .ms{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
+  .mc .mt{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+  .mc .tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:2px;padding:1px 5px;}
+  .tag-w7{background:var(--w7-bg);color:var(--w7-t);border:1px solid var(--w7-b);}
+  .tag-w6e{background:var(--w6e-bg);color:var(--w6e-t);border:1px solid var(--w6e-b);}
+  .tag-w6{background:var(--w6-bg);color:var(--w6-t);border:1px solid var(--w6-b);}
+  .tag-out{background:var(--ok-bg);color:var(--ok-t);border:1px solid var(--ok-b);}
+  .tag-rug{background:var(--warn-bg);color:var(--warn-t);border:1px solid var(--warn-b);}
+  .tag-wall{background:var(--th);color:var(--text2);border:1px solid var(--border);}
+  .mc.hidden{display:none;}
+
+  /* FORM */
+  .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+  .grp{display:flex;flex-direction:column;gap:4px;}
+  label.lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;}
+  label.lbl .r{color:var(--red);margin-left:2px;}
+  input[type=number],select{background:var(--white);border:1px solid var(--ib);border-radius:3px;padding:6px 9px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;width:100%;}
+  input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(238,49,36,.1);}
+  .invalid{border-color:var(--red)!important;}
+  .err{display:none;font-size:11px;color:#C0392B;margin-top:2px;}
+
+  .trow{display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:5px 8px;border-radius:3px;margin-bottom:2px;transition:background .1s;}
+  .trow:hover{background:var(--sh);}
+  .trow input[type=checkbox]{accent-color:var(--red);width:14px;height:14px;margin-top:1px;flex-shrink:0;}
+  .tl{font-size:13px;color:var(--text);}
+  .tn{font-size:11px;color:var(--textm);}
+
+  .callout{border-radius:3px;padding:9px 12px;font-size:12px;line-height:1.6;display:flex;gap:8px;align-items:flex-start;margin-bottom:14px;}
+  .callout svg{flex-shrink:0;margin-top:1px;}
+  .callout.info{background:var(--info-bg);border:1px solid var(--info-b);color:var(--info-t);}
+  .callout.warn{background:var(--warn-bg);border:1px solid var(--warn-b);color:var(--warn-t);}
+
+  .divider{height:1px;background:var(--border);margin:14px 0;}
+  .sec-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--textm);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+  .actions{display:flex;gap:10px;align-items:center;padding:12px 18px;background:var(--sh);border-top:1px solid var(--border);}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:3px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:background .12s;}
+  .btn svg{width:13px;height:13px;flex-shrink:0;}
+  .btn-p{background:var(--red);color:#fff;border-color:var(--red);}
+  .btn-p:hover{background:#d42a1e;}
+  .btn-s{background:var(--white);color:var(--text);border-color:var(--ib);}
+  .btn-s:hover{background:var(--sh);}
+  #smsg{font-size:11px;margin-left:6px;}
+
+  /* BOM */
+  #bom-section{display:none;}
+  .bom-meta{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
+  .bom-meta-item .ml{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--textm);}
+  .bom-meta-item .mv{font-size:13px;font-weight:500;color:var(--text);}
+  table.bt{width:100%;border-collapse:collapse;font-size:12px;}
+  table.bt thead th{background:var(--th);border:1px solid var(--border);padding:7px 11px;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);white-space:nowrap;}
+  table.bt tbody td{border:1px solid var(--border);padding:7px 11px;vertical-align:top;}
+  table.bt tbody tr:nth-child(even) td{background:var(--ts);}
+  table.bt tbody tr:hover td{background:#EEF1F6;}
+  .rs td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);padding:5px 11px;border-top:2px solid #C5CAD9;}
+  .sk{font-family:'Courier New',monospace;font-size:11.5px;color:#1A4E82;font-weight:700;white-space:nowrap;}
+  .qc{text-align:center;font-weight:700;}
+  .nc{color:var(--textm);font-size:11px;}
+  .br{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 5px;}
+  .br-r{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2;}
+  .br-o{background:var(--info-bg);color:var(--info-t);border:1px solid var(--info-b);}
+  .bom-totals{margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;}
+  .tc{background:var(--sh);border:1px solid var(--border);border-radius:3px;padding:9px 14px;min-width:120px;}
+  .tc .tl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--textm);margin-bottom:3px;}
+  .tc .tv{font-size:18px;font-weight:600;color:var(--text);}
+  .tc.hi .tv{color:var(--red);}
+
+  @media print{body{background:#fff;padding:0;}#config-section,.actions{display:none!important;}#bom-section{display:block!important;}}
+</style>
+</head>
+<body>
+
+<div class="ph">
+  <div class="ph-icon">
+    <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="white" stroke-width="1.4"/><path d="M10 3.5C6.4 3.5 3.5 6.4 3.5 10" stroke="white" stroke-width="1.3" stroke-linecap="round"/><path d="M10 16.5c3.6 0 6.5-2.9 6.5-6.5" stroke="white" stroke-width="1.3" stroke-linecap="round"/><path d="M3.5 10c0 1.8.7 3.4 1.9 4.6" stroke="white" stroke-width="1.3" stroke-linecap="round"/><path d="M16.5 10c0-1.8-.7-3.4-1.9-4.6" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
+  </div>
+  <div>
+    <h1>FortiAP – BOM Generator</h1>
+    <div class="sub">Wi-Fi 6 / 6E / 7 · Indoor / Outdoor / Rugged / OT · FortiGate, FortiEdge Cloud, or SASE-managed · Based on FAP-DAT-R79-20260402 &amp; FAP-OS-R16-20260204</div>
+  </div>
+</div>
+
+<div id="config-section">
+
+<!-- ══ MODEL SELECTION ═══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#6B7589" stroke-width="1.2"/><path d="M4 6.5h5M6.5 4v5" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>AP Model Selection</h2><span class="badge">Step 1 — Select one model</span>
+  </div>
+  <div class="cb">
+
+    <div class="callout info">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#3557A5" stroke-width="1.2"/><path d="M7 6.5v3.5M7 4.5v.5" stroke="#3557A5" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div>All FortiAPs are managed by <strong>FortiGate, FortiEdge Cloud, or FortiSASE</strong>. FortiCare 24×7 support (SKU code <code>-247-</code>) is recommended for all deployments. The <strong>FortiEdge Cloud</strong> add-on (<code>FC-10-90AP1-639-02-DD</code>) enables full cloud management — FortiCare is only included when FortiEdge Cloud manages the unit. All SKUs use co-term <code>-DD</code> suffix.</div>
+    </div>
+
+    <div class="seg-bar">
+      <button class="seg-btn active" onclick="filterSeg(this,'all')">All Models</button>
+      <button class="seg-btn" onclick="filterSeg(this,'indoor')">Indoor</button>
+      <button class="seg-btn" onclick="filterSeg(this,'outdoor')">Outdoor</button>
+      <button class="seg-btn" onclick="filterSeg(this,'rugged')">Rugged / OT</button>
+      <button class="seg-btn" onclick="filterSeg(this,'wallplate')">Wall Plate</button>
+      <button class="seg-btn" onclick="filterSeg(this,'wifi7')">Wi-Fi 7</button>
+      <button class="seg-btn" onclick="filterSeg(this,'4x4')">4×4 MIMO</button>
+    </div>
+
+    <div class="model-grid" id="model-grid"></div>
+    <span class="err" id="err-model" style="margin-top:6px;">Please select a model</span>
+  </div>
+</div>
+
+<!-- ══ CONFIGURATION ═════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="2" stroke="#6B7589" stroke-width="1.2"/><path d="M6.5 1v1.5M6.5 10.5V12M1 6.5h1.5M10.5 6.5H12" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/><path d="M3 3l1 1M9 9l1 1M3 10l1-1M9 4l1-1" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Configuration</h2><span class="badge">Step 2</span>
+  </div>
+  <div class="cb">
+    <div class="fg" style="margin-bottom:14px;">
+      <div class="grp">
+        <label class="lbl">Quantity <span class="r">*</span></label>
+        <input type="number" id="f-qty" min="1" max="9999" value="1">
+        <span class="err" id="err-qty">Enter at least 1</span>
+      </div>
+      <div class="grp">
+        <label class="lbl">FortiCare Support Level</label>
+        <select id="f-care">
+          <option value="premium">FortiCare Premium (-247-) — recommended</option>
+          <option value="elite">FortiCare Elite (-284-)</option>
+          <option value="essential">FortiCare Essential (-314-) — renewal only, not with initial HW purchase</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">Optional Add-on Licenses</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px;">
+      <label class="trow"><input type="checkbox" id="f-sase"><div>
+        <div class="tl">FortiSASE Subscription</div>
+        <div class="tn" id="sase-hint">FC-10-{model}-595-02-DD — cloud managed FortiAP with bandwidth included (select models only)</div>
+      </div></label>
+      <label class="trow" id="row-utp"><input type="checkbox" id="f-utp"><div>
+        <div class="tl">UTP Edge Services (G/K-Series)</div>
+        <div class="tn">FC-10-APGIS-768-02-DD — Application Control + Web Filtering for G-Series and K-Series APs</div>
+      </div></label>
+      <label class="trow"><input type="checkbox" id="f-cloud"><div>
+        <div class="tl">FortiEdge Cloud Management License</div>
+        <div class="tn">FC-10-90AP1-639-02-DD — Full FortiAP management suite, 1-yr log retention, FortiCare Premium (FortiCare only when cloud-managed)</div>
+      </div></label>
+      <label class="trow"><input type="checkbox" id="f-presence"><div>
+        <div class="tl">Presence Analytics License</div>
+        <div class="tn">FC-10-FPCLD-169-02-DD — Location/presence analytics via FortiCloud</div>
+      </div></label>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">PoE Injector / Power Accessories (Optional)</div>
+    <div class="fg">
+      <div class="grp">
+        <label class="lbl">PoE Injector</label>
+        <select id="f-poe">
+          <option value="none">None — customer-supplied PoE switch</option>
+          <option value="GPI-115">GPI-115 — 802.3af 15.4W Gigabit injector</option>
+          <option value="GPI-130">GPI-130 — 802.3at 30W Gigabit injector</option>
+          <option value="GPI-145">GPI-145 — 802.3bt 60W Multi-Gigabit injector</option>
+        </select>
+      </div>
+      <div class="grp" id="grp-poe-qty">
+        <label class="lbl">Injector Qty</label>
+        <input type="number" id="f-poe-qty" min="1" value="1">
+        <div style="font-size:10px;color:var(--textm);margin-top:3px;">Defaults to AP quantity — adjust if PoE switch covers some APs</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ACTIONS ═══════════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="actions">
+    <button class="btn btn-p" onclick="generateBOM()">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5h10M7 2l4.5 4.5L7 11" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Preview BOM
+    </button>
+    <button class="btn btn-p" onclick="addToProjectBOM()" style="background:#2E7D32;border-color:#2E7D32;">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6l3 3 3-3" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Add to Project BOM
+    </button>
+    <button class="btn btn-s" onclick="resetForm()">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5a5 5 0 1 0 1.2-3.2L1.5 2v3h3" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Reset
+    </button>
+    <span id="smsg" style="color:#C0392B;"></span>
+  </div>
+</div>
+
+</div><!-- end config-section -->
+
+<!-- ══ BOM OUTPUT ════════════════════════════════════════════════════════ -->
+<div class="card" id="bom-section">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1.5" width="11" height="10" rx="1.5" stroke="#6B7589" stroke-width="1.2"/><path d="M3.5 5h6M3.5 7h6M3.5 9h3.5" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Bill of Materials — FortiAP</h2>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-s" onclick="copyTSV()" style="padding:4px 10px;font-size:11px;">
+        <svg viewBox="0 0 13 13" fill="none"><rect x="3.5" y="1" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/><rect x="1" y="3" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/></svg>Copy TSV
+      </button>
+      <button class="btn btn-s" onclick="window.print()" style="padding:4px 10px;font-size:11px;">
+        <svg viewBox="0 0 13 13" fill="none"><rect x="1.5" y="4" width="10" height="6" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M3.5 4V2h6v2M3.5 10h6" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Print
+      </button>
+    </div>
+  </div>
+  <div class="cb">
+    <div class="bom-meta" id="bom-meta"></div>
+    <table class="bt" id="bom-table">
+      <thead><tr>
+        <th style="width:230px;">Part Number</th>
+        <th>Description</th>
+        <th style="width:55px;text-align:center;">Qty</th>
+        <th style="width:75px;">Type</th>
+        <th>Notes</th>
+      </tr></thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+    <div class="bom-totals" id="bom-totals"></div>
+  </div>
+</div>
+
+<script>
+// ── MODEL DATABASE ────────────────────────────────────────────────────────────
+// Sources: FAP-DAT-R79-20260402 (pages 45-46) and FAP-OS-R16-20260204 (page 3)
+// hwSku: hardware base SKU (suffix [RC] = region code, shown as -A in BOM)
+// careSku: FortiCare Premium 247 base (we swap -247- for -284-/-314- on elite/essential)
+// saseSku: FortiSASE subscription (595), or null if not available
+// utpEligible: can add APGIS UTP license
+// wifi: wifi generation string for display
+// seg: filter category (indoor/outdoor/rugged/wallplate)
+// mimo: '2x2' or '4x4'
+// poeNeeded: recommended PoE injector type (for notes)
+
+const MODELS = [
+  // ── INDOOR Wi-Fi 7 ────────────────────────────────────────────────────────
+  {
+    id:'FAP-443K', wifi:'Wi-Fi 7', mimo:'4×4', seg:['indoor','wifi7','4x4'],
+    desc:'4-radio indoor quad-radio 11be 6GHz capable (2.4/5/6GHz + Scan), external antennas, 2×10G RJ45, BT/BLE, USB',
+    hwBase:'FAP-443K', carePfx:'FC-10-FP43K',
+    saseSku:null, utpEligible:true,
+    poeRec:'GPI-145 (802.3bt 60W)',
+  },
+  {
+    id:'FAP-441K', wifi:'Wi-Fi 7', mimo:'4×4', seg:['indoor','wifi7','4x4'],
+    desc:'4-radio indoor quad-radio 11be 6GHz capable (2.4/5/6GHz + Scan), internal antennas, 2×10G RJ45, BT/BLE, USB',
+    hwBase:'FAP-441K', carePfx:'FC-10-FP41K',
+    saseSku:null, utpEligible:true,
+    poeRec:'GPI-145 (802.3bt 60W)',
+  },
+  {
+    id:'FAP-243K', wifi:'Wi-Fi 7', mimo:'2×2', seg:['indoor','wifi7'],
+    desc:'4-radio indoor quad-radio 11be 6GHz capable (2.4/5/6GHz + Scan), external antennas, 1×10G + 1×1G RJ45, BT/BLE, USB',
+    hwBase:'FAP-243K', carePfx:'FC-10-P243K',
+    saseSku:null, utpEligible:true,
+    poeRec:'GPI-130 (802.3at 30W) or AC adapter SP-FAP400-PA',
+  },
+  {
+    id:'FAP-241K', wifi:'Wi-Fi 7', mimo:'2×2', seg:['indoor','wifi7'],
+    desc:'4-radio indoor quad-radio 11be 6GHz capable (2.4/5/6GHz + Scan), internal antennas, 1×10G + 1×1G RJ45, BT/BLE, USB',
+    hwBase:'FAP-241K', carePfx:'FC-10-P241K',
+    saseSku:null, utpEligible:true,
+    poeRec:'GPI-130 (802.3at 30W) or AC adapter SP-FAP400-PA',
+  },
+  {
+    id:'FAP-231K', wifi:'Wi-Fi 7', mimo:'2×2', seg:['indoor','wifi7'],
+    desc:'3-radio indoor tri-radio 11be 6GHz capable (2.4/5/6GHz), internal antennas, 1×5G RJ45, BT/BLE, GPS. No dedicated scanning radio.',
+    hwBase:'FAP-231K', carePfx:'FC-10-P231K',
+    saseSku:null, utpEligible:false,
+    poeRec:'GPI-130 (802.3at 30W) or AC adapter SP-FAP200-PA-XX',
+  },
+  {
+    id:'FAP-23JK', wifi:'Wi-Fi 7', mimo:'2×2', seg:['indoor','wifi7','wallplate'],
+    desc:'3-radio indoor Wi-Fi 7 wall plate (2.4/5/6GHz + Scan), 1×10G WAN + 3×1G LAN ports, LAN3 802.3af PSE out, BT/BLE. Desktop/wall mount.',
+    hwBase:'FAP-23JK', carePfx:'FC-10-P23JK',
+    saseSku:null, utpEligible:true,
+    poeRec:'GPI-145 (802.3bt 60W)',
+  },
+  // ── INDOOR Wi-Fi 6 ────────────────────────────────────────────────────────
+  {
+    id:'FAP-831F', wifi:'Wi-Fi 6', mimo:'8×8', seg:['indoor','4x4'],
+    desc:'3-radio indoor 802.11ax tri-radio (2.4GHz 4×4 + 5GHz 8×8 + Scan), internal antennas, 1×5G + 1×1G RJ45, BT/BLE, USB. High-density campus.',
+    hwBase:'FAP-831F', carePfx:'FC-10-P831F',
+    saseSku:'FC-10-P831F-595-02-DD', utpEligible:false,
+    poeRec:'GPI-130 (802.3at) or AC adapter SP-FAP400-PA',
+  },
+  {
+    id:'FAP-23JF', wifi:'Wi-Fi 6', mimo:'2×2', seg:['indoor','wallplate'],
+    desc:'3-radio indoor 802.11ax wall plate (2.4/5GHz + Scan), 3 internal antennas, 4×GE RJ45 (1×PD, 1×PSE, 2×non-PoE), RJ45 passthrough. Remote worker / wall plate.',
+    hwBase:'FAP-23JF', carePfx:'FC-10-P23JF',
+    saseSku:'FC-10-P23JF-595-02-DD', utpEligible:false,
+    poeRec:'GPI-130 (802.3at) or DC adapter SP-FAP23J-PA-10',
+  },
+  // ── OUTDOOR Wi-Fi 7 ───────────────────────────────────────────────────────
+  {
+    id:'FAP-244K', wifi:'Wi-Fi 7', mimo:'2×2', seg:['outdoor','wifi7'],
+    desc:'4-radio outdoor ruggedized 11be 6GHz quad-radio (2.4/5/6GHz + Scan), internal antennas, IP67, 10G SFP+ + 5G RJ45 PoE-IN, BT/BLE. Ships with 802.3bt PoE injector.',
+    hwBase:'FAP-244K', carePfx:'FC-10-F244K',
+    saseSku:'FC-10-F244K-595-02-DD', utpEligible:true,
+    poeRec:'PoE injector included in box (802.3bt)',
+  },
+  {
+    id:'FAP-222KL', wifi:'Wi-Fi 7', mimo:'2×2', seg:['outdoor','wifi7'],
+    desc:'2-radio outdoor dual-radio 11be (2.4/5GHz), external antennas, IP67, 1×2.5G PoE-IN + 1×1G PSE-OUT, LoRaWAN module, LTE Cat4 (eSIM), GNSS. Ships with 802.3bt PoE injector.',
+    hwBase:'FAP-222KL', carePfx:'FC-10-F22KL',
+    saseSku:'FC-10-F22KL-595-02-DD', utpEligible:false,
+    poeRec:'PoE injector included in box (802.3bt)',
+  },
+  // ── OUTDOOR Wi-Fi 6E ──────────────────────────────────────────────────────
+  {
+    id:'FAP-432G', wifi:'Wi-Fi 6E', mimo:'4×4', seg:['outdoor','4x4'],
+    desc:'3-radio outdoor 802.11ax Wi-Fi 6E (2.4GHz 4×4 + 5GHz 4×4 + 6GHz/Scan), N-type external antennas, IP67, 1×10G + 1×1G RJ45, BT/BLE, GNSS, PSE out. Ships with PoE injector.',
+    hwBase:'FAP-432G', carePfx:'FC-10-P432G',
+    saseSku:'FC-10-P432G-595-02-DD', utpEligible:true,
+    poeRec:'PoE injector included in box (802.3bt)',
+  },
+  {
+    id:'FAP-234G', wifi:'Wi-Fi 6E', mimo:'2×2', seg:['outdoor'],
+    desc:'3-radio outdoor ruggedized 802.11ax Wi-Fi 6E (2.4/5/6GHz), internal antennas, IP67, C1D2/ATEX certified, 1×2.5G + 1×1G RJ45, BT/BLE, GNSS. Ships with PoE injector.',
+    hwBase:'FAP-234G', carePfx:'FC-10-PG234',
+    saseSku:'FC-10-PG234-595-02-DD', utpEligible:true,
+    poeRec:'PoE injector included in box (802.3at)',
+  },
+  // ── OUTDOOR / RUGGED Wi-Fi 6 ──────────────────────────────────────────────
+  {
+    id:'FAP-432FR', wifi:'Wi-Fi 6', mimo:'4×4', seg:['outdoor','rugged','4x4'],
+    desc:'3-radio outdoor/industrial/OT 802.11ax Wi-Fi 6 (2.4GHz 4×4 + 5GHz 4×4 + Scan), N-type external antennas, IP67, C1D2 certified, 1×2.5G + 1×1G RJ45 (PSE), BT/BLE. Ships with passive PoE injector.',
+    hwBase:'FAP-432FR', carePfx:'FC-10-FR432',
+    saseSku:'FC-10-FR432-595-02-DD', utpEligible:false,
+    poeRec:'Passive PoE injector included in box (802.3bt)',
+  },
+];
+
+// FortiCare code mapping: -247- Premium, -284- Elite, -314- Essential
+const CARE_CODE = { premium:'247', elite:'284', essential:'314' };
+const CARE_LABEL = { premium:'Premium', elite:'Elite', essential:'Essential (renewal only)' };
+
+// PoE injector SKUs and descriptions
+const POE_INJECTORS = {
+  'GPI-115': { desc:'1-port Gigabit PoE injector, 802.3af 15.4W' },
+  'GPI-130': { desc:'1-port Gigabit PoE injector, 802.3at up to 30W' },
+  'GPI-145': { desc:'1-port Multi-Gigabit PoE injector, 802.3bt up to 60W' },
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let selectedModel = null;
+let _lastRows = [], _lastLabel = '', _lastMeta = {};
+
+// ── BUILD MODEL GRID ─────────────────────────────────────────────────────────
+function buildModelGrid() {
+  const grid = document.getElementById('model-grid');
+  grid.innerHTML = MODELS.map(m => {
+    const wifiTagClass = m.wifi === 'Wi-Fi 7' ? 'tag-w7' : m.wifi === 'Wi-Fi 6E' ? 'tag-w6e' : 'tag-w6';
+    const isOut = m.seg.includes('outdoor');
+    const isRug = m.seg.includes('rugged');
+    const isWall = m.seg.includes('wallplate');
+    const tags = [
+      `<span class="tag ${wifiTagClass}">${m.wifi}</span>`,
+      `<span class="tag" style="background:var(--th);color:var(--text2);border:1px solid var(--border);">${m.mimo}</span>`,
+    ];
+    if (isOut) tags.push(`<span class="tag tag-out">Outdoor</span>`);
+    if (isRug) tags.push(`<span class="tag tag-rug">C1D2/Rugged</span>`);
+    if (isWall) tags.push(`<span class="tag tag-wall">Wall Plate</span>`);
+    if (m.utpEligible) tags.push(`<span class="tag" style="background:#F0FAF0;color:#1E6B20;border:1px solid #9FD8A0;">UTP</span>`);
+    const segData = m.seg.join(' ');
+    return `<div class="mc" id="mc-${m.id.replace(/-/g,'')}" data-seg="${segData}" onclick="selectModel('${m.id}')">
+      <div class="mn">${m.id}</div>
+      <div class="ms">${m.desc.split(',')[0]}</div>
+      <div class="mt">${tags.join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function filterSeg(btn, seg) {
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.mc').forEach(c => {
+    const segs = c.dataset.seg.split(' ');
+    const show = seg === 'all' || segs.includes(seg);
+    c.classList.toggle('hidden', !show);
+  });
+}
+
+function selectModel(id) {
+  selectedModel = MODELS.find(m => m.id === id);
+  document.querySelectorAll('.mc').forEach(c => c.classList.remove('selected'));
+  document.getElementById('mc-' + id.replace(/-/g,'')).classList.add('selected');
+  document.getElementById('err-model').style.display = 'none';
+
+  // Update SASE hint
+  const saseHint = document.getElementById('sase-hint');
+  if (selectedModel.saseSku) {
+    saseHint.textContent = `${selectedModel.saseSku} — FortiSASE subscription for cloud managed FortiAP with bandwidth included`;
+  } else {
+    saseHint.textContent = 'FortiSASE subscription not available for this model';
+    document.getElementById('f-sase').checked = false;
+  }
+  document.querySelector('label:has(#f-sase)').style.opacity = selectedModel.saseSku ? '1' : '0.4';
+  document.querySelector('label:has(#f-sase)').style.pointerEvents = selectedModel.saseSku ? '' : 'none';
+
+  // UTP eligibility
+  const utpRow = document.getElementById('row-utp');
+  utpRow.style.opacity = selectedModel.utpEligible ? '1' : '0.4';
+  utpRow.style.pointerEvents = selectedModel.utpEligible ? '' : 'none';
+  if (!selectedModel.utpEligible) document.getElementById('f-utp').checked = false;
+
+  // PoE recommendation note
+  document.querySelector('#grp-poe-qty .tn, #f-poe + div') && null;
+  const poeQtyHint = document.querySelector('#grp-poe-qty div');
+  if (poeQtyHint) poeQtyHint.textContent = `Recommended for this model: ${selectedModel.poeRec}`;
+}
+
+// ── postMessage ───────────────────────────────────────────────────────────────
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'FORTIBOM_ADD', product:'FortiAP', label:_lastLabel, rows:_lastRows, meta:_lastMeta }, '*');
+    document.getElementById('smsg').textContent = '✓ Added to Project BOM.';
+    document.getElementById('smsg').style.color = '#2E7D32';
+  }
+}
+
+// ── GENERATE ──────────────────────────────────────────────────────────────────
+function generateBOM() {
+  if (!selectedModel) {
+    document.getElementById('err-model').style.display = 'block';
+    document.getElementById('smsg').textContent = '⚠ Please select an AP model.';
+    document.getElementById('smsg').style.color = '#C0392B';
+    return false;
+  }
+  const qty = parseInt(document.getElementById('f-qty').value, 10) || 0;
+  if (qty < 1) {
+    document.getElementById('f-qty').classList.add('invalid');
+    document.getElementById('err-qty').style.display = 'block';
+    document.getElementById('smsg').textContent = '⚠ Enter a valid quantity.';
+    document.getElementById('smsg').style.color = '#C0392B';
+    return false;
+  }
+  document.getElementById('f-qty').classList.remove('invalid');
+  document.getElementById('err-qty').style.display = 'none';
+  document.getElementById('smsg').textContent = '';
+
+  const m = selectedModel;
+  const careLevel = document.getElementById('f-care').value;
+  const incSase = document.getElementById('f-sase').checked && !!m.saseSku;
+  const incUtp = document.getElementById('f-utp').checked && m.utpEligible;
+  const incCloud = document.getElementById('f-cloud').checked;
+  const incPresence = document.getElementById('f-presence').checked;
+  const poeModel = document.getElementById('f-poe').value;
+  const poeQty = parseInt(document.getElementById('f-poe-qty').value, 10) || qty;
+
+  const careCode = CARE_CODE[careLevel];
+  const careLabel = CARE_LABEL[careLevel];
+  const careSku = `${m.carePfx}-${careCode}-02-DD`;
+
+  const isOut = m.seg.includes('outdoor');
+  const isRug = m.seg.includes('rugged');
+  const segLabel = isRug ? 'Rugged / Industrial OT' : isOut ? 'Outdoor' : 'Indoor';
+
+  const rows = [];
+
+  rows.push({ section: `${segLabel} · ${m.id} ×${qty} — ${m.wifi} ${m.mimo} MIMO` });
+
+  // Hardware AP
+  rows.push({
+    sku: `${m.hwBase}-A`,
+    desc: `${m.id} Wireless Access Point — ${m.desc} Managed by FortiGate, FortiEdge Cloud, or FortiSASE. Limited Lifetime Hardware Warranty.`,
+    qty, kind:'req',
+    note: `Replace -A with correct regional suffix (A/B/C/D/E/F/I/J/K/N/P/S/T/U/V/W/Y)`,
+  });
+
+  // FortiCare Support
+  if (careLevel === 'essential') {
+    rows.push({
+      sku: '⚠',
+      desc: 'NOTE: FortiCare Essential (-314-) is only available for renewal, not with initial hardware purchase.',
+      qty: null, kind:'note', note: 'Renewal only',
+    });
+  }
+  rows.push({
+    sku: careSku,
+    desc: `FortiCare ${careLabel} Support for ${m.id} — 24×7 TAC, firmware updates, hardware replacement`,
+    qty, kind:'req',
+    note: `${careLevel === 'essential' ? 'Renewal only — not with initial HW' : '24×7 TAC + RMA'} · co-term -DD`,
+  });
+
+  // FortiSASE subscription
+  if (incSase) {
+    rows.push({
+      sku: m.saseSku,
+      desc: `FortiSASE Subscription for ${m.id} — cloud managed FortiAP with SD-WAN bandwidth included. Enables SASE-managed deployment without FortiGate on-site.`,
+      qty, kind:'opt',
+      note: 'FortiSASE managed · bandwidth included',
+    });
+  }
+
+  // UTP Edge Services
+  if (incUtp) {
+    rows.push({
+      sku: 'FC-10-APGIS-768-02-DD',
+      desc: 'FortiAP G/K-Series UTP Edge Services — FortiGuard Universal Threat Protection: Application Control + Web Filtering. Applicable to FortiGate or FortiCloud managed G-Series and K-Series FortiAP.',
+      qty, kind:'opt',
+      note: 'G/K-Series models only · requires FortiGate or FortiCloud management',
+    });
+  }
+
+  // FortiEdge Cloud Management
+  if (incCloud) {
+    rows.push({
+      sku: 'FC-10-90AP1-639-02-DD',
+      desc: 'FortiEdge Cloud FortiAP Management License — full suite of FortiAP management features, 1-year log retention. FortiCare Premium included only when FortiEdge Cloud is the managing entity.',
+      qty, kind:'opt',
+      note: 'Cloud-managed · FortiCare only when FortiEdge Cloud manages unit',
+    });
+  }
+
+  // Presence Analytics
+  if (incPresence) {
+    rows.push({
+      sku: 'FC-10-FPCLD-169-02-DD',
+      desc: 'FortiCloud Presence Analytics License — location and presence analytics for FortiAP.',
+      qty, kind:'opt',
+      note: 'FortiCloud presence/location analytics',
+    });
+  }
+
+  // PoE Injector
+  if (poeModel !== 'none') {
+    const poe = POE_INJECTORS[poeModel];
+    rows.push({
+      sku: poeModel,
+      desc: `${poeModel} — ${poe.desc}`,
+      qty: poeQty, kind:'opt',
+      note: `${poeQty < qty ? `${poeQty} of ${qty} APs — remainder powered by PoE switch` : 'One per AP'}`,
+    });
+  }
+
+  _lastLabel = `${m.id} ×${qty} — ${m.wifi} ${m.mimo} ${careLabel}`;
+  _lastRows  = rows;
+  _lastMeta  = { model: m.id, qty, wifi: m.wifi, mimo: m.mimo, care: careLabel };
+  renderBOM(rows, _lastMeta);
+  return true;
+}
+
+function renderBOM(rows, meta) {
+  document.getElementById('bom-meta').innerHTML = [
+    { label:'Model',   value: meta.model },
+    { label:'Qty',     value: meta.qty },
+    { label:'Wi-Fi',   value: meta.wifi },
+    { label:'MIMO',    value: meta.mimo },
+    { label:'Support', value: meta.care },
+    { label:'SKU Suffix', value:'-DD (co-term)' },
+  ].map(m=>`<div class="bom-meta-item"><div class="ml">${m.label}</div><div class="mv">${m.value}</div></div>`).join('');
+
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+  let lines=0, totalQty=0;
+  for (const row of rows) {
+    const tr = document.createElement('tr');
+    if (row.section !== undefined) {
+      tr.className = 'rs';
+      tr.innerHTML = `<td colspan="5">${row.section}</td>`;
+    } else {
+      lines++;
+      if (typeof row.qty === 'number') totalQty += row.qty;
+      const bm={req:'<span class="br br-r">Required</span>',opt:'<span class="br br-o">Optional</span>',note:''};
+      tr.innerHTML = `<td><span class="sk">${row.sku}</span></td><td class="nc">${row.desc}</td><td class="qc">${row.qty??''}</td><td>${bm[row.kind]||''}</td><td class="nc">${row.note||''}</td>`;
+    }
+    tbody.appendChild(tr);
+  }
+  document.getElementById('bom-totals').innerHTML = `
+    <div class="tc"><div class="tl">Line Items</div><div class="tv">${lines}</div></div>
+    <div class="tc hi"><div class="tl">Total Units</div><div class="tv">${totalQty}</div></div>
+  `;
+  document.getElementById('bom-section').style.display='block';
+  document.getElementById('bom-section').scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('smsg').textContent='✓ BOM generated.';
+  document.getElementById('smsg').style.color='#2E7D32';
+}
+
+function resetForm() {
+  selectedModel = null;
+  document.querySelectorAll('.mc').forEach(c => c.classList.remove('selected'));
+  document.getElementById('f-qty').value = '1';
+  document.getElementById('f-care').value = 'premium';
+  document.getElementById('f-sase').checked = false;
+  document.getElementById('f-utp').checked = false;
+  document.getElementById('f-cloud').checked = false;
+  document.getElementById('f-presence').checked = false;
+  document.getElementById('f-poe').value = 'none';
+  document.getElementById('f-poe-qty').value = '1';
+  document.querySelector('label:has(#f-sase)').style.opacity = '1';
+  document.querySelector('label:has(#f-sase)').style.pointerEvents = '';
+  document.getElementById('row-utp').style.opacity = '1';
+  document.getElementById('row-utp').style.pointerEvents = '';
+  document.getElementById('bom-section').style.display = 'none';
+  document.getElementById('smsg').textContent = '';
+  document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+  document.querySelectorAll('.err').forEach(e => e.style.display = 'none');
+}
+
+function copyTSV() {
+  const rows = document.querySelectorAll('#bom-table tbody tr');
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  rows.forEach(r => {
+    if (r.classList.contains('rs')) { lines.push(`\t${r.querySelector('td').textContent.trim()}\t\t\t`); }
+    else {
+      const c = r.querySelectorAll('td');
+      if (c.length >= 5) lines.push([c[0].textContent.trim(),c[1].textContent.trim(),c[2].textContent.trim(),c[3].textContent.trim(),c[4].textContent.trim()].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => { document.getElementById('smsg').textContent='✓ Copied.'; document.getElementById('smsg').style.color='#2E7D32'; });
+}
+
+buildModelGrid();
+</script>
+</body>
+</html>

@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiBOM – Project BOM Generator</title>
+<style>
+  :root {
+    --forti-red:#EE3124; --forti-dark:#1A1D23; --forti-sidebar:#21252D;
+    --forti-sidebar-hover:#2A2F3A; --forti-sidebar-active:#2E3340;
+    --forti-border:#363C4A; --forti-text-primary:#E8EAF0;
+    --forti-text-secondary:#8A93A8; --forti-text-muted:#555E72;
+    --forti-content-bg:#F2F4F7; --hh:52px;
+    --c-white:#fff; --c-border:#DDE1E9; --c-text:#2A2F3A;
+    --c-text2:#6B7589; --c-textm:#9BA5BA; --c-sh:#F7F9FC;
+    --c-ib:#C8CDD9; --c-th:#EEF1F6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--forti-dark);color:var(--forti-text-primary);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+  /* TOP BAR */
+  #top-bar{height:var(--hh);background:var(--forti-dark);border-bottom:1px solid var(--forti-border);display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;z-index:200;}
+  .logo-wrap{display:flex;align-items:center;gap:10px;}
+  .logo-icon{width:28px;height:28px;flex-shrink:0;}
+  .product-name{font-size:15px;font-weight:600;color:var(--forti-text-primary);letter-spacing:.01em;}
+  .product-name span{color:var(--forti-red);}
+  .tb-div{width:1px;height:24px;background:var(--forti-border);margin:0 4px;}
+  .tb-sub{font-size:12px;color:var(--forti-text-secondary);letter-spacing:.03em;text-transform:uppercase;}
+  .spacer{flex:1;}
+  .ver-badge{font-size:11px;color:var(--forti-text-muted);background:rgba(255,255,255,.05);border:1px solid var(--forti-border);border-radius:3px;padding:2px 8px;letter-spacing:.04em;}
+  #cart-btn{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:3px;border:1px solid var(--forti-border);background:rgba(255,255,255,.04);cursor:pointer;font-size:12px;color:var(--forti-text-secondary);font-family:inherit;transition:background .12s;}
+  #cart-btn:hover{background:rgba(255,255,255,.08);color:var(--forti-text-primary);}
+  #cart-btn.live{border-color:var(--forti-red);color:var(--forti-text-primary);}
+  #cart-btn svg{width:15px;height:15px;}
+  #cbadge{display:none;background:var(--forti-red);color:#fff;font-size:10px;font-weight:700;border-radius:2px;padding:1px 5px;}
+  #cbadge.on{display:inline-block;}
+
+  /* LAYOUT */
+  #main{display:flex;flex:1;overflow:hidden;}
+
+  /* SIDEBAR */
+  #sidebar{width:240px;background:var(--forti-sidebar);border-right:1px solid var(--forti-border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;overflow-x:hidden;}
+  #sidebar::-webkit-scrollbar{width:4px;}
+  #sidebar::-webkit-scrollbar-thumb{background:var(--forti-border);border-radius:2px;}
+  .nsl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--forti-text-muted);padding:20px 16px 8px;}
+  .ni{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;transition:background .12s;border-left:2px solid transparent;color:inherit;}
+  .ni:hover{background:var(--forti-sidebar-hover);}
+  .ni.active{background:var(--forti-sidebar-active);border-left-color:var(--forti-red);}
+  .ni.proj{border-left-color:transparent;}
+  .ni.proj.live{border-left-color:#F7941D;}
+  .ni-icon{width:18px;height:18px;flex-shrink:0;opacity:.7;}
+  .ni.active .ni-icon,.ni.proj .ni-icon{opacity:1;}
+  .ni-label{font-size:13px;color:var(--forti-text-secondary);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ni.active .ni-label,.ni.proj .ni-label{color:var(--forti-text-primary);font-weight:500;}
+  .ni-badge{margin-left:auto;font-size:10px;background:var(--forti-red);color:#fff;border-radius:2px;padding:1px 5px;font-weight:600;display:none;}
+  .ni-badge.on{display:block;}
+  .n-sep{height:1px;background:var(--forti-border);margin:8px 0;}
+  .n-load{padding:12px 16px;font-size:12px;color:var(--forti-text-muted);font-style:italic;}
+
+  /* CONTENT */
+  #content{flex:1;background:var(--forti-content-bg);overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+  #ch{height:40px;background:#fff;border-bottom:1px solid #DDE1E9;display:flex;align-items:center;padding:0 20px;gap:6px;flex-shrink:0;}
+  .bci{font-size:12px;color:#6B7589;}
+  .bcs{font-size:11px;color:#B0B8CC;}
+  .bci.cur{color:#2A2F3A;font-weight:500;}
+  #pfw{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+  #pf{border:none;width:100%;flex:1;}
+  #ws{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;color:#6B7589;text-align:center;}
+  .wl{width:56px;height:56px;opacity:.2;}
+  #ws h2{font-size:18px;font-weight:500;color:#4A5168;}
+  #ws p{font-size:13px;max-width:360px;line-height:1.6;}
+  #ws .hint{margin-top:8px;font-size:11px;color:#9BA5BA;border:1px dashed #C8CDD9;border-radius:4px;padding:8px 16px;}
+
+  /* PROJECT BOM VIEW */
+  #pbv{flex:1;overflow-y:auto;display:none;flex-direction:column;background:var(--forti-content-bg);padding:20px;gap:14px;}
+  #pbv::-webkit-scrollbar{width:6px;}
+  #pbv::-webkit-scrollbar-thumb{background:#C8CDD9;border-radius:3px;}
+
+  /* Light cards */
+  .lc{background:var(--c-white);border:1px solid var(--c-border);border-radius:4px;overflow:hidden;}
+  .lch{background:var(--c-sh);border-bottom:1px solid var(--c-border);padding:9px 18px;display:flex;align-items:center;gap:8px;}
+  .lch h2{font-size:11px;font-weight:700;color:var(--c-text);letter-spacing:.04em;text-transform:uppercase;}
+  .lcb{padding:18px;}
+  .pfg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr));gap:14px;}
+  .pg{display:flex;flex-direction:column;gap:4px;}
+  .pg.full{grid-column:1/-1;}
+  .pl{font-size:10px;font-weight:700;color:var(--c-text2);text-transform:uppercase;letter-spacing:.07em;}
+  .pl .r{color:var(--forti-red);margin-left:2px;}
+  input[type=text].pi,select.pi,textarea.pi{background:var(--c-white);border:1px solid var(--c-ib);border-radius:3px;padding:6px 9px;font-size:13px;color:var(--c-text);font-family:inherit;outline:none;transition:border-color .15s;width:100%;}
+  input.pi:focus,select.pi:focus,textarea.pi:focus{border-color:var(--forti-red);box-shadow:0 0 0 2px rgba(238,49,36,.1);}
+  textarea.pi{resize:vertical;min-height:52px;}
+
+  /* Summary bar */
+  .sbar{background:var(--c-white);border:1px solid var(--c-border);border-radius:4px;padding:12px 18px;display:flex;align-items:center;flex-wrap:wrap;gap:16px;}
+  .si .sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--c-textm);}
+  .si .sv{font-size:18px;font-weight:600;color:var(--c-text);}
+  .si.hi .sv{color:var(--forti-red);}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:3px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:background .12s;}
+  .btn svg{width:13px;height:13px;flex-shrink:0;}
+  .bp{background:var(--forti-red);color:#fff;border-color:var(--forti-red);}
+  .bp:hover{background:#d42a1e;}
+  .bs{background:var(--c-white);color:var(--c-text);border-color:var(--c-ib);}
+  .bs:hover{background:var(--c-sh);}
+  .bd{background:#FEF0EE;color:#C0392B;border-color:#F5C6C2;}
+  .bd:hover{background:#F5C6C2;}
+  .act-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-left:auto;}
+
+  /* BOM groups */
+  .bg{background:var(--c-white);border:1px solid var(--c-border);border-radius:4px;overflow:hidden;}
+  .bgh{background:var(--c-th);border-bottom:1px solid var(--c-border);padding:8px 14px;display:flex;align-items:center;gap:10px;}
+  .bgp{font-size:12px;font-weight:700;color:var(--c-text);flex:1;}
+  .bgm{font-size:11px;color:var(--c-text2);}
+  .bg-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5;border-radius:2px;padding:1px 6px;}
+  .bg-del{background:#FEF0EE;border:1px solid #F5C6C2;color:#C0392B;font-size:11px;font-weight:600;padding:3px 8px;border-radius:2px;cursor:pointer;font-family:inherit;}
+  .bg-del:hover{background:#F5C6C2;}
+
+  /* BOM table */
+  table.bt{width:100%;border-collapse:collapse;font-size:12px;}
+  table.bt thead th{background:var(--c-th);border:1px solid var(--c-border);padding:6px 10px;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#4A5268;white-space:nowrap;}
+  table.bt tbody td{border:1px solid var(--c-border);padding:6px 10px;vertical-align:top;font-size:12px;}
+  table.bt tbody tr:nth-child(even) td{background:var(--c-sh);}
+  table.bt tbody tr:hover td{background:#EEF1F6;}
+  .sr td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--c-text2);padding:4px 10px;border-top:2px solid #C5CAD9;}
+  .sk{font-family:'Courier New',monospace;font-size:11px;color:#1A4E82;font-weight:700;white-space:nowrap;}
+  .qc{text-align:center;font-weight:700;color:var(--c-textm);}
+  .nc{color:var(--c-textm);font-size:11px;}
+  .br{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 4px;}
+  .br-r{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2;}
+  .br-o{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5;}
+  .br-m{background:#FFF8EE;color:#8A5800;border:1px solid #F5D9A0;}
+
+  /* Empty state */
+  .ec{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:60px 20px;text-align:center;color:var(--c-textm);}
+  .ec svg{opacity:.2;}
+  .ec h3{font-size:16px;font-weight:500;color:var(--c-text2);}
+  .ec p{font-size:13px;max-width:320px;line-height:1.6;}
+
+  /* Drag-to-reorder */
+  .bg{cursor:default;}
+  .bg.dragging{opacity:.45;box-shadow:0 4px 18px rgba(0,0,0,.18);transform:scale(1.01);transition:transform .1s;}
+  .bg.drag-over{outline:2px dashed var(--forti-red);outline-offset:2px;}
+  .drag-handle{display:flex;align-items:center;padding:0 8px 0 0;cursor:grab;color:var(--c-textm);opacity:.55;flex-shrink:0;}
+  .drag-handle:active{cursor:grabbing;}
+  .drag-handle svg{pointer-events:none;}
+
+  /* BOM Group header rows (user-created section dividers) */
+  .bom-group-row{background:#D8DCE6;border:1px solid #B4BAC8;border-radius:4px;display:flex;align-items:stretch;gap:0;overflow:hidden;cursor:default;}
+  .bom-group-row.dragging{opacity:.45;box-shadow:0 4px 18px rgba(0,0,0,.18);}
+  .bom-group-row.drag-over{outline:2px dashed var(--forti-red);outline-offset:2px;}
+  .bgr-accent{width:4px;background:var(--forti-red);flex-shrink:0;}
+  .bgr-body{flex:1;padding:9px 14px;display:flex;align-items:center;gap:12px;}
+  .bgr-icon{color:var(--forti-red);flex-shrink:0;}
+  .bgr-label{font-size:13px;font-weight:700;color:var(--c-text);flex:1;}
+  .bgr-note{font-size:11px;color:var(--c-text2);font-style:italic;}
+  .bgr-actions{display:flex;gap:5px;align-items:center;padding:0 10px;}
+  .bgr-btn{background:none;border:1px solid var(--c-ib);border-radius:2px;color:var(--c-text2);font-size:11px;font-weight:600;padding:3px 8px;cursor:pointer;font-family:inherit;transition:background .12s;}
+  .bgr-btn:hover{background:var(--c-sh);color:var(--c-text);}
+  .bgr-btn.del{border-color:#F5C6C2;color:#C0392B;background:#FEF0EE;}
+  .bgr-btn.del:hover{background:#F5C6C2;}
+
+  /* Import modal */
+  #imp-modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);align-items:center;justify-content:center;}
+  #imp-modal.on{display:flex;}
+  #imp-box{background:#fff;border-radius:5px;width:480px;max-width:95vw;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+  #imp-box h3{font-size:14px;font-weight:700;color:var(--c-text);padding:16px 18px;border-bottom:1px solid var(--c-border);background:var(--c-sh);display:flex;align-items:center;gap:8px;}
+  #imp-body{padding:18px;display:flex;flex-direction:column;gap:12px;}
+  #imp-drop{border:2px dashed var(--c-ib);border-radius:4px;padding:32px 20px;text-align:center;color:var(--c-text2);font-size:13px;cursor:pointer;transition:border-color .15s,background .15s;}
+  #imp-drop:hover,#imp-drop.over{border-color:var(--forti-red);background:#FFF5F4;}
+  #imp-drop p{margin-top:6px;font-size:11px;color:var(--c-textm);}
+  #imp-foot{padding:12px 18px;border-top:1px solid var(--c-border);display:flex;justify-content:flex-end;gap:8px;background:var(--c-sh);}
+
+  /* Group editor modal */
+  #grp-modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);align-items:center;justify-content:center;}
+  #grp-modal.on{display:flex;}
+  #grp-box{background:#fff;border-radius:5px;width:400px;max-width:95vw;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+  #grp-box h3{font-size:14px;font-weight:700;color:var(--c-text);padding:16px 18px;border-bottom:1px solid var(--c-border);background:var(--c-sh);}
+  #grp-body{padding:18px;display:flex;flex-direction:column;gap:12px;}
+  #grp-foot{padding:12px 18px;border-top:1px solid var(--c-border);display:flex;justify-content:flex-end;gap:8px;background:var(--c-sh);}
+
+  /* Toast */
+  #toast{position:fixed;bottom:24px;right:24px;z-index:999;background:#2A2F3A;color:#E8EAF0;font-size:12px;padding:10px 16px;border-radius:4px;border-left:3px solid var(--forti-red);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;max-width:340px;}
+  #toast.on{opacity:1;transform:translateY(0);}
+
+  /* Print */
+  @media print {
+    body{background:#fff;overflow:auto;height:auto;}
+    #top-bar,#sidebar,#ch,.act-row,#toast,#pfw{display:none!important;}
+    #main{display:block;}
+    #pbv{display:flex!important;overflow:visible;padding:20px;}
+    .bg-del{display:none!important;}
+    .lc,.bg{break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+
+<div id="top-bar">
+  <div class="logo-wrap">
+    <svg class="logo-icon" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="4" fill="#EE3124"/><path d="M6 8h16v3H6zM6 12.5h10v3H6zM6 17h16v3H6z" fill="white"/></svg>
+    <span class="product-name"><span>Forti</span>BOM</span>
+  </div>
+  <div class="tb-div"></div>
+  <span class="tb-sub">Project BOM Generator</span>
+  <div class="spacer"></div>
+  <button id="cart-btn" onclick="showPBV()">
+    <svg viewBox="0 0 15 15" fill="none"><path d="M1 1h2l2 7h7l1-5H5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="13" r="1" fill="currentColor"/><circle cx="12" cy="13" r="1" fill="currentColor"/></svg>
+    Project BOM
+    <span id="cbadge">0</span>
+  </button>
+  <span class="ver-badge">v2.0</span>
+</div>
+
+<div id="main">
+  <nav id="sidebar">
+    <div class="nsl" style="padding-bottom:4px;">Project</div>
+    <div class="ni proj" id="nav-proj" onclick="showPBV()">
+      <svg class="ni-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="2" stroke="#E8EAF0" stroke-width="1.2"/><path d="M5 6h8M5 9h8M5 12h5" stroke="#E8EAF0" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <span class="ni-label">Project BOM</span>
+      <span class="ni-badge" id="sb-badge">0</span>
+    </div>
+    <div class="n-sep" style="margin-top:8px;"></div>
+    <div class="nsl">Products</div>
+    <div id="nav-items"><div class="n-load">Scanning products…</div></div>
+    <div class="n-sep"></div>
+    <div class="nsl">Info</div>
+    <div class="ni" onclick="showAbout()">
+      <svg class="ni-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="#8A93A8" stroke-width="1.2"/><path d="M9 8v5M9 6.5v.5" stroke="#8A93A8" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <span class="ni-label">About</span>
+    </div>
+  </nav>
+
+  <div id="content">
+    <div id="ch">
+      <span class="bci">FortiBOM</span>
+      <span class="bcs">›</span>
+      <span class="bci cur" id="bc">Select a product</span>
+    </div>
+
+    <!-- Product iframe area -->
+    <div id="pfw">
+      <div id="ws">
+        <svg class="wl" viewBox="0 0 56 56" fill="none"><rect width="56" height="56" rx="8" fill="#EE3124"/><path d="M12 16h32v6H12zM12 25h20v6H12zM12 34h32v6H12z" fill="white"/></svg>
+        <h2>Select a product to begin</h2>
+        <p>Choose a Fortinet product from the left sidebar. Configure the BOM, then click <strong>"Add to Project BOM"</strong> to build a cross-product project quote. You can add the same product multiple times.</p>
+        <div class="hint">Products load from <code>products/</code> · Multiple runs per product supported</div>
+      </div>
+      <iframe id="pf" style="display:none;" title="Product BOM Generator"></iframe>
+    </div>
+
+    <!-- Project BOM view -->
+    <div id="pbv">
+      <!-- Project Info -->
+      <div class="lc">
+        <div class="lch">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="11" height="11" rx="1.5" stroke="#6B7589" stroke-width="1.2"/><path d="M3.5 4.5h6M3.5 6.5h4" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+          <h2>Project Information</h2>
+        </div>
+        <div class="lcb">
+          <div class="pfg">
+            <div class="pg"><label class="pl">Customer / Opportunity <span class="r">*</span></label><input type="text" class="pi" id="pi-cust" placeholder="e.g. Acme Corp – Network Refresh 2025"></div>
+            <div class="pg"><label class="pl">Opportunity ID</label><input type="text" class="pi" id="pi-opp" placeholder="e.g. OPP-2025-01234"></div>
+            <div class="pg"><label class="pl">SE / Engineer</label><input type="text" class="pi" id="pi-eng" placeholder="Your name"></div>
+            <div class="pg"><label class="pl">Date</label><input type="text" class="pi" id="pi-date"></div>
+            <div class="pg">
+              <label class="pl">Support / License Term</label>
+              <select class="pi" id="pi-term" onchange="applyTerm()">
+                <option value="DD">Co-term / Date-driven (-DD) — default</option>
+                <option value="12">1 Year (-12)</option>
+                <option value="36">3 Years (-36)</option>
+                <option value="60">5 Years (-60)</option>
+              </select>
+              <div style="font-size:10px;color:var(--c-textm);margin-top:3px;">Replaces <code>-DD</code> suffix on all SKUs in this project BOM</div>
+            </div>
+            <div class="pg full"><label class="pl">Project Scope / Notes</label><textarea class="pi" id="pi-notes" placeholder="Optional: overall project scope, deployment context, or assumptions…"></textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary + Actions -->
+      <div class="sbar" id="sbar" style="display:none;">
+        <div class="si"><div class="sl">Product Groups</div><div class="sv" id="sum-g">0</div></div>
+        <div class="si hi"><div class="sl">Total Line Items</div><div class="sv" id="sum-l">0</div></div>
+        <div class="si"><div class="sl">Total Units / Licenses</div><div class="sv" id="sum-q">0</div></div>
+        <div class="si"><div class="sl">Term Applied</div><div class="sv" id="sum-term" style="font-size:14px;">-DD</div></div>
+        <div class="act-row">
+          <button class="btn bp" onclick="exportCSV()"><svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6l3 3 3-3" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>Export CSV</button>
+          <button class="btn bs" onclick="openImport()"><svg viewBox="0 0 13 13" fill="none"><path d="M6.5 9V1M9.5 6l-3 3-3-3" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round"/></svg>Import CSV</button>
+          <button class="btn bs" onclick="openAddGroup()"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="4" width="11" height="5" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M4 6.5h5M6.5 5.5v2" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Add Group</button>
+          <button class="btn bs" onclick="window.print()"><svg viewBox="0 0 13 13" fill="none"><rect x="1.5" y="4" width="10" height="6" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M3.5 4V2h6v2M3.5 10h6" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Print</button>
+          <button class="btn bs" onclick="copyTSV()"><svg viewBox="0 0 13 13" fill="none"><rect x="3.5" y="1" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/><rect x="1" y="3" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/></svg>Copy TSV</button>
+          <button class="btn bd" onclick="clearCart()"><svg viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M5.5 6v4M7.5 6v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3 3.5l.5 7a1 1 0 0 0 1 .9h4a1 1 0 0 0 1-.9l.5-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Clear All</button>
+        </div>
+      </div>
+
+      <!-- Empty state (outside bgc so innerHTML on bgc never destroys it) -->
+      <div class="ec" id="ec">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M4 4h8l6 22h20l4-14H14" stroke="#9BA5BA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="40" r="3" fill="#9BA5BA"/><circle cx="36" cy="40" r="3" fill="#9BA5BA"/></svg>
+        <h3>Project BOM is empty</h3>
+        <p>Select a product from the left sidebar, configure it, and click <strong>Add to Project BOM</strong>. You can add multiple products and run the same product page multiple times to build a complete project quote.</p>
+        <button class="btn bs" onclick="openImport()" style="margin-top:4px;"><svg viewBox="0 0 13 13" fill="none"><path d="M6.5 9V1M9.5 6l-3 3-3-3" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round"/></svg>Import from CSV</button>
+      </div>
+
+      <!-- BOM groups container -->
+      <div id="bgc"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Import CSV Modal -->
+<div id="imp-modal">
+  <div id="imp-box">
+    <h3>
+      <svg width="14" height="14" viewBox="0 0 13 13" fill="none"><path d="M6.5 9V1M9.5 6l-3 3-3-3" stroke="#2A2F3A" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="#2A2F3A" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Import Project from CSV
+    </h3>
+    <div id="imp-body">
+      <div id="imp-drop" onclick="document.getElementById('imp-file').click()" ondragover="impDragOver(event)" ondragleave="impDragLeave(event)" ondrop="impDrop(event)">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="opacity:.35"><rect x="4" y="4" width="24" height="24" rx="3" stroke="#6B7589" stroke-width="1.5"/><path d="M10 16h12M16 10v12" stroke="#6B7589" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <div style="font-weight:600;color:var(--c-text);margin-top:8px;">Drop a CSV file here or click to browse</div>
+        <p>Must be a FortiBOM-exported CSV. Project info and all product groups will be restored.</p>
+        <input type="file" id="imp-file" accept=".csv" style="display:none" onchange="impFileChosen(this)">
+      </div>
+      <div id="imp-warn" style="display:none;font-size:12px;color:#8A5800;background:#FFF8EE;border:1px solid #F5D9A0;border-radius:3px;padding:8px 12px;"></div>
+    </div>
+    <div id="imp-foot">
+      <button class="btn bs" onclick="closeImport()">Cancel</button>
+      <button class="btn bp" id="imp-ok" onclick="doImport()" disabled style="opacity:.5;">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Group Modal -->
+<div id="grp-modal">
+  <div id="grp-box">
+    <h3 id="grp-title">Add Group Header</h3>
+    <div id="grp-body">
+      <div class="pg">
+        <label class="pl">Group Label <span class="r">*</span></label>
+        <input type="text" class="pi" id="grp-label" placeholder="e.g. Core Firewall, Option A – SD-WAN…">
+      </div>
+      <div class="pg">
+        <label class="pl">Note (optional)</label>
+        <input type="text" class="pi" id="grp-note" placeholder="e.g. Requires FortiCare Essential">
+      </div>
+    </div>
+    <div id="grp-foot">
+      <button class="btn bs" onclick="closeGroupModal()">Cancel</button>
+      <button class="btn bp" id="grp-ok" onclick="saveGroupRow()">Add Group</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+const CATALOG = [
+  { file:'fortigate-bomgen.html',    label:'FortiGate',      cat:'Network Security' },
+  { file:'fortisase-bomgen.html',    label:'FortiSASE',      cat:'Network Security' },
+  { file:'fortisandbox-bomgen.html', label:'FortiSandbox', cat:'Network Security' },
+  { file:'fortiadc-bomgen.html', label:'FortiADC', cat:'Network Security' },
+  { file:'fortideceptor-bomgen.html', label:'FortiDeceptor', cat:'Network Security' },
+  { file:'fortiweb-bomgen.html', label:'FortiWeb', cat:'Network Security' },
+  { file:'fortiap-bomgen.html',      label:'FortiAP',        cat:'Network Access' },
+  { file:'fortiswitch-bomgen.html',  label:'FortiSwitch',    cat:'Network Access' },
+  { file:'forticlient-bomgen.html', label:'FortiClient', cat:'Endpoint Security' },
+  { file:'fortinac-bomgen.html',     label:'FortiNAC',       cat:'Access Control' },
+  { file: 'fortiauthenticator-bomgen.html', label: 'FortiAuthenticator', cat: 'Access Control' },
+  { file:'fortianalyzer-bomgen.html',label:'FortiAnalyzer',  cat:'Management' },
+  { file:'fortimanager-bomgen.html', label:'FortiManager',   cat:'Management' },
+  { file: 'fortiaiops-bomgen.html', label: 'FortiAIOps', cat: 'Management' },
+  { file:'fortimonitor-bomgen.html', label:'FortiMonitor', cat:'Management' },
+  { file:'fortisiem-bomgen.html', label:'FortiSIEM', cat:'Management' },
+  { file:'fortiflex-bomgen.html', label:'FortiFlex', cat:'Management' },
+  { file:'custom-sku-bomgen.html', label:'Custom SKU', cat:'Custom' },
+  { file:'placeholder-bomgen.html',  label:'Placeholder',    cat:'Demo' },
+];
+
+let cart = [], seq = 0, activeNav = null;
+// cart entries are either product-entries {id, product, label, rows, meta}
+// or group-header entries {id, _type:'group', label, note}
+
+// ── PERSISTENCE ───────────────────────────────────────────────────────────────
+function saveCart() {
+  try {
+    localStorage.setItem('fortibom_cart', JSON.stringify({ cart, seq }));
+  } catch(e) {
+    toast('Could not save cart — browser storage may be full.');
+  }
+}
+function loadCart() {
+  try {
+    const raw = localStorage.getItem('fortibom_cart');
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    cart = saved.cart || [];
+    seq  = saved.seq  || 0;
+  } catch(e) { /* corrupt data — start fresh */ }
+}
+
+// ── ICONS ──────────────────────────────────────────────────────────────────
+function icon(file) {
+  if (file.startsWith('fortigate'))   return `<svg class="ni-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 7h8M5 9.5h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+  if (file.startsWith('fortiswitch')) return `<svg class="ni-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="6" width="14" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="5" cy="9" r="1" fill="currentColor"/><circle cx="8" cy="9" r="1" fill="currentColor"/><circle cx="11" cy="9" r="1" fill="currentColor"/></svg>`;
+  if (file.startsWith('fortiap'))     return `<svg class="ni-icon" viewBox="0 0 18 18" fill="none"><path d="M9 11a3 3 0 0 1 0-6M9 11a3 3 0 0 0 0-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M6 13.5A6 6 0 0 1 3 8M12 13.5A6 6 0 0 0 15 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="9" cy="9" r="1" fill="currentColor"/></svg>`;
+  if (file.startsWith('fortinac'))    return `<svg class="ni-icon" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="10" y="3" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="3" y="10" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="10" y="10" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>`;
+  if (file.startsWith('fortianal') || file.startsWith('fortimanag')) return `<svg class="ni-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.2"/><path d="M9 2v2M9 14v2M2 9h2M14 9h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+  return `<svg class="ni-icon" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M6 9h6M9 6v6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+}
+
+// ── NAV BUILD ────────────────────────────────────────────────────────────────
+async function buildNav() {
+  const c = document.getElementById('nav-items');
+  c.innerHTML = '';
+  const groups = {};
+  for (const p of CATALOG) { if (!groups[p.cat]) groups[p.cat]=[]; groups[p.cat].push(p); }
+  let any = false;
+  for (const [cat, prods] of Object.entries(groups)) {
+    const items = [];
+    for (const p of prods) { if (await exists(`products/${p.file}`)) { items.push(p); any=true; } }
+    if (!items.length) continue;
+    const lbl = document.createElement('div'); lbl.className='nsl'; lbl.textContent=cat; lbl.style.paddingTop='14px'; c.appendChild(lbl);
+    for (const p of items) {
+      const el = document.createElement('div'); el.className='ni';
+      el.innerHTML = `${icon(p.file)}<span class="ni-label">${p.label}</span>`;
+      el.onclick = () => loadProduct(`products/${p.file}`, p.label, el);
+      c.appendChild(el);
+    }
+  }
+  if (!any) c.innerHTML = `<div class="n-load">No product files found in products/</div>`;
+}
+async function exists(path) { try { return (await fetch(path,{method:'HEAD'})).ok; } catch { return false; } }
+
+// ── NAVIGATION ───────────────────────────────────────────────────────────────
+function setActiveNav(el) {
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  activeNav = el;
+}
+function loadProduct(path, label, navEl) {
+  setActiveNav(navEl);
+  document.getElementById('bc').textContent = label;
+  document.getElementById('pbv').style.display = 'none';
+  document.getElementById('pfw').style.display = 'flex';
+  document.getElementById('ws').style.display = 'none';
+  const f = document.getElementById('pf');
+  f.style.display = 'block';
+  f.src = path;
+}
+function showPBV() {
+  setActiveNav(document.getElementById('nav-proj'));
+  document.getElementById('bc').textContent = 'Project BOM';
+  document.getElementById('pfw').style.display = 'none';
+  document.getElementById('pbv').style.display = 'flex';
+}
+function showAbout() {
+  setActiveNav(null);
+  document.getElementById('bc').textContent = 'About';
+  document.getElementById('pbv').style.display = 'none';
+  document.getElementById('pfw').style.display = 'flex';
+  document.getElementById('pf').style.display = 'none';
+  const ws = document.getElementById('ws');
+  ws.style.display = 'flex';
+  ws.querySelector('h2').textContent = 'FortiBOM v2.0';
+  ws.querySelector('p').textContent = 'Cross-product Bill of Materials generator for Fortinet deployments. Build BOMs per product, then combine them into a Project BOM.';
+  ws.querySelector('p').innerHTML += '<br><br>Disclaimer: FortiBOM is not an officially sanctioned Fortinet product. Always validate output against the official Fortinet product ordering guides.';
+  ws.querySelector('p').innerHTML += '<br><br><a href="https://github.com/msalty/FortiBOM/issues" target="_blank" rel="noopener noreferrer">Report an issue on GitHub</a>';
+}
+
+// ── postMessage RECEIVER ─────────────────────────────────────────────────────
+window.addEventListener('message', e => {
+  if (!e.data || e.data.type !== 'FORTIBOM_ADD') return;
+  const { product, label, rows, meta } = e.data;
+  const count = cart.filter(c => c.product === product).length;
+  const dispLabel = count > 0 ? `${label} (run ${count+1})` : label;
+  cart.push({ id:++seq, product, label:dispLabel, rows, meta });
+  updateBadges();
+  renderGroups();
+  saveCart();
+  toast(`✓ Added to Project BOM: ${dispLabel}`);
+  if (cart.length === 1) showPBV();
+});
+
+// ── CART UI ──────────────────────────────────────────────────────────────────
+function updateBadges() {
+  const n = cart.filter(c=>!c._type).length;
+  const badge = document.getElementById('cbadge');
+  const btn = document.getElementById('cart-btn');
+  const sbBadge = document.getElementById('sb-badge');
+  const navProj = document.getElementById('nav-proj');
+  badge.textContent = n; n > 0 ? badge.classList.add('on') : badge.classList.remove('on');
+  n > 0 ? btn.classList.add('live') : btn.classList.remove('live');
+  sbBadge.textContent = n; n > 0 ? sbBadge.classList.add('on') : sbBadge.classList.remove('on');
+  n > 0 ? navProj.classList.add('live') : navProj.classList.remove('live');
+}
+
+function removeFromCart(id) { cart = cart.filter(c=>c.id!==id); updateBadges(); renderGroups(); saveCart(); }
+function clearCart() { if (!confirm('Clear all items from the Project BOM?')) return; cart=[]; seq=0; updateBadges(); renderGroups(); saveCart(); }
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function renderGroups() {
+  const c = document.getElementById('bgc');
+  const ec = document.getElementById('ec');
+  const sbar = document.getElementById('sbar');
+  if (!cart.length) {
+    c.innerHTML = '';
+    ec.style.display = 'flex';
+    sbar.style.display = 'none';
+    return;
+  }
+  ec.style.display = 'none';
+  sbar.style.display = 'flex';
+  let totL=0, totQ=0;
+  c.innerHTML = '';
+  for (const entry of cart) {
+    if (entry._type === 'group') {
+      const el = document.createElement('div');
+      el.className = 'bom-group-row';
+      el.dataset.id = entry.id;
+      el.innerHTML = `
+        <div class="bgr-accent"></div>
+        <div class="drag-handle" title="Drag to reorder">
+          <svg width="12" height="18" viewBox="0 0 12 18" fill="none"><circle cx="4" cy="4" r="1.3" fill="currentColor"/><circle cx="8" cy="4" r="1.3" fill="currentColor"/><circle cx="4" cy="9" r="1.3" fill="currentColor"/><circle cx="8" cy="9" r="1.3" fill="currentColor"/><circle cx="4" cy="14" r="1.3" fill="currentColor"/><circle cx="8" cy="14" r="1.3" fill="currentColor"/></svg>
+        </div>
+        <div class="bgr-body">
+          <svg class="bgr-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="4" width="12" height="6" rx="1" stroke="#EE3124" stroke-width="1.3"/><path d="M4 7h6" stroke="#EE3124" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span class="bgr-label">${h(entry.label)}</span>
+          ${entry.note ? `<span class="bgr-note">${h(entry.note)}</span>` : ''}
+        </div>
+        <div class="bgr-actions">
+          <button class="bgr-btn" onclick="openEditGroup(${entry.id})">Edit</button>
+          <button class="bgr-btn del" onclick="removeFromCart(${entry.id})">✕</button>
+        </div>`;
+      addDragListeners(el);
+      c.appendChild(el);
+    } else {
+      let lines=0, qty=0;
+      const displayRows = rowsWithTerm(entry.rows);
+      const rows = displayRows.map(r => {
+        if (r.section!==undefined) return `<tr class="sr"><td colspan="5">${h(r.section)}</td></tr>`;
+        lines++; if (typeof r.qty==='number') qty+=r.qty;
+        const bm={req:'<span class="br br-r">Required</span>',mand:'<span class="br br-m">Mandatory</span>',opt:'<span class="br br-o">Optional</span>',inc:'<span class="br br-o">Included</span>',note:''};
+        return `<tr><td><span class="sk">${h(r.sku||'')}</span></td><td class="nc">${h(r.desc||'')}</td><td class="qc">${r.qty??''}</td><td>${bm[r.kind]||''}</td><td class="nc">${h(r.note||'')}</td></tr>`;
+      }).join('');
+      totL+=lines; totQ+=qty;
+      const el = document.createElement('div');
+      el.className = 'bg';
+      el.dataset.id = entry.id;
+      el.innerHTML = `
+        <div class="bgh">
+          <div class="drag-handle" title="Drag to reorder">
+            <svg width="12" height="18" viewBox="0 0 12 18" fill="none"><circle cx="4" cy="4" r="1.3" fill="currentColor"/><circle cx="8" cy="4" r="1.3" fill="currentColor"/><circle cx="4" cy="9" r="1.3" fill="currentColor"/><circle cx="8" cy="9" r="1.3" fill="currentColor"/><circle cx="4" cy="14" r="1.3" fill="currentColor"/><circle cx="8" cy="14" r="1.3" fill="currentColor"/></svg>
+          </div>
+          <div><div class="bgp">${h(entry.label)}</div><div class="bgm">${lines} line item${lines!==1?'s':''} · ${qty.toLocaleString()} units/licenses</div></div>
+          <span class="bg-tag">${h(entry.product)}</span>
+          <button class="bg-del" onclick="removeFromCart(${entry.id})">✕ Remove</button>
+        </div>
+        <table class="bt"><thead><tr>
+          <th style="width:200px;">Part Number</th><th>Description</th>
+          <th style="width:50px;text-align:center;">Qty</th><th style="width:80px;">Type</th><th>Notes</th>
+        </tr></thead><tbody>${rows}</tbody></table>`;
+      addDragListeners(el);
+      c.appendChild(el);
+    }
+  }
+  const prodCount = cart.filter(e=>!e._type).length;
+  document.getElementById('sum-g').textContent = prodCount;
+  document.getElementById('sum-l').textContent = totL;
+  document.getElementById('sum-q').textContent = totQ.toLocaleString();
+  const term = getCurrentTerm();
+  const termLabel = {DD:'-DD (co-term)',12:'-12 (1 yr)',36:'-36 (3 yr)',60:'-60 (5 yr)'}[term];
+  document.getElementById('sum-term').textContent = termLabel;
+}
+
+// ── DRAG-TO-REORDER ──────────────────────────────────────────────────────────
+let dragSrcId = null;
+
+function addDragListeners(el) {
+  // Only allow drag when the mousedown originated on the drag handle
+  el.addEventListener('mousedown', e => {
+    el.draggable = !!e.target.closest('.drag-handle');
+  });
+  el.addEventListener('dragstart', e => {
+    if (!el.draggable) { e.preventDefault(); return; }
+    dragSrcId = Number(el.dataset.id);
+    el.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  el.addEventListener('dragend', () => {
+    el.classList.remove('dragging');
+    document.querySelectorAll('#bgc > *').forEach(n => n.classList.remove('drag-over'));
+  });
+  el.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('#bgc > *').forEach(n => n.classList.remove('drag-over'));
+    if (Number(el.dataset.id) !== dragSrcId) el.classList.add('drag-over');
+  });
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    const targetId = Number(el.dataset.id);
+    if (dragSrcId === null || dragSrcId === targetId) return;
+    const srcIdx = cart.findIndex(c => c.id === dragSrcId);
+    const tgtIdx = cart.findIndex(c => c.id === targetId);
+    if (srcIdx === -1 || tgtIdx === -1) return;
+    const [moved] = cart.splice(srcIdx, 1);
+    cart.splice(tgtIdx, 0, moved);
+    dragSrcId = null;
+    renderGroups();
+    saveCart();
+  });
+}
+
+// ── GROUP HEADERS ────────────────────────────────────────────────────────────
+let editingGroupId = null;
+
+function openAddGroup() {
+  editingGroupId = null;
+  document.getElementById('grp-title').textContent = 'Add Group Header';
+  document.getElementById('grp-ok').textContent = 'Add Group';
+  document.getElementById('grp-label').value = '';
+  document.getElementById('grp-note').value = '';
+  document.getElementById('grp-modal').classList.add('on');
+  setTimeout(() => document.getElementById('grp-label').focus(), 60);
+}
+
+function openEditGroup(id) {
+  const entry = cart.find(c => c.id === id);
+  if (!entry) return;
+  editingGroupId = id;
+  document.getElementById('grp-title').textContent = 'Edit Group Header';
+  document.getElementById('grp-ok').textContent = 'Save';
+  document.getElementById('grp-label').value = entry.label;
+  document.getElementById('grp-note').value = entry.note || '';
+  document.getElementById('grp-modal').classList.add('on');
+  setTimeout(() => document.getElementById('grp-label').focus(), 60);
+}
+
+function closeGroupModal() {
+  document.getElementById('grp-modal').classList.remove('on');
+  editingGroupId = null;
+}
+
+function saveGroupRow() {
+  const label = document.getElementById('grp-label').value.trim();
+  if (!label) { document.getElementById('grp-label').focus(); return; }
+  const note = document.getElementById('grp-note').value.trim();
+  if (editingGroupId !== null) {
+    const entry = cart.find(c => c.id === editingGroupId);
+    if (entry) { entry.label = label; entry.note = note; }
+  } else {
+    cart.push({ id: ++seq, _type: 'group', label, note });
+    updateBadges();
+  }
+  closeGroupModal();
+  renderGroups();
+  saveCart();
+  toast(editingGroupId !== null ? '✓ Group updated' : '✓ Group header added');
+}
+
+// Allow Enter key in group modal inputs
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeGroupModal(); closeImport(); }
+  if (e.key === 'Enter' && document.getElementById('grp-modal').classList.contains('on')) saveGroupRow();
+});
+
+function h(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── TERM REPLACEMENT ──────────────────────────────────────────────────────────
+// All product pages emit -DD SKUs. applyTerm() is called when the term selector
+// changes — it just triggers a re-render; renderGroups reads the current term.
+function getCurrentTerm() {
+  return document.getElementById('pi-term').value; // 'DD', '12', '36', or '60'
+}
+
+function applyTermToSku(sku, term) {
+  if (!sku || term === 'DD') return sku;
+  // Replace trailing -DD (case-insensitive, word-boundary aware)
+  return String(sku).replace(/-DD$/i, `-${term}`);
+}
+
+function applyTerm() {
+  renderGroups(); // re-render with new term applied
+}
+
+// Wrap rows with term substitution applied
+function rowsWithTerm(rows) {
+  const term = getCurrentTerm();
+  if (term === 'DD') return rows;
+  return rows.map(r => {
+    if (r.section !== undefined) return r;
+    return { ...r, sku: applyTermToSku(r.sku, term) };
+  });
+}
+
+// ── EXPORT ───────────────────────────────────────────────────────────────────
+function getMeta() {
+  return {
+    cust:  document.getElementById('pi-cust').value.trim()||'Unnamed Project',
+    opp:   document.getElementById('pi-opp').value.trim(),
+    eng:   document.getElementById('pi-eng').value.trim(),
+    date:  document.getElementById('pi-date').value.trim(),
+    notes: document.getElementById('pi-notes').value.trim(),
+    term:  document.getElementById('pi-term').value,
+  };
+}
+function exportCSV() {
+  const p = getMeta();
+  const termLabel = {DD:'Co-term (-DD)',12:'1 Year (-12)',36:'3 Years (-36)',60:'5 Years (-60)'}[p.term];
+  const rows = [
+    ['FortiBOM Project Export'],
+    [`Customer:${p.cust}`,`Opportunity:${p.opp}`,`Engineer:${p.eng}`,`Date:${p.date}`,`Term:${termLabel}`],
+    [],
+    ['Product Group','Part Number','Description','Qty','Type','Notes'],
+  ];
+  for (const entry of cart) {
+    if (entry._type === 'group') {
+      rows.push([`__GROUP__ ${entry.label}`, entry.note||'','','','','']);
+      continue;
+    }
+    rows.push([entry.label,'','','','','']);
+    for (const r of rowsWithTerm(entry.rows)) {
+      if (r.section!==undefined) rows.push(['',`--- ${r.section} ---`,'','','','']);
+      else rows.push(['',r.sku||'',r.desc||'',r.qty??'',r.kind||'',r.note||'']);
+    }
+    rows.push([]);
+  }
+  const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`FortiBOM_${p.cust.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); toast('✓ CSV exported');
+}
+function copyTSV() {
+  const lines=['Product Group\tPart Number\tDescription\tQty\tType\tNotes'];
+  for (const entry of cart) {
+    lines.push(`${entry.label}\t\t\t\t\t`);
+    for (const r of rowsWithTerm(entry.rows)) {
+      if (r.section!==undefined) lines.push(`\t--- ${r.section} ---\t\t\t\t`);
+      else lines.push(`\t${r.sku||''}\t${r.desc||''}\t${r.qty??''}\t${r.kind||''}\t${r.note||''}`);
+    }
+    lines.push('');
+  }
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('✓ Copied to clipboard'));
+}
+
+// ── IMPORT CSV ───────────────────────────────────────────────────────────────
+let pendingImport = null;
+
+function openImport() {
+  pendingImport = null;
+  document.getElementById('imp-file').value = '';
+  const warn = document.getElementById('imp-warn');
+  warn.style.display = 'none';
+  const ok = document.getElementById('imp-ok');
+  ok.disabled = true; ok.style.opacity = '.5';
+  document.getElementById('imp-modal').classList.add('on');
+}
+function closeImport() {
+  document.getElementById('imp-modal').classList.remove('on');
+  pendingImport = null;
+}
+function impDragOver(e) { e.preventDefault(); document.getElementById('imp-drop').classList.add('over'); }
+function impDragLeave() { document.getElementById('imp-drop').classList.remove('over'); }
+function impDrop(e) { e.preventDefault(); document.getElementById('imp-drop').classList.remove('over'); const f=e.dataTransfer.files[0]; if(f) parseImportFile(f); }
+function impFileChosen(inp) { if(inp.files[0]) parseImportFile(inp.files[0]); }
+
+function parseImportFile(file) {
+  const warn = document.getElementById('imp-warn');
+  const ok = document.getElementById('imp-ok');
+  warn.style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const result = parseCSV(ev.target.result);
+      if (!result.ok) { warn.textContent = result.error; warn.style.display='block'; pendingImport=null; ok.disabled=true; ok.style.opacity='.5'; return; }
+      pendingImport = result;
+      ok.disabled = false; ok.style.opacity = '1';
+      const pParts = [];
+      if (result.prodCount) pParts.push(`${result.prodCount} product group${result.prodCount!==1?'s':''}`);
+      if (result.grpCount)  pParts.push(`${result.grpCount} group header${result.grpCount!==1?'s':''}`);
+      warn.textContent = `Ready to import: "${result.meta.cust || 'Unnamed'}" — ` + (pParts.join(' + ') || 'no items');
+      warn.style.display='block'; warn.style.color='#1A6B3A'; warn.style.background='#F0FFF6'; warn.style.borderColor='#9BD6B8';
+    } catch(err) { warn.textContent = 'Could not parse CSV: ' + err.message; warn.style.display='block'; pendingImport=null; ok.disabled=true; ok.style.opacity='.5'; }
+  };
+  reader.readAsText(file);
+}
+
+function parseCSV(text) {
+  // Split lines, handle \r\n and \n
+  const rawLines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  function parseLine(line) {
+    const cells=[]; let cur='', inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(inQ){if(c==='"'&&line[i+1]==='"'){cur+='"';i++;}else if(c==='"'){inQ=false;}else{cur+=c;}}
+      else{if(c==='"'){inQ=true;}else if(c===','){cells.push(cur);cur='';}else{cur+=c;}}
+    }
+    cells.push(cur); return cells;
+  }
+  const lines = rawLines.map(parseLine);
+  // Validate header
+  if (!lines[0] || lines[0][0] !== 'FortiBOM Project Export') return {ok:false, error:'Not a FortiBOM CSV export (missing header).'};
+  // Row 1: meta
+  const metaRow = lines[1] || [];
+  function mval(cell) { return cell ? cell.replace(/^[^:]+:/,'').trim() : ''; }
+  const meta = { cust:mval(metaRow[0]), opp:mval(metaRow[1]), eng:mval(metaRow[2]), date:mval(metaRow[3]), term:'DD' };
+  const termLine = mval(metaRow[4]);
+  if (termLine.includes('1 Year')) meta.term='12';
+  else if (termLine.includes('3 Year')) meta.term='36';
+  else if (termLine.includes('5 Year')) meta.term='60';
+  // Data rows start at index 4 (after header row at index 3)
+  // Parse all items in order (product groups and group headers interleaved)
+  const items = [];
+  let currentEntry = null;
+  for (let i=4; i<lines.length; i++) {
+    const row = lines[i];
+    if (!row || row.every(c=>!c.trim())) { currentEntry=null; continue; }
+    const grp=row[0], sku=row[1]||'', desc=row[2]||'', qty=row[3]||'', kind=row[4]||'', note=row[5]||'';
+    // Group header row
+    if (grp && grp.startsWith('__GROUP__')) {
+      currentEntry = null;
+      items.push({ _type:'group', label: grp.replace('__GROUP__','').trim(), note: sku });
+      continue;
+    }
+    if (grp && !sku) {
+      // Product group label row
+      currentEntry = { product: grp, label: grp, rows: [] };
+      items.push(currentEntry);
+      continue;
+    }
+    if (sku && sku.startsWith('--- ') && sku.endsWith(' ---')) {
+      if (currentEntry) currentEntry.rows.push({ section: sku.slice(4,-4) });
+      continue;
+    }
+    if (currentEntry && sku) {
+      const qn = qty !== '' ? (isNaN(Number(qty)) ? qty : Number(qty)) : undefined;
+      currentEntry.rows.push({ sku, desc, qty:qn, kind, note });
+    }
+  }
+  const prodCount = items.filter(i=>!i._type).length;
+  const grpCount  = items.filter(i=>i._type==='group').length;
+  return { ok:true, meta, items, prodCount, grpCount };
+}
+
+function doImport() {
+  if (!pendingImport) return;
+  const { meta, items, prodCount, grpCount } = pendingImport;
+  // Restore project info fields
+  if (meta.cust) document.getElementById('pi-cust').value = meta.cust;
+  if (meta.opp)  document.getElementById('pi-opp').value  = meta.opp;
+  if (meta.eng)  document.getElementById('pi-eng').value  = meta.eng;
+  if (meta.date) document.getElementById('pi-date').value = meta.date;
+  if (meta.term) document.getElementById('pi-term').value = meta.term;
+  // Rebuild cart preserving order
+  cart = [];
+  seq = 0;
+  for (const item of items) {
+    if (item._type === 'group') {
+      cart.push({ id:++seq, _type:'group', label:item.label, note:item.note||'' });
+    } else {
+      cart.push({ id:++seq, product:item.product, label:item.label, rows:item.rows, meta:{} });
+    }
+  }
+  updateBadges();
+  renderGroups();
+  saveCart();
+  closeImport();
+  const parts = [];
+  if (prodCount) parts.push(`${prodCount} product group${prodCount!==1?'s':''}`);
+  if (grpCount)  parts.push(`${grpCount} group header${grpCount!==1?'s':''}`);
+  toast('✓ Imported ' + (parts.join(' + ') || 'project'));
+  showPBV();
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+let tt=null;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');if(tt)clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),3000);}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('pi-date').value = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+loadCart();
+updateBadges();
+renderGroups();
+if (cart.length) showPBV();
+buildNav();
+</script>
+</body>
+</html>

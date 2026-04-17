@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiAIOps – BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  color: var(--forti-text);
+  background: var(--forti-bg);
+  padding: 20px;
+  line-height: 1.5;
+}
+h2 { font-size: 16px; font-weight: 700; }
+h3 { font-size: 13px; font-weight: 600; color: var(--forti-text-secondary); text-transform: uppercase; letter-spacing: .05em; }
+
+/* Page header */
+.page-header { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+.page-icon { width:42px; height:42px; background:var(--forti-red); border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.page-icon svg { width:24px; height:24px; fill:white; }
+.page-title { font-size:20px; font-weight:700; color:var(--forti-text); }
+.page-subtitle { font-size:11px; color:var(--forti-text-muted); margin-top:2px; }
+
+/* Cards */
+.card { background:var(--forti-white); border:1px solid var(--forti-border); border-radius:4px; margin-bottom:14px; overflow:hidden; }
+.card-header { background:var(--forti-section-header); border-bottom:1px solid var(--forti-border); padding:9px 18px; display:flex; align-items:center; justify-content:space-between; }
+.card-body { padding:16px 18px; }
+
+/* Form elements */
+label { display:block; font-size:12px; font-weight:600; color:var(--forti-text-secondary); margin-bottom:4px; }
+label .req { color:var(--forti-red); }
+input[type=number], select {
+  background:white; border:1px solid var(--forti-input-border); border-radius:3px;
+  padding:6px 9px; font-size:13px; width:100%; outline:none;
+}
+input[type=number]:focus, select:focus {
+  border-color:var(--forti-red); box-shadow:0 0 0 2px rgba(238,49,36,.1);
+}
+input.invalid, select.invalid { border-color:var(--forti-red); }
+.field-err { display:none; color:var(--forti-red); font-size:11px; margin-top:3px; }
+
+.grid-2 { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(210px,100%),1fr)); gap:14px; }
+.grid-3 { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(180px,100%),1fr)); gap:10px; }
+.field { margin-bottom:0; }
+
+/* Deployment type cards */
+.dep-card {
+  border:2px solid var(--forti-border); border-radius:4px; padding:10px 12px;
+  cursor:pointer; transition:border-color .15s, background .15s;
+  user-select:none;
+}
+.dep-card:hover { border-color:#aab2c8; }
+.dep-card.selected { border:2px solid var(--forti-red); background:#FEF8F8; }
+.dep-card .dep-title { font-weight:600; font-size:13px; }
+.dep-card .dep-sub { font-size:11px; color:var(--forti-text-secondary); margin-top:2px; }
+
+/* Subscription tier cards */
+.tier-card {
+  border:2px solid var(--forti-border); border-radius:4px; padding:10px 12px;
+  cursor:pointer; transition:border-color .15s, background .15s;
+  user-select:none;
+}
+.tier-card:hover { border-color:#aab2c8; }
+.tier-card.selected { border:2px solid var(--forti-red); background:#FEF8F8; }
+.tier-card .tier-title { font-weight:600; font-size:12px; }
+.tier-card .tier-sub { font-size:10px; color:var(--forti-text-muted); margin-top:2px; }
+
+/* Callouts */
+.callout { border-radius:3px; padding:9px 12px; font-size:12px; line-height:1.6; display:flex; gap:8px; margin-bottom:10px; }
+.info { background:var(--forti-info-bg); border:1px solid var(--forti-info-border); color:var(--forti-info-text); }
+.warn { background:var(--forti-warn-bg); border:1px solid var(--forti-warn-border); color:var(--forti-warn-text); }
+
+/* Band indicator */
+.band-indicator {
+  display:none; background:var(--forti-info-bg); border:1px solid var(--forti-info-border);
+  border-radius:3px; padding:4px 10px; font-size:12px; color:var(--forti-info-text); margin-top:4px;
+}
+
+/* Feature comparison table */
+.comp-table { width:100%; border-collapse:collapse; font-size:11px; margin-top:8px; }
+.comp-table th { background:var(--forti-table-head); border:1px solid var(--forti-border); padding:6px 10px; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); text-align:left; }
+.comp-table td { border:1px solid var(--forti-border); padding:6px 10px; vertical-align:middle; }
+.comp-table tr:nth-child(even) td { background:var(--forti-table-stripe); }
+.comp-table .sub-head td { background:#EAECF3!important; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--forti-text-secondary); }
+.chk { color:#2E7D32; font-size:14px; }
+.dash { color:var(--forti-text-muted); }
+.col-center { text-align:center; }
+
+/* BOM action buttons */
+.btn { display:inline-block; padding:8px 16px; border:none; border-radius:3px; font-size:13px; font-weight:600; cursor:pointer; }
+.btn-primary { background:var(--forti-red); color:white; }
+.btn-primary:hover { background:#D42B1F; }
+.btn-green { background:#2E7D32; color:white; }
+.btn-green:hover { background:#245F27; }
+.btn-secondary { background:white; color:var(--forti-text); border:1px solid var(--forti-border); }
+.btn-secondary:hover { background:var(--forti-bg); }
+.btn-sm { padding:5px 11px; font-size:12px; }
+.actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px; }
+#smsg { font-size:12px; color:#2E7D32; font-weight:600; }
+
+/* BOM Preview table */
+#bom-section { display:none; }
+.bom-table { width:100%; border-collapse:collapse; font-size:12px; }
+.bom-table thead th { background:var(--forti-table-head); border:1px solid var(--forti-border); padding:7px 11px; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); }
+.bom-table tbody td { border:1px solid var(--forti-border); padding:7px 11px; vertical-align:top; }
+.bom-table tbody tr:nth-child(even) td { background:var(--forti-table-stripe); }
+.section-row td { background:#EAECF3!important; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--forti-text-secondary); padding:5px 11px!important; border-top:2px solid #C5CAD9!important; }
+.badge { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-radius:2px; padding:1px 4px; display:inline-block; }
+.badge-req  { background:#FEF0EE; color:#C0392B; border:1px solid #F5C6C2; }
+.badge-opt  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.badge-mand { background:#FFF8EE; color:#8A5800; border:1px solid #F5D9A0; }
+.badge-inc  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.sku { font-family:'Courier New', monospace; font-size:11px; color:#1A4E82; }
+.nc  { color:var(--forti-text-muted); }
+
+/* Checkbox add-ons */
+.addon-row { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--forti-border); }
+.addon-row:last-child { border-bottom:none; }
+.addon-row input[type=checkbox] { margin-top:2px; accent-color:var(--forti-red); width:14px; height:14px; flex-shrink:0; }
+.addon-label { font-size:13px; font-weight:600; }
+.addon-desc { font-size:11px; color:var(--forti-text-muted); }
+
+/* Disabled overlay */
+.disabled-opt { opacity:0.4; pointer-events:none; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ PAGE HEADER ═══════════════════════ -->
+<div class="page-header">
+  <div class="page-icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+    </svg>
+  </div>
+  <div>
+    <div class="page-title">FortiAIOps</div>
+    <div class="page-subtitle">BOM Generator · FAIOPS-OG-R8-20260206</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ FEATURE COMPARISON ═══════════════════════ -->
+<div class="card">
+  <div class="card-header"><h3>Subscription Comparison</h3></div>
+  <div class="card-body" style="overflow-x:auto;">
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th style="min-width:200px;">Feature</th>
+          <th class="col-center" style="min-width:140px;">Monitoring</th>
+          <th class="col-center" style="min-width:160px;">Monitoring + AI Insights</th>
+          <th class="col-center" style="min-width:130px;">SD-WAN</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="sub-head"><td colspan="4">Wireless &amp; Wired</td></tr>
+        <tr><td>FortiAP Monitoring</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>Wireless Clients Monitoring</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>Wireless Heatmaps</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>Wireless Channels Insights</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>Wireless Service Assurance</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>Wireless Troubleshooting Tools</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>Wireless Applications / Location / Reports / Rogue APs</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>Topology</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>FortiGate / FortiSwitch / Wired Monitoring &amp; Troubleshooting</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr class="sub-head"><td colspan="4">AI Insights (Wireless &amp; Wired)</td></tr>
+        <tr><td>AI Insights · AI-Driven ARRP · AI Trending</td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>AI Root Cause Analysis · AI Recommendations</td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr><td>FortiAI-Assist (Beta)</td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+        <tr class="sub-head"><td colspan="4">SD-WAN &amp; FortiExtender</td></tr>
+        <tr><td>AI Insights · AI Trending · AI Root Cause Analysis</td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="chk">✓</span></td></tr>
+        <tr><td>AI Recommendations · AI Forecasting</td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="chk">✓</span></td></tr>
+        <tr><td>FortiAI-Assist (Beta)</td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="chk">✓</span></td></tr>
+        <tr class="sub-head"><td colspan="4">Licensing Basis</td></tr>
+        <tr><td>Licensed by</td><td>Extension devices (FortiAP / FortiSwitch)</td><td>Extension devices (FortiAP / FortiSwitch)</td><td>FortiGate (SD-WAN enabled)</td></tr>
+        <tr><td>FortiCare Premium included (VM)</td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td><td class="col-center"><span class="chk">✓</span></td></tr>
+        <tr><td>FortiCare Premium included (Hardware)</td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="dash">—</span></td><td class="col-center"><span class="dash">—</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DEPLOYMENT TYPE ═══════════════════════ -->
+<div class="card">
+  <div class="card-header"><h3>Step 1 — Deployment Type <span style="color:var(--forti-red)">*</span></h3></div>
+  <div class="card-body">
+    <div class="grid-3" id="dep-grid">
+      <div class="dep-card selected" data-dep="vm" onclick="selectDep('vm')">
+        <div class="dep-title">VM / Virtual</div>
+        <div class="dep-sub">Public cloud (BYOL) or private cloud / on-prem VM</div>
+      </div>
+      <div class="dep-card" data-dep="hw100" onclick="selectDep('hw100')">
+        <div class="dep-title">FortiAIOps 100G</div>
+        <div class="dep-sub">FAO-100G appliance · 3.84 TB SSD</div>
+      </div>
+      <div class="dep-card" data-dep="hw500" onclick="selectDep('hw500')">
+        <div class="dep-title">FortiAIOps 500G</div>
+        <div class="dep-sub">FAO-500G appliance · 2×1.92 TB SSD + 4×4 TB HDD</div>
+      </div>
+    </div>
+
+    <!-- VM cloud callout -->
+    <div id="vm-note" class="callout info" style="margin-top:12px;">
+      <span>ℹ</span>
+      <span>All public cloud instances (AWS, Azure, GCP, Oracle OCI) are BYOL — subscriptions must be purchased separately. Private clouds supported: VMware, KVM, Hyper-V, Proxmox VE, Nutanix.</span>
+    </div>
+    <!-- HW callout -->
+    <div id="hw-note" class="callout warn" style="margin-top:12px; display:none;">
+      <span>⚠</span>
+      <span>Hardware appliances ship without any subscription or FortiCare. Both must be purchased separately. Hardware subscriptions do <strong>not</strong> include FortiCare Premium.</span>
+    </div>
+
+    <!-- HW qty (only for appliance) -->
+    <div id="hw-qty-row" style="margin-top:12px; display:none; max-width:220px;">
+      <label>Appliance Quantity <span class="req">*</span></label>
+      <input type="number" id="f-hw-qty" min="1" value="1" oninput="onFormChange()">
+      <span class="field-err" id="err-hw-qty">Enter a valid quantity ≥ 1</span>
+    </div>
+    <!-- HW spare parts (500G only) -->
+    <div id="hw500-spares" style="margin-top:14px; display:none;">
+      <div style="font-size:12px; font-weight:600; color:var(--forti-text-secondary); margin-bottom:8px;">Optional Spare Parts (FAO-500G)</div>
+      <div class="addon-row">
+        <input type="checkbox" id="chk-hdd" onchange="onFormChange()">
+        <div><div class="addon-label">Additional / Replacement 4TB SAS HDD</div><div class="addon-desc">SP-FSM2000G-HDD</div></div>
+        <div style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+          <label style="margin:0; font-size:11px; color:var(--forti-text-muted);">Qty</label>
+          <input type="number" id="f-hdd-qty" min="1" value="1" style="width:60px;" oninput="onFormChange()">
+        </div>
+      </div>
+      <div class="addon-row">
+        <input type="checkbox" id="chk-ssd" onchange="onFormChange()">
+        <div><div class="addon-label">Additional / Replacement 1.92TB SATA SSD</div><div class="addon-desc">SP-FAO500G-SSD</div></div>
+        <div style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+          <label style="margin:0; font-size:11px; color:var(--forti-text-muted);">Qty</label>
+          <input type="number" id="f-ssd-qty" min="1" value="1" style="width:60px;" oninput="onFormChange()">
+        </div>
+      </div>
+      <div class="addon-row">
+        <input type="checkbox" id="chk-ps" onchange="onFormChange()">
+        <div><div class="addon-label">Replacement Power Supply</div><div class="addon-desc">SP-FSM2000G-PS</div></div>
+        <div style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+          <label style="margin:0; font-size:11px; color:var(--forti-text-muted);">Qty</label>
+          <input type="number" id="f-ps-qty" min="1" value="1" style="width:60px;" oninput="onFormChange()">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ SUBSCRIPTION TYPE ═══════════════════════ -->
+<div class="card">
+  <div class="card-header"><h3>Step 2 — Subscription Type <span style="color:var(--forti-red)">*</span></h3></div>
+  <div class="card-body">
+    <div class="grid-3">
+      <div class="tier-card selected" data-sub="mon" onclick="selectSub('mon')">
+        <div class="tier-title">Monitoring</div>
+        <div class="tier-sub">FortiAP, FortiSwitch, FortiGate — wired &amp; wireless monitoring + tools</div>
+      </div>
+      <div class="tier-card" data-sub="ai" onclick="selectSub('ai')">
+        <div class="tier-title">Monitoring + AI Insights</div>
+        <div class="tier-sub">Monitoring + all AI/ML insights, ARRP, Root Cause, FortiAI-Assist</div>
+      </div>
+      <div class="tier-card" data-sub="sdwan" onclick="selectSub('sdwan')">
+        <div class="tier-title">SD-WAN</div>
+        <div class="tier-sub">SD-WAN AI insights, forecasting, FortiAI-Assist, FortiExtender — licensed per FortiGate</div>
+      </div>
+    </div>
+    <div id="sdwan-note" class="callout info" style="margin-top:10px; display:none;">
+      <span>ℹ</span>
+      <span>SD-WAN subscription is licensed by FortiGate (SD-WAN enabled only). FortiGate clusters count as one device. FortiExtenders are covered but not counted separately.</span>
+    </div>
+    <div id="mon-note" class="callout info" style="margin-top:10px;">
+      <span>ℹ</span>
+      <span>Monitoring &amp; AI Insights subscriptions are licensed by extension devices (FortiAP and/or FortiSwitch). FortiGates are not counted.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DEVICE COUNT ═══════════════════════ -->
+<div class="card">
+  <div class="card-header"><h3>Step 3 — Device Count</h3></div>
+  <div class="card-body">
+    <div class="grid-2">
+      <div class="field" id="ext-field">
+        <label id="ext-label">Extension Devices (FortiAP + FortiSwitch) <span class="req">*</span></label>
+        <input type="number" id="f-ext" min="1" value="" placeholder="e.g. 500" oninput="onFormChange()">
+        <span class="field-err" id="err-ext">Enter a valid device count ≥ 1</span>
+        <div class="band-indicator" id="ext-band">
+          Tier: <strong id="ext-band-text">—</strong> · SKU band: <span id="ext-band-range">—</span>
+        </div>
+      </div>
+      <div class="field" id="fg-field" style="display:none;">
+        <label>FortiGate Devices (SD-WAN enabled) <span class="req">*</span></label>
+        <input type="number" id="f-fg" min="1" value="" placeholder="e.g. 50" oninput="onFormChange()">
+        <span class="field-err" id="err-fg">Enter a valid FortiGate count ≥ 1</span>
+        <div class="band-indicator" id="fg-band">
+          Tier: <strong id="fg-band-text">—</strong> · SKU band: <span id="fg-band-range">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VM resource guidance (shown only for VM) -->
+    <div id="vm-resource-note" style="margin-top:14px;">
+      <div class="callout info">
+        <span>ℹ</span>
+        <div>
+          <strong>VM Sizing Guide</strong> (Monitoring Only / Monitoring + AI Insights)<br>
+          Small (8vCPU / 32GB / 1TB): up to 1,200 FortiAP · 200 FortiGate · 10,000 stations (Monitoring) / 180 FortiAP · 90 FortiSwitch · 3,000 stations (AI)<br>
+          Medium (24–40vCPU / 128GB / 4TB): up to 15,000 FortiAP · 2,500 FortiGate · 60,000 stations (Monitoring) / 6,000 FortiAP · 1,000 FortiGate · 25,000 stations (AI)<br>
+          Large (104vCPU / 256GB / 8TB): up to 30,000 FortiAP · 5,000 FortiGate (AI Insights) · 100,000 stations (AI)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ FORTICARE (HARDWARE ONLY) ═══════════════════════ -->
+<div class="card" id="hw-care-card" style="display:none;">
+  <div class="card-header"><h3>Step 4 — FortiCare Support (Hardware)</h3></div>
+  <div class="card-body">
+    <div class="callout warn" style="margin-bottom:12px;">
+      <span>⚠</span>
+      <span>Hardware appliances do not include FortiCare. Hardware subscriptions also do not include FortiCare Premium — it must be added separately to the appliance.</span>
+    </div>
+    <div class="addon-row">
+      <input type="checkbox" id="chk-care" checked onchange="onFormChange()">
+      <div>
+        <div class="addon-label">FortiCare Premium Support — Appliance</div>
+        <div class="addon-desc" id="care-sku-hint">FC-10-AO1HG-247-02-DD (100G) · FC-10-A500G-247-02-DD (500G)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ACTIONS ═══════════════════════ -->
+<div class="card">
+  <div class="card-body">
+    <div class="actions">
+      <button class="btn btn-primary" onclick="generateBOM()">Preview BOM</button>
+      <button class="btn btn-green" onclick="addToProjectBOM()">Add to Project BOM</button>
+      <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+      <span id="smsg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ BOM PREVIEW ═══════════════════════ -->
+<div id="bom-section" class="card">
+  <div class="card-header">
+    <h3>BOM Preview</h3>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="copyTSV()">Copy TSV</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <div class="card-body" style="overflow-x:auto;">
+    <table class="bom-table">
+      <thead>
+        <tr>
+          <th>Part Number</th>
+          <th>Description</th>
+          <th style="text-align:center; width:50px;">Qty</th>
+          <th style="width:90px;">Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ────────────────────────────────────────────────────────────────────────────
+// DATA MODEL
+// ────────────────────────────────────────────────────────────────────────────
+
+// Tiers: { devices, vmMonSku, vmAiSku, vmSdwanSku, hwMonSku, hwAiSku, hwSdwanSku, label }
+const TIERS = [
+  {
+    devices: 10000, label: '10,000 devices',
+    vmMonSku:   'FC4-10-AOVMS-668-01-DD', vmMonDesc:   'FortiAIOps VM Monitoring subscription for 10,000 extension devices',
+    vmAiSku:    'FC4-10-AOVMS-670-01-DD', vmAiDesc:    'FortiAIOps VM Monitoring + AI Insights subscription BUNDLE for 10,000 extension devices',
+    vmSdwanSku: 'FC4-10-AOVMS-671-01-DD', vmSdwanDesc: 'FortiAIOps VM SD-WAN subscription for 10,000 FortiGate devices',
+    hwMonSku:   'FC4-10-AIOHR-673-01-DD', hwMonDesc:   'FortiAIOps Hardware Monitoring subscription for 10,000 extension devices',
+    hwAiSku:    'FC4-10-AIOHR-1087-01-DD', hwAiDesc:   'FortiAIOps Hardware Monitoring + AI Insights subscription BUNDLE for 10,000 extension devices',
+    hwSdwanSku: 'FC4-10-AIOHR-675-01-DD', hwSdwanDesc: 'FortiAIOps Hardware SD-WAN subscription for 10,000 FortiGate devices',
+  },
+  {
+    devices: 2000, label: '2,000 devices',
+    vmMonSku:   'FC3-10-AOVMS-668-01-DD', vmMonDesc:   'FortiAIOps VM Monitoring subscription for 2,000 extension devices',
+    vmAiSku:    'FC3-10-AOVMS-670-01-DD', vmAiDesc:    'FortiAIOps VM Monitoring + AI Insights subscription BUNDLE for 2,000 extension devices',
+    vmSdwanSku: 'FC3-10-AOVMS-671-01-DD', vmSdwanDesc: 'FortiAIOps VM SD-WAN subscription for 2,000 FortiGate devices',
+    hwMonSku:   'FC3-10-AIOHR-673-01-DD', hwMonDesc:   'FortiAIOps Hardware Monitoring subscription for 2,000 extension devices',
+    hwAiSku:    'FC3-10-AIOHR-1087-01-DD', hwAiDesc:   'FortiAIOps Hardware Monitoring + AI Insights subscription BUNDLE for 2,000 extension devices',
+    hwSdwanSku: 'FC3-10-AIOHR-675-01-DD', hwSdwanDesc: 'FortiAIOps Hardware SD-WAN subscription for 2,000 FortiGate devices',
+  },
+  {
+    devices: 500, label: '500 devices',
+    vmMonSku:   'FC2-10-AOVMS-668-01-DD', vmMonDesc:   'FortiAIOps VM Monitoring subscription for 500 extension devices',
+    vmAiSku:    'FC2-10-AOVMS-670-01-DD', vmAiDesc:    'FortiAIOps VM Monitoring + AI Insights subscription BUNDLE for 500 extension devices',
+    vmSdwanSku: 'FC2-10-AOVMS-671-01-DD', vmSdwanDesc: 'FortiAIOps VM SD-WAN subscription for 500 FortiGate devices',
+    hwMonSku:   'FC2-10-AIOHR-673-01-DD', hwMonDesc:   'FortiAIOps Hardware Monitoring subscription for 500 extension devices',
+    hwAiSku:    'FC2-10-AIOHR-1087-01-DD', hwAiDesc:   'FortiAIOps Hardware Monitoring + AI Insights subscription BUNDLE for 500 extension devices',
+    hwSdwanSku: 'FC2-10-AIOHR-675-01-DD', hwSdwanDesc: 'FortiAIOps Hardware SD-WAN subscription for 500 FortiGate devices',
+  },
+  {
+    devices: 25, label: '25 devices',
+    vmMonSku:   'FC1-10-AOVMS-668-01-DD', vmMonDesc:   'FortiAIOps VM Monitoring subscription for 25 extension devices',
+    vmAiSku:    'FC1-10-AOVMS-670-01-DD', vmAiDesc:    'FortiAIOps VM Monitoring + AI Insights subscription BUNDLE for 25 extension devices',
+    vmSdwanSku: 'FC1-10-AOVMS-671-01-DD', vmSdwanDesc: 'FortiAIOps VM SD-WAN subscription for 25 FortiGate devices',
+    hwMonSku:   'FC1-10-AIOHR-673-01-DD', hwMonDesc:   'FortiAIOps Hardware Monitoring subscription for 25 extension devices',
+    hwAiSku:    'FC1-10-AIOHR-1087-01-DD', hwAiDesc:   'FortiAIOps Hardware Monitoring + AI Insights subscription BUNDLE for 25 extension devices',
+    hwSdwanSku: 'FC1-10-AIOHR-675-01-DD', hwSdwanDesc: 'FortiAIOps Hardware SD-WAN subscription for 25 FortiGate devices',
+  },
+];
+
+const HW_MODELS = {
+  hw100: {
+    hwSku: 'FAO-100G',
+    hwDesc: 'FortiAIOps 100G — 4×2.5GE RJ45, 1×RJ45 Serial Console, 1×3.84TB SSD',
+    careSku: 'FC-10-AO1HG-247-02-DD',
+    careDesc: 'FortiCare Premium Support for FortiAIOps 100G',
+    label: 'FortiAIOps 100G',
+  },
+  hw500: {
+    hwSku: 'FAO-500G',
+    hwDesc: 'FortiAIOps 500G — 4×GE RJ45, 2×10GE SFP+, 1×RJ45 Serial Console, 2×1.92TB SSD, 4×3.5" 4TB HDD',
+    careSku: 'FC-10-A500G-247-02-DD',
+    careDesc: 'FortiCare Premium Support for FortiAIOps 500G',
+    label: 'FortiAIOps 500G',
+  },
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────────────────────────────────
+let _dep = 'vm';      // 'vm' | 'hw100' | 'hw500'
+let _sub = 'mon';     // 'mon' | 'ai' | 'sdwan'
+let _lastRows = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+// ────────────────────────────────────────────────────────────────────────────
+// PACKING
+// ────────────────────────────────────────────────────────────────────────────
+function packDevices(total, isVm, subType) {
+  const skuKey = isVm
+    ? (subType === 'mon' ? 'vmMonSku' : subType === 'ai' ? 'vmAiSku' : 'vmSdwanSku')
+    : (subType === 'mon' ? 'hwMonSku' : subType === 'ai' ? 'hwAiSku' : 'hwSdwanSku');
+  const descKey = skuKey.replace('Sku', 'Desc');
+
+  let remaining = total;
+  const result = [];
+  for (const tier of TIERS) {
+    const qty = Math.floor(remaining / tier.devices);
+    if (qty > 0) {
+      result.push({ sku: tier[skuKey], desc: tier[descKey], qty, devices: tier.devices * qty });
+      remaining -= qty * tier.devices;
+    }
+  }
+  if (remaining > 0) {
+    const smallest = TIERS[TIERS.length - 1];
+    result.push({ sku: smallest[skuKey], desc: smallest[descKey], qty: 1, devices: smallest.devices });
+  }
+  return result;
+}
+
+function tierLabel(total) {
+  if (total >= 10000) return 'FC4 (10,000)';
+  if (total >= 2000)  return 'FC3 (2,000)';
+  if (total >= 500)   return 'FC2 (500)';
+  return 'FC1 (25)';
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// UI HELPERS
+// ────────────────────────────────────────────────────────────────────────────
+function selectDep(dep) {
+  _dep = dep;
+  document.querySelectorAll('.dep-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector(`.dep-card[data-dep="${dep}"]`).classList.add('selected');
+
+  const isHw  = dep !== 'vm';
+  const is500 = dep === 'hw500';
+
+  document.getElementById('vm-note').style.display  = isHw ? 'none' : 'flex';
+  document.getElementById('hw-note').style.display  = isHw ? 'flex' : 'none';
+  document.getElementById('hw-qty-row').style.display = isHw ? 'block' : 'none';
+  document.getElementById('hw500-spares').style.display = is500 ? 'block' : 'none';
+  document.getElementById('hw-care-card').style.display = isHw ? 'block' : 'none';
+  document.getElementById('vm-resource-note').style.display = isHw ? 'none' : 'block';
+  hideBOM();
+}
+
+function selectSub(sub) {
+  _sub = sub;
+  document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector(`.tier-card[data-sub="${sub}"]`).classList.add('selected');
+
+  const isSdwan = sub === 'sdwan';
+  document.getElementById('ext-field').style.display = isSdwan ? 'none' : 'block';
+  document.getElementById('fg-field').style.display  = isSdwan ? 'block' : 'none';
+  document.getElementById('sdwan-note').style.display = isSdwan ? 'flex' : 'none';
+  document.getElementById('mon-note').style.display   = isSdwan ? 'none' : 'flex';
+  hideBOM();
+  updateBandIndicator();
+}
+
+function onFormChange() {
+  hideBOM();
+  updateBandIndicator();
+}
+
+function updateBandIndicator() {
+  const isSdwan = _sub === 'sdwan';
+  if (isSdwan) {
+    const v = parseInt(document.getElementById('f-fg').value);
+    const el = document.getElementById('fg-band');
+    if (v > 0) {
+      el.style.display = 'block';
+      document.getElementById('fg-band-text').textContent = tierLabel(v);
+      document.getElementById('fg-band-range').textContent = v + ' FortiGate(s)';
+    } else { el.style.display = 'none'; }
+  } else {
+    const v = parseInt(document.getElementById('f-ext').value);
+    const el = document.getElementById('ext-band');
+    if (v > 0) {
+      el.style.display = 'block';
+      document.getElementById('ext-band-text').textContent = tierLabel(v);
+      document.getElementById('ext-band-range').textContent = v + ' extension device(s)';
+    } else { el.style.display = 'none'; }
+  }
+}
+
+function hideBOM() {
+  document.getElementById('bom-section').style.display = 'none';
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// VALIDATION
+// ────────────────────────────────────────────────────────────────────────────
+function setErr(fieldId, errId, show) {
+  const f = document.getElementById(fieldId);
+  const e = document.getElementById(errId);
+  if (show) { f.classList.add('invalid'); if(e) e.style.display = 'block'; }
+  else       { f.classList.remove('invalid'); if(e) e.style.display = 'none'; }
+  return !show;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// GENERATE BOM
+// ────────────────────────────────────────────────────────────────────────────
+function generateBOM() {
+  document.getElementById('smsg').textContent = '';
+  let valid = true;
+  const isHw  = _dep !== 'vm';
+  const isVm  = !isHw;
+  const isSdwan = _sub === 'sdwan';
+
+  // HW qty
+  let hwQty = 1;
+  if (isHw) {
+    hwQty = parseInt(document.getElementById('f-hw-qty').value);
+    valid = setErr('f-hw-qty', 'err-hw-qty', !(hwQty >= 1)) && valid;
+  }
+
+  // Device count
+  let devCount = 0;
+  if (isSdwan) {
+    devCount = parseInt(document.getElementById('f-fg').value);
+    valid = setErr('f-fg', 'err-fg', !(devCount >= 1)) && valid;
+  } else {
+    devCount = parseInt(document.getElementById('f-ext').value);
+    valid = setErr('f-ext', 'err-ext', !(devCount >= 1)) && valid;
+  }
+
+  if (!valid) return false;
+
+  const rows = [];
+  const hw = HW_MODELS[_dep];
+  const subLabel = _sub === 'mon' ? 'Monitoring' : _sub === 'ai' ? 'Monitoring + AI Insights' : 'SD-WAN';
+
+  // ── HARDWARE section ────────────────────────────────────────────
+  if (isHw) {
+    rows.push({ section: 'Hardware Appliance' });
+    rows.push({ sku: hw.hwSku, desc: hw.hwDesc, qty: hwQty, kind: 'req', note: 'Bare-metal appliance — no subscription included' });
+
+    // Spare parts (500G)
+    if (_dep === 'hw500') {
+      if (document.getElementById('chk-hdd').checked) {
+        const q = parseInt(document.getElementById('f-hdd-qty').value) || 1;
+        rows.push({ sku: 'SP-FSM2000G-HDD', desc: 'Additional / Replacement 4TB SAS HDD', qty: q, kind: 'opt', note: 'FAO-500G spare' });
+      }
+      if (document.getElementById('chk-ssd').checked) {
+        const q = parseInt(document.getElementById('f-ssd-qty').value) || 1;
+        rows.push({ sku: 'SP-FAO500G-SSD', desc: 'Additional / Replacement 1.92TB SATA SSD', qty: q, kind: 'opt', note: 'FAO-500G spare' });
+      }
+      if (document.getElementById('chk-ps').checked) {
+        const q = parseInt(document.getElementById('f-ps-qty').value) || 1;
+        rows.push({ sku: 'SP-FSM2000G-PS', desc: 'Replacement Power Supply', qty: q, kind: 'opt', note: 'FAO-500G spare' });
+      }
+    }
+
+    // FortiCare for appliance
+    if (document.getElementById('chk-care').checked) {
+      rows.push({ sku: hw.careSku, desc: hw.careDesc, qty: hwQty, kind: 'req', note: 'Must be added separately — not in subscription' });
+    }
+  }
+
+  // ── SUBSCRIPTION section ────────────────────────────────────────
+  rows.push({ section: `${subLabel} Subscription` });
+
+  const packed = packDevices(devCount, isVm, _sub);
+  const notePrefix = isVm ? 'VM sub · FortiCare Premium included' : 'HW sub · FortiCare NOT included';
+
+  for (const p of packed) {
+    // For hardware, multiply qty by number of appliances (stacking on top of each hw instance)
+    const finalQty = isHw ? p.qty * hwQty : p.qty;
+    rows.push({
+      sku: p.sku,
+      desc: p.desc,
+      qty: finalQty,
+      kind: 'req',
+      note: notePrefix,
+    });
+  }
+
+  // Info note for stacking
+  const totalLicensed = packed.reduce((acc, p) => acc + p.devices, 0);
+  if (totalLicensed > devCount) {
+    rows.push({
+      sku: '⚠',
+      desc: `License covers ${totalLicensed} devices (rounded up to next tier). Actual requirement: ${devCount}.`,
+      qty: null,
+      kind: 'note',
+      note: '',
+    });
+  }
+
+  // Stacking note for hardware
+  if (isHw && hwQty > 1) {
+    rows.push({
+      sku: '⚠',
+      desc: 'When registering, each subscription certificate must be stacked on top of the hardware appliance in FortiCare.',
+      qty: null,
+      kind: 'note',
+      note: '',
+    });
+  }
+
+  // VM stacking note
+  if (isVm && packed.length > 1) {
+    rows.push({
+      sku: '⚠',
+      desc: 'When registering multiple certificates, stack them on top of each other. Only one license will be generated.',
+      qty: null,
+      kind: 'note',
+      note: '',
+    });
+  }
+
+  _lastRows  = rows;
+  _lastLabel = `FortiAIOps ${isHw ? hw.label : 'VM'} · ${subLabel} · ${devCount} ${isSdwan ? 'FortiGate' : 'ext'} devices`;
+  _lastMeta  = {
+    'Deployment': isHw ? hw.label : 'VM / Virtual',
+    'Subscription': subLabel,
+    'Device Count': devCount + (isSdwan ? ' FortiGate (SD-WAN)' : ' extension devices'),
+    'Licensed Capacity': totalLicensed + (isSdwan ? ' FortiGate' : ' extension devices'),
+    'FortiCare (VM)': isVm ? 'Included in subscription' : 'N/A',
+    'Ordering Guide': 'FAIOPS-OG-R8-20260206',
+  };
+
+  renderBOM(rows);
+  return true;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// RENDER BOM
+// ────────────────────────────────────────────────────────────────────────────
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-body');
+  tbody.innerHTML = '';
+  for (const r of rows) {
+    if (r.section) {
+      tbody.innerHTML += `<tr class="section-row"><td colspan="5">${r.section}</td></tr>`;
+      continue;
+    }
+    const badge = r.kind === 'req'  ? '<span class="badge badge-req">Required</span>'
+                : r.kind === 'opt'  ? '<span class="badge badge-opt">Optional</span>'
+                : r.kind === 'mand' ? '<span class="badge badge-mand">Mandatory</span>'
+                : r.kind === 'inc'  ? '<span class="badge badge-inc">Included</span>'
+                : '';
+    const skuCell = r.sku === '⚠'
+      ? `<span style="font-size:14px;">⚠</span>`
+      : `<span class="sku">${r.sku}</span>`;
+    const qtyCell = r.qty !== null ? r.qty : '';
+    tbody.innerHTML += `
+      <tr>
+        <td>${skuCell}</td>
+        <td>${r.desc}</td>
+        <td style="text-align:center;">${qtyCell}</td>
+        <td>${badge}</td>
+        <td class="nc">${r.note || ''}</td>
+      </tr>`;
+  }
+  const sec = document.getElementById('bom-section');
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// ADD TO PROJECT BOM
+// ────────────────────────────────────────────────────────────────────────────
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  window.parent.postMessage({
+    type:    'FORTIBOM_ADD',
+    product: 'FortiAIOps',
+    label:   _lastLabel,
+    rows:    _lastRows,
+    meta:    _lastMeta,
+  }, '*');
+  const msg = document.getElementById('smsg');
+  msg.textContent = '✔ Added to Project BOM';
+  setTimeout(() => { msg.textContent = ''; }, 3000);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// COPY TSV
+// ────────────────────────────────────────────────────────────────────────────
+function copyTSV() {
+  if (!_lastRows.length) return;
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  for (const r of _lastRows) {
+    if (r.section) { lines.push(`[${r.section}]`); continue; }
+    lines.push([r.sku, r.desc, r.qty ?? '', r.kind ?? '', r.note ?? ''].join('\t'));
+  }
+  navigator.clipboard.writeText(lines.join('\n'))
+    .then(() => { const m = document.getElementById('smsg'); m.textContent = '✔ TSV copied'; setTimeout(()=>m.textContent='',2000); });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// RESET
+// ────────────────────────────────────────────────────────────────────────────
+function resetForm() {
+  selectDep('vm');
+  selectSub('mon');
+  document.getElementById('f-ext').value = '';
+  document.getElementById('f-fg').value  = '';
+  document.getElementById('f-hw-qty').value = 1;
+  document.getElementById('chk-care').checked = true;
+  document.getElementById('chk-hdd').checked  = false;
+  document.getElementById('chk-ssd').checked  = false;
+  document.getElementById('chk-ps').checked   = false;
+  document.getElementById('f-hdd-qty').value = 1;
+  document.getElementById('f-ssd-qty').value = 1;
+  document.getElementById('f-ps-qty').value  = 1;
+  ['f-ext','f-fg','f-hw-qty'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('invalid');
+  });
+  ['err-ext','err-fg','err-hw-qty'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('ext-band').style.display = 'none';
+  document.getElementById('fg-band').style.display  = 'none';
+  hideBOM();
+  _lastRows = []; _lastLabel = ''; _lastMeta = {};
+  document.getElementById('smsg').textContent = '';
+}
+</script>
+</body>
+</html>

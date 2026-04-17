@@ -7,6 +7,7 @@ Fortisku is a static, browser-only toolkit for working with Fortinet data and li
 The project started as a SKU finder and has grown into a small suite of related tools for a Fortinet SE:
 
 - FortiSKU Finder
+- BOM Builder
 - Hardware LifeCycle lookup
 - Software LifeCycle lookup
 - Ordering Guides lookup
@@ -25,6 +26,8 @@ The codebase is now organized by feature instead of keeping every page module fl
   - Main FortiSKU Finder page and current toolbox landing page
 - `fortisku/`
   - Optional compatibility alias for the finder route
+- `bom-builder/`
+  - Canonical BOM Builder integration preview page
 - `hardware-lifecycle/`
   - Canonical Hardware LifeCycle lookup page
 - `software-lifecycle/`
@@ -39,6 +42,7 @@ The codebase is now organized by feature instead of keeping every page module fl
 Primary browser routes are:
 
 - `/`
+- `/bom-builder/`
 - `/hardware-lifecycle/`
 - `/software-lifecycle/`
 - `/ordering-guides/`
@@ -55,6 +59,8 @@ Legacy page URLs are still present only as lightweight redirect files for backwa
 
 - `src/features/finder/`
   - Main SKU finder logic, UI, BOM support
+- `src/features/bom-builder/`
+  - FortiBOM-backed wrapper route, adapter logic, and theme bridge assets
 - `src/features/hardware-lifecycle/`
   - Hardware LifeCycle parsing, storage, search, UI
 - `src/features/software-lifecycle/`
@@ -99,7 +105,22 @@ Key modules:
 - `src/shared/data/storage.js`
 - `src/shared/data/csv.js`
 
-### 2. Hardware LifeCycle Lookup
+### 2. BOM Builder
+
+Primary page: `bom-builder/index.html`
+
+Purpose:
+- Provide a Fortisku-native wrapper around a vendored FortiBOM workspace
+- Keep BOM-building inside the shared Fortisku shell and navigation
+- Preserve a cleaner path for future upstream FortiBOM updates
+
+Key modules:
+- `src/features/bom-builder/main.js`
+- `src/features/bom-builder/page.css`
+- `src/features/bom-builder/theme-bridge.css`
+- `vendor/FortiBOM/`
+
+### 3. Hardware LifeCycle Lookup
 
 Primary page: `hardware-lifecycle/index.html`
 
@@ -118,7 +139,7 @@ Key modules:
 - `src/shared/lifecycle/app.js`
 - `src/shared/lifecycle/search.js`
 
-### 3. Software LifeCycle Lookup
+### 4. Software LifeCycle Lookup
 
 Primary page: `software-lifecycle/index.html`
 
@@ -137,7 +158,7 @@ Key modules:
 - `src/shared/lifecycle/app.js`
 - `src/shared/lifecycle/search.js`
 
-### 4. Ordering Guides
+### 5. Ordering Guides
 
 Primary page: `ordering-guides/index.html`
 
@@ -152,7 +173,7 @@ Key modules:
 - `src/shared/data/ingest.js`
 - `src/shared/data/storage.js`
 
-### 5. Asset Reports
+### 6. Asset Reports
 
 Primary page: `asset-reports/index.html`
 
@@ -166,7 +187,7 @@ Key modules:
 - `src/features/asset-reports/ui.js`
 - `src/features/asset-reports/workbook.js`
 
-### 6. Lab Portal Generator
+### 7. Lab Portal Generator
 
 Primary page: `lab-portal/index.html`
 
@@ -212,6 +233,7 @@ python3 -m http.server 5173
 
 - Main entry URLs:
   - `/`
+  - `/bom-builder/`
   - `/hardware-lifecycle/`
   - `/software-lifecycle/`
   - `/ordering-guides/`

@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FortiSIEM BOM Generator</title>
+<style>
+:root{
+  --forti-red:#EE3124;--forti-border:#DDE1E9;--forti-bg:#F2F4F7;--forti-white:#FFFFFF;
+  --forti-text:#2A2F3A;--forti-text-secondary:#6B7589;--forti-text-muted:#9BA5BA;
+  --forti-section-header:#F7F9FC;--forti-input-border:#C8CDD9;--forti-table-head:#EEF1F6;
+  --forti-table-stripe:#F7F9FC;--forti-info-bg:#EEF3FF;--forti-info-border:#B8CBF5;
+  --forti-info-text:#3557A5;--forti-warn-bg:#FFF8EE;--forti-warn-border:#F5D9A0;--forti-warn-text:#8A5800;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.5;background:var(--forti-bg);color:var(--forti-text);padding:20px}
+h2{font-size:18px;font-weight:700}h3{font-size:13px;font-weight:600}
+.page-header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.icon-box{width:44px;height:44px;background:var(--forti-red);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-box svg{fill:#fff}
+.page-header h1{font-size:20px;font-weight:700;color:var(--forti-text)}
+.page-header p{font-size:11px;color:var(--forti-text-muted);margin-top:2px}
+.card{background:var(--forti-white);border:1px solid var(--forti-border);border-radius:4px;margin-bottom:14px;overflow:hidden}
+.card-header{background:var(--forti-section-header);border-bottom:1px solid var(--forti-border);padding:9px 18px;display:flex;align-items:center;justify-content:space-between}
+.card-body{padding:16px 18px}
+label{display:block;font-size:12px;font-weight:600;color:var(--forti-text-secondary);margin-bottom:4px}
+.req-star{color:var(--forti-red)}
+select,input[type=number]{background:#fff;border:1px solid var(--forti-input-border);border-radius:3px;padding:6px 9px;font-size:13px;width:100%;color:var(--forti-text)}
+select:focus,input[type=number]:focus{outline:none;border-color:var(--forti-red);box-shadow:0 0 0 2px rgba(238,49,36,.1)}
+select.invalid,input.invalid{border-color:var(--forti-red)}
+.err{color:var(--forti-red);font-size:11px;margin-top:3px;display:none}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.field{margin-bottom:12px}
+.callout{border-radius:3px;padding:9px 12px;font-size:12px;line-height:1.6;display:flex;gap:8px;margin-bottom:10px}
+.info{background:var(--forti-info-bg);border:1px solid var(--forti-info-border);color:var(--forti-info-text)}
+.warn{background:var(--forti-warn-bg);border:1px solid var(--forti-warn-border);color:var(--forti-warn-text)}
+.band-ind{display:none;background:var(--forti-info-bg);border:1px solid var(--forti-info-border);border-radius:3px;padding:4px 10px;font-size:12px;color:var(--forti-info-text);margin-top:4px}
+/* licensing model tabs */
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--forti-border);margin-bottom:16px}
+.tab{padding:8px 16px;font-size:12px;font-weight:600;color:var(--forti-text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tab:hover{color:var(--forti-text)}
+.tab.active{color:var(--forti-red);border-bottom-color:var(--forti-red)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+/* add-on checkboxes */
+.addon-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--forti-border)}
+.addon-row:last-child{border-bottom:none}
+.addon-row input[type=checkbox]{margin-top:2px;flex-shrink:0;accent-color:var(--forti-red)}
+.addon-label{font-size:12px;font-weight:600;color:var(--forti-text)}
+.addon-sub{font-size:11px;color:var(--forti-text-muted);margin-top:1px}
+.addon-qty-wrap{margin-top:6px;display:flex;align-items:center;gap:8px}
+.addon-qty-wrap input{width:80px}
+.disabled-addon{opacity:.4;pointer-events:none}
+/* hw model cards */
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px;margin-bottom:12px}
+.model-card{border:1px solid var(--forti-border);border-radius:4px;padding:10px 12px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
+.model-card:hover{border-color:#b0b8cc;background:#fcfcfe}
+.model-card.selected{border:2px solid var(--forti-red);background:#FEF8F8}
+.model-card .mc-name{font-weight:700;font-size:13px}
+.model-card .mc-sub{font-size:11px;color:var(--forti-text-secondary);margin-top:2px}
+/* buttons */
+.btn-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+button{padding:8px 18px;border:none;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-primary{background:var(--forti-red);color:#fff}
+.btn-primary:hover{background:#c7271c}
+.btn-success{background:#2E7D32;color:#fff}
+.btn-success:hover{background:#1b5e20}
+.btn-default{background:#fff;color:var(--forti-text);border:1px solid var(--forti-input-border)}
+.btn-default:hover{background:var(--forti-bg)}
+#smsg{font-size:12px;color:#2E7D32;font-weight:600}
+/* BOM table */
+#bom-section{display:none;margin-top:16px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--forti-table-head);border:1px solid var(--forti-border);padding:7px 11px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--forti-text-secondary);text-align:left}
+tbody td{border:1px solid var(--forti-border);padding:7px 11px;vertical-align:top}
+tbody tr:nth-child(even) td{background:var(--forti-table-stripe)}
+.section-row td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--forti-text-secondary);padding:5px 11px;border-top:2px solid #C5CAD9}
+.badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 4px;display:inline-block}
+.badge-req{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2}
+.badge-opt{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5}
+.badge-mand{background:#FFF8EE;color:#8A5800;border:1px solid #F5D9A0}
+.badge-inc{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5}
+.sku{font-family:'Courier New',monospace;font-size:11px;color:#1A4E82}
+.nc{color:var(--forti-text-muted);font-size:11px}
+.tbl-act{display:flex;gap:8px;margin-bottom:10px}
+/* overview table */
+.ov-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}
+.ov-table th{background:var(--forti-table-head);border:1px solid var(--forti-border);padding:5px 8px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--forti-text-secondary)}
+.ov-table td{border:1px solid var(--forti-border);padding:5px 8px;text-align:center;vertical-align:middle}
+.ov-table td.left{text-align:left;font-weight:600}
+.ov-table tr:nth-child(even) td{background:var(--forti-table-stripe)}
+.check{color:#2E7D32;font-weight:700}
+.addon-check{color:#E67E22;font-size:10px}
+.dash{color:#ccc}
+@media(max-width:600px){.grid-2,.grid-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="icon-box">
+    <svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+  </div>
+  <div>
+    <h1>FortiSIEM</h1>
+    <p>BOM Generator · FSM-OG-R27-20260115 · Security Information &amp; Event Management</p>
+  </div>
+</div>
+
+<!-- LICENSING MODEL OVERVIEW -->
+<div class="card">
+  <div class="card-header"><h3>Licensing Model Overview</h3></div>
+  <div class="card-body" style="padding:12px 18px">
+    <div class="callout info" style="margin-bottom:12px">
+      <span>ℹ</span>
+      <span>FortiSIEM licensing models are <strong>mutually exclusive</strong> — they cannot be combined. Select the appropriate model tab below.</span>
+    </div>
+    <table class="ov-table">
+      <thead>
+        <tr>
+          <th class="left" style="text-align:left">Feature</th>
+          <th>CAPEX<br>Device+EPS</th>
+          <th>OPEX<br>Device+EPS</th>
+          <th>OPEX<br>GB/Day</th>
+          <th>Cloud<br>SaaS</th>
+          <th>MSSP<br>PAYG</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="left">Deployment</td><td>VM/HW</td><td>VM</td><td>VM</td><td>Cloud</td><td>VM</td></tr>
+        <tr><td class="left">HA Super</td><td>Add-on</td><td>Add-on</td><td class="check">✓ Incl.</td><td>—</td><td class="check">✓ Incl.</td></tr>
+        <tr><td class="left">FortiCare Support</td><td>Add-on</td><td>Add-on</td><td class="check">✓ Incl.</td><td class="check">✓ Incl.</td><td class="check">✓ Incl.</td></tr>
+        <tr><td class="left">IOC Service</td><td>Add-on</td><td>Add-on</td><td>Add-on</td><td class="check">✓ Incl.</td><td class="check">✓ Incl.</td></tr>
+        <tr><td class="left">UEBA</td><td>Add-on</td><td>Add-on</td><td>Add-on</td><td class="check">✓ Incl.</td><td>Add-on</td></tr>
+        <tr><td class="left">Agents</td><td>Add-on</td><td>Add-on</td><td>Add-on</td><td class="check">✓ Incl.</td><td>Add-on</td></tr>
+        <tr><td class="left">EPS</td><td>10/device</td><td>10/device</td><td>Unlimited</td><td>Per FCU</td><td>Unlimited</td></tr>
+        <tr><td class="left">Min. Order</td><td>50 devices</td><td>50 devices</td><td>40 GB/day</td><td>10 FCU + 500GB</td><td>MSSP Agmt</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MAIN CONFIG CARD -->
+<div class="card">
+  <div class="card-header"><h3>Configuration</h3></div>
+  <div class="card-body">
+
+    <!-- Licensing Model Tabs -->
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab('capex')" id="tab-capex">CAPEX / Perpetual</div>
+      <div class="tab" onclick="switchTab('opex-dev')" id="tab-opex-dev">OPEX Device+EPS</div>
+      <div class="tab" onclick="switchTab('opex-gb')" id="tab-opex-gb">OPEX GB/Day</div>
+      <div class="tab" onclick="switchTab('cloud')" id="tab-cloud">Cloud (SaaS)</div>
+    </div>
+
+    <!-- ===== TAB: CAPEX ===== -->
+    <div class="tab-panel active" id="panel-capex">
+      <div class="callout info" style="margin-bottom:12px">
+        <span>ℹ</span>
+        <span>CAPEX requires <strong>FSM-AIO-BASE</strong> (included automatically). HW appliances use model-specific base licenses. Support, IOC, and HA are add-ons priced by "points" (1 device = 1 pt · 2 endpoints = 1 pt · 3 agents = 1 pt · 10 UEBA = 1 pt).</span>
+      </div>
+
+      <h3 style="margin-bottom:10px">Deployment Type</h3>
+      <div class="model-grid" id="capex-deploy-grid">
+        <div class="model-card selected" onclick="selectCapexDeploy('vm')" id="cd-vm">
+          <div class="mc-name">VM / Software</div>
+          <div class="mc-sub">Any virtualization platform</div>
+        </div>
+        <div class="model-card" onclick="selectCapexDeploy('hw500')" id="cd-hw500">
+          <div class="mc-name">FSM-500G Collector</div>
+          <div class="mc-sub">5,000 EPS · Collector only</div>
+        </div>
+        <div class="model-card" onclick="selectCapexDeploy('hw2200')" id="cd-hw2200">
+          <div class="mc-name">FSM-2200G</div>
+          <div class="mc-sub">20,000 EPS · All-in-one</div>
+        </div>
+        <div class="model-card" onclick="selectCapexDeploy('hw3600')" id="cd-hw3600">
+          <div class="mc-name">FSM-3600G</div>
+          <div class="mc-sub">50,000 EPS · All-in-one</div>
+        </div>
+      </div>
+
+      <div id="capex-vm-fields">
+        <div class="grid-3">
+          <div class="field">
+            <label>Devices <span class="req-star">*</span></label>
+            <input type="number" id="cx-devices" min="50" step="1" value="50" oninput="updateCapexPoints()">
+            <div class="err" id="cx-devices-err">Minimum 50 devices required</div>
+          </div>
+          <div class="field">
+            <label>Endpoints</label>
+            <input type="number" id="cx-endpoints" min="0" step="50" value="0" oninput="updateCapexPoints()">
+          </div>
+          <div class="field">
+            <label>Agents (Log &amp; FIM)</label>
+            <input type="number" id="cx-agents" min="0" step="50" value="0" oninput="updateCapexPoints()">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>UEBA Agent Telemetry</label>
+            <input type="number" id="cx-ueba" min="0" step="25" value="0" oninput="updateCapexPoints()">
+          </div>
+          <div class="field">
+            <label>Additional EPS (increments of 1)</label>
+            <input type="number" id="cx-eps" min="0" step="1" value="0" oninput="updateCapexPoints()">
+          </div>
+        </div>
+      </div>
+
+      <div id="capex-hw-fields" style="display:none">
+        <div class="callout warn">
+          <span>⚠</span>
+          <span id="capex-hw-note">Hardware appliance base license included automatically. Add device/endpoint/agent licenses as needed.</span>
+        </div>
+        <div class="grid-3">
+          <div class="field">
+            <label>Additional Devices (beyond base)</label>
+            <input type="number" id="cx-hw-devices" min="0" step="50" value="0" oninput="updateCapexPoints()">
+          </div>
+          <div class="field">
+            <label>Endpoints</label>
+            <input type="number" id="cx-hw-endpoints" min="0" step="50" value="0" oninput="updateCapexPoints()">
+          </div>
+          <div class="field">
+            <label>Agents (Log &amp; FIM)</label>
+            <input type="number" id="cx-hw-agents" min="0" step="50" value="0" oninput="updateCapexPoints()">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>UEBA Agent Telemetry</label>
+            <input type="number" id="cx-hw-ueba" min="0" step="25" value="0" oninput="updateCapexPoints()">
+          </div>
+          <div class="field">
+            <label>Additional EPS</label>
+            <input type="number" id="cx-hw-eps" min="0" step="1" value="0" oninput="updateCapexPoints()">
+          </div>
+        </div>
+      </div>
+
+      <div class="band-ind" id="capex-pts-ind">
+        Total Points: <strong id="capex-pts-val">50</strong> · Support/IOC SKU band will be selected automatically
+      </div>
+    </div>
+
+    <!-- ===== TAB: OPEX DEVICE+EPS ===== -->
+    <div class="tab-panel" id="panel-opex-dev">
+      <div class="callout info" style="margin-bottom:12px">
+        <span>ℹ</span>
+        <span>Subscription SKUs are <strong>not stackable</strong>. Each SKU represents a minimum quantity tier. Minimum 50 devices. Support and IOC are add-ons priced by points.</span>
+      </div>
+      <div class="grid-3">
+        <div class="field">
+          <label>Devices <span class="req-star">*</span></label>
+          <input type="number" id="od-devices" min="50" step="1" value="50" oninput="updateOpexDevPoints()">
+          <div class="err" id="od-devices-err">Minimum 50 devices required</div>
+        </div>
+        <div class="field">
+          <label>Endpoints</label>
+          <input type="number" id="od-endpoints" min="0" step="50" value="0" oninput="updateOpexDevPoints()">
+        </div>
+        <div class="field">
+          <label>Agents (Log &amp; FIM)</label>
+          <input type="number" id="od-agents" min="0" step="50" value="0" oninput="updateOpexDevPoints()">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>UEBA Agent Telemetry</label>
+          <input type="number" id="od-ueba" min="0" step="25" value="0" oninput="updateOpexDevPoints()">
+        </div>
+        <div class="field">
+          <label>Additional EPS (increments of 1)</label>
+          <input type="number" id="od-eps" min="0" step="1" value="0" oninput="updateOpexDevPoints()">
+        </div>
+      </div>
+      <div class="band-ind" id="opex-dev-pts-ind">
+        Total Points: <strong id="opex-dev-pts-val">50</strong> · Support/IOC SKU band selected automatically
+      </div>
+    </div>
+
+    <!-- ===== TAB: OPEX GB/DAY ===== -->
+    <div class="tab-panel" id="panel-opex-gb">
+      <div class="callout info" style="margin-bottom:12px">
+        <span>ℹ</span>
+        <span>GB/Day licensing is <strong>subscription only</strong> (no CAPEX/perpetual). HA Super and FortiCare Premium are included. Minimum 40 GB/day. Available on FortiSIEM v7.2.x+ (all versions 7.3.0+). <strong>Not supported on HW appliances.</strong></span>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Log Volume (GB per day) <span class="req-star">*</span></label>
+          <input type="number" id="gb-volume" min="40" step="1" value="40" oninput="updateGbBand()">
+          <div class="err" id="gb-volume-err">Minimum 40 GB/day required</div>
+          <div class="band-ind" id="gb-band-ind">Band: <code id="gb-band-text">FC1</code> · <span id="gb-band-range">40–99 GB/day</span></div>
+        </div>
+        <div class="field">
+          <label>UEBA Agents</label>
+          <input type="number" id="gb-ueba" min="0" step="25" value="0" oninput="updateGbBand()">
+          <div class="band-ind" id="gb-ueba-ind" style="display:flex;margin-top:4px">UEBA Band: <code id="gb-ueba-band" style="margin:0 4px">FC1</code> <span id="gb-ueba-range">25–499</span></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Advanced Agents (Log &amp; FIM)</label>
+          <input type="number" id="gb-agents" min="0" step="25" value="0" oninput="updateGbBand()">
+          <div class="band-ind" id="gb-agent-ind" style="display:flex;margin-top:4px">Agent Band: <code id="gb-agent-band" style="margin:0 4px">FC1</code> <span id="gb-agent-range">25–499</span></div>
+        </div>
+        <div class="field">
+          <label>IOC GB/Day Coverage</label>
+          <select id="gb-ioc">
+            <option value="0">No IOC Service</option>
+            <option value="50">Up to 50 GB/day</option>
+            <option value="100">Up to 100 GB/day</option>
+            <option value="200">Up to 200 GB/day</option>
+            <option value="300">Up to 300 GB/day</option>
+            <option value="400">Up to 400 GB/day</option>
+            <option value="500">Up to 500 GB/day</option>
+            <option value="700">Up to 700 GB/day</option>
+            <option value="1000">Up to 1,000 GB/day</option>
+            <option value="2000">Up to 2,000 GB/day</option>
+            <option value="3000">Up to 3,000 GB/day</option>
+            <option value="4000">Up to 4,000 GB/day</option>
+            <option value="5000">Up to 5,000 GB/day</option>
+            <option value="6000">Up to 6,000 GB/day</option>
+            <option value="7000">Up to 7,000 GB/day</option>
+            <option value="8000">Up to 8,000 GB/day</option>
+            <option value="9000">Up to 9,000 GB/day</option>
+            <option value="10000">Up to 10,000 GB/day</option>
+            <option value="15000">Up to 15,000 GB/day</option>
+            <option value="20000">Up to 20,000 GB/day</option>
+            <option value="25000">Up to 25,000 GB/day</option>
+            <option value="99999">Unlimited GB/day</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB: CLOUD ===== -->
+    <div class="tab-panel" id="panel-cloud">
+      <div class="callout info" style="margin-bottom:12px">
+        <span>ℹ</span>
+        <span>FortiSIEM Cloud is a hosted, dedicated cluster managed by Fortinet. Licensed by <strong>FortiSIEM Compute Units (FCU)</strong> — 10 FCU = 1,000 EPS. Minimum: 1×FC2 (10 FCU) + 1×Online Storage. Max: 600 FCU total. FortiCare Premium included.</span>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Cloud Region <span class="req-star">*</span></label>
+          <select id="cl-region">
+            <option value="A">Region A (North America, Europe, Middle East, Asia Pacific)</option>
+            <option value="B">Region B (Brazil, South Africa, Zurich, Bahrain, Hong Kong)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Deployment Size (FCU Tier) <span class="req-star">*</span></label>
+          <select id="cl-fcu-tier" onchange="updateCloudFCU()">
+            <option value="FC2">FC2 – 10 FCU (1,000 EPS) · Qty 1 only</option>
+            <option value="FC3">FC3 – 10 FCU each · Qty 2–4 (20–40 FCU / 2K–4K EPS)</option>
+            <option value="FC4" selected>FC4 – 10 FCU each · Qty 5–60 (50–600 FCU / 5K–60K EPS)</option>
+          </select>
+        </div>
+      </div>
+      <div id="cl-qty-row" class="grid-2">
+        <div class="field">
+          <label>Quantity (number of 10-FCU blocks) <span class="req-star">*</span></label>
+          <input type="number" id="cl-fcu-qty" min="5" max="60" value="5" oninput="updateCloudFCU()">
+          <div class="err" id="cl-fcu-err">Quantity out of range for selected tier</div>
+          <div class="band-ind" id="cl-fcu-ind">10 × <strong id="cl-fcu-qty-val">5</strong> = <strong id="cl-fcu-total">50</strong> FCU = <strong id="cl-eps-total">5,000</strong> EPS</div>
+        </div>
+        <div class="field">
+          <label>Online Storage (500 GB blocks) <span class="req-star">*</span></label>
+          <input type="number" id="cl-storage" min="1" max="120" value="1" oninput="updateCloudFCU()">
+          <div class="err" id="cl-storage-err">Minimum 1 block required</div>
+          <div class="nc" style="margin-top:4px">Max 120 blocks (60 TB)</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Archive Storage (500 GB blocks, optional)</label>
+        <input type="number" id="cl-archive" min="0" value="0" oninput="updateCloudFCU()">
+      </div>
+    </div>
+
+  </div><!-- /card-body -->
+</div><!-- /card -->
+
+<!-- ADD-ONS CARD -->
+<div class="card">
+  <div class="card-header"><h3>Add-ons &amp; Optional Licenses</h3></div>
+  <div class="card-body">
+
+    <!-- FortiSIEM Manager -->
+    <div class="addon-row">
+      <input type="checkbox" id="ao-manager" onchange="toggleAddonQty('ao-manager-qty')">
+      <div style="flex:1">
+        <div class="addon-label">FortiSIEM Manager</div>
+        <div class="addon-sub">FC1-10-SMMGR-574-02-DD · Centralized multi-instance management. Min qty 5, max 50 instances. Requires FSM v6.5.0+.</div>
+        <div class="addon-qty-wrap" id="ao-manager-qty" style="display:none">
+          <label style="margin:0;white-space:nowrap">Instances:</label>
+          <input type="number" id="ao-manager-count" min="5" max="50" value="5" style="width:80px">
+        </div>
+      </div>
+    </div>
+
+    <!-- HA Super (CAPEX/OPEX-Dev only) -->
+    <div class="addon-row" id="ao-ha-row">
+      <input type="checkbox" id="ao-ha">
+      <div style="flex:1">
+        <div class="addon-label">High Availability (HA) Super</div>
+        <div class="addon-sub">Priced by points (same calculation as Support/IOC). Included in GB/Day and MSSP PAYG. N/A for Cloud.</div>
+      </div>
+    </div>
+
+    <!-- Security Automation Service -->
+    <div class="addon-row" id="ao-sas-row">
+      <input type="checkbox" id="ao-sas" onchange="toggleAddonQty('ao-sas-qty')">
+      <div style="flex:1">
+        <div class="addon-label">Security Automation Service</div>
+        <div class="addon-sub">FC1-10-SIMPC-1055-02-DD · One concurrent playbook execution capacity per unit (~3,000 playbooks/day). Max qty 10. Requires FSM v7.4.0+. Available on-prem &amp; Cloud (not FortiFlex).</div>
+        <div class="addon-qty-wrap" id="ao-sas-qty" style="display:none">
+          <label style="margin:0;white-space:nowrap">Concurrency:</label>
+          <input type="number" id="ao-sas-count" min="1" max="10" value="1" style="width:80px">
+        </div>
+      </div>
+    </div>
+
+    <!-- FortiCare Premium Support (CAPEX/OPEX-Dev) -->
+    <div class="addon-row" id="ao-support-row">
+      <input type="checkbox" id="ao-support" checked>
+      <div style="flex:1">
+        <div class="addon-label">FortiCare 24×7 Support Contract</div>
+        <div class="addon-sub">Priced by points. VM deployments: FSM97 series. HW deployments: FSM99 series. Included in GB/Day, Cloud, and MSSP PAYG.</div>
+      </div>
+    </div>
+
+    <!-- IOC Service (CAPEX/OPEX-Dev) -->
+    <div class="addon-row" id="ao-ioc-row">
+      <input type="checkbox" id="ao-ioc">
+      <div style="flex:1">
+        <div class="addon-label">FortiGuard IOC Service</div>
+        <div class="addon-sub">Indicators of Compromise threat intelligence. Priced by points for Device+EPS licensing. Included in Cloud and MSSP PAYG. Add-on for GB/Day (selected separately above).</div>
+      </div>
+    </div>
+
+    <!-- HW FortiCare (HW appliances only) -->
+    <div class="addon-row disabled-addon" id="ao-hw-care-row">
+      <input type="checkbox" id="ao-hw-care">
+      <div style="flex:1">
+        <div class="addon-label">Hardware Appliance FortiCare Premium</div>
+        <div class="addon-sub">Per-appliance FortiCare Premium support. FC-10-FSM[XX]-247-02-DD. Select hardware deployment above to enable.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="card">
+  <div class="card-body">
+    <div class="btn-row">
+      <button class="btn-primary" onclick="generateBOM()">Preview BOM</button>
+      <button class="btn-success" onclick="addToProjectBOM()">Add to Project BOM</button>
+      <button class="btn-default" onclick="resetForm()">Reset</button>
+      <span id="smsg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- BOM PREVIEW -->
+<div id="bom-section">
+  <div class="card">
+    <div class="card-header">
+      <h3>BOM Preview</h3>
+      <div class="tbl-act" style="margin:0">
+        <button class="btn-default" style="padding:4px 10px;font-size:11px" onclick="copyTSV()">Copy TSV</button>
+        <button class="btn-default" style="padding:4px 10px;font-size:11px" onclick="window.print()">Print</button>
+      </div>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table>
+        <thead><tr><th style="width:200px">Part Number</th><th>Description</th><th style="width:50px;text-align:center">Qty</th><th style="width:80px;text-align:center">Type</th><th style="width:160px">Notes</th></tr></thead>
+        <tbody id="bom-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let _currentTab = 'capex';
+let _capexDeploy = 'vm';
+let _lastRows = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+// ─────────────────────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────────────────────
+function switchTab(id){
+  _currentTab = id;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('panel-'+id.replace('-','').replace('dev','dev').replace('gb','gb')).classList.add('active');
+  // Fix ID mapping
+  const panelMap={capex:'panel-capex','opex-dev':'panel-opex-dev','opex-gb':'panel-opex-gb',cloud:'panel-cloud'};
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(panelMap[id]).classList.add('active');
+  updateAddonsVisibility();
+  updateCapexPoints();
+  updateOpexDevPoints();
+  updateGbBand();
+  updateCloudFCU();
+}
+
+function updateAddonsVisibility(){
+  const tab = _currentTab;
+  // HA: only relevant for CAPEX/OPEX-Dev
+  const haRow = document.getElementById('ao-ha-row');
+  if(tab==='opex-gb'||tab==='cloud'){
+    haRow.classList.add('disabled-addon');
+    document.getElementById('ao-ha').checked=false;
+  } else {
+    haRow.classList.remove('disabled-addon');
+  }
+  // Support row: hidden for gb/cloud (included)
+  const supRow = document.getElementById('ao-support-row');
+  if(tab==='opex-gb'||tab==='cloud'){
+    supRow.classList.add('disabled-addon');
+  } else {
+    supRow.classList.remove('disabled-addon');
+  }
+  // IOC row: for gb/cloud it's handled differently
+  const iocRow = document.getElementById('ao-ioc-row');
+  if(tab==='cloud'){
+    iocRow.classList.add('disabled-addon');
+    document.getElementById('ao-ioc').checked=false;
+  } else {
+    iocRow.classList.remove('disabled-addon');
+  }
+  // HW FortiCare
+  const hwCareRow = document.getElementById('ao-hw-care-row');
+  if(tab==='capex' && (_capexDeploy==='hw500'||_capexDeploy==='hw2200'||_capexDeploy==='hw3600')){
+    hwCareRow.classList.remove('disabled-addon');
+  } else {
+    hwCareRow.classList.add('disabled-addon');
+    document.getElementById('ao-hw-care').checked=false;
+  }
+}
+
+// ─────────────────────────────────────────────
+// CAPEX DEPLOY SELECTION
+// ─────────────────────────────────────────────
+function selectCapexDeploy(type){
+  _capexDeploy = type;
+  ['vm','hw500','hw2200','hw3600'].forEach(t=>{
+    document.getElementById('cd-'+t).classList.remove('selected');
+  });
+  document.getElementById('cd-'+type).classList.add('selected');
+  const isHW = type!=='vm';
+  document.getElementById('capex-vm-fields').style.display = isHW?'none':'block';
+  document.getElementById('capex-hw-fields').style.display = isHW?'block':'none';
+  if(type==='hw2200') document.getElementById('capex-hw-note').textContent='FSM-AIO-2200-BASE included (100 devices, 1,000 EPS). Add more as needed.';
+  else if(type==='hw3600') document.getElementById('capex-hw-note').textContent='FSM-AIO-3600-BASE included (500 devices, 5,000 EPS). Add more as needed.';
+  else if(type==='hw500') document.getElementById('capex-hw-note').textContent='FSM-500G Collector — no base license SKU required. Add device/agent licenses.';
+  updateAddonsVisibility();
+  updateCapexPoints();
+}
+
+// ─────────────────────────────────────────────
+// POINTS CALCULATORS
+// ─────────────────────────────────────────────
+function calcPoints(devices, endpoints, agents, ueba){
+  return Math.ceil(devices*1) + Math.ceil(endpoints/2) + Math.ceil(agents/3) + Math.ceil(ueba/10);
+}
+
+function updateCapexPoints(){
+  if(_currentTab!=='capex') return;
+  let pts;
+  if(_capexDeploy==='vm'){
+    const d=iv('cx-devices'),e=iv('cx-endpoints'),a=iv('cx-agents'),u=iv('cx-ueba');
+    pts=calcPoints(d,e,a,u);
+  } else {
+    const baseDevices=_capexDeploy==='hw2200'?100:_capexDeploy==='hw3600'?500:0;
+    const d=baseDevices+iv('cx-hw-devices'),e=iv('cx-hw-endpoints'),a=iv('cx-hw-agents'),u=iv('cx-hw-ueba');
+    pts=calcPoints(d,e,a,u);
+  }
+  const el=document.getElementById('capex-pts-ind');el.style.display='flex';
+  document.getElementById('capex-pts-val').textContent=pts;
+}
+
+function updateOpexDevPoints(){
+  if(_currentTab!=='opex-dev') return;
+  const d=iv('od-devices'),e=iv('od-endpoints'),a=iv('od-agents'),u=iv('od-ueba');
+  const pts=calcPoints(d,e,a,u);
+  const el=document.getElementById('opex-dev-pts-ind');el.style.display='flex';
+  document.getElementById('opex-dev-pts-val').textContent=pts;
+}
+
+function updateGbBand(){
+  if(_currentTab!=='opex-gb') return;
+  const vol=iv('gb-volume');
+  const band=getGbBand(vol);
+  const ind=document.getElementById('gb-band-ind');ind.style.display='flex';
+  document.getElementById('gb-band-text').textContent=band.fc;
+  document.getElementById('gb-band-range').textContent=band.range;
+
+  const ueba=iv('gb-ueba');
+  const uebaBand=getUebaBand(ueba,'smgs1');
+  if(ueba>0){
+    document.getElementById('gb-ueba-ind').style.display='flex';
+    document.getElementById('gb-ueba-band').textContent=uebaBand.fc;
+    document.getElementById('gb-ueba-range').textContent=uebaBand.range;
+  } else { document.getElementById('gb-ueba-ind').style.display='none'; }
+
+  const agents=iv('gb-agents');
+  const agentBand=getAgentBand(agents,'smgs1');
+  if(agents>0){
+    document.getElementById('gb-agent-ind').style.display='flex';
+    document.getElementById('gb-agent-band').textContent=agentBand.fc;
+    document.getElementById('gb-agent-range').textContent=agentBand.range;
+  } else { document.getElementById('gb-agent-ind').style.display='none'; }
+}
+
+function updateCloudFCU(){
+  if(_currentTab!=='cloud') return;
+  const tier=sv('cl-fcu-tier');
+  const qty=iv('cl-fcu-qty');
+  // Adjust min/max based on tier
+  const qtyInput=document.getElementById('cl-fcu-qty');
+  if(tier==='FC2'){qtyInput.min=1;qtyInput.max=1;}
+  else if(tier==='FC3'){qtyInput.min=2;qtyInput.max=4;}
+  else{qtyInput.min=5;qtyInput.max=60;}
+  const total=qty*10;const eps=total*100;
+  const ind=document.getElementById('cl-fcu-ind');ind.style.display='flex';
+  document.getElementById('cl-fcu-qty-val').textContent=qty;
+  document.getElementById('cl-fcu-total').textContent=total;
+  document.getElementById('cl-eps-total').textContent=(eps).toLocaleString();
+}
+
+// ─────────────────────────────────────────────
+// SKU BAND HELPERS
+// ─────────────────────────────────────────────
+// GB per day main tiers
+function getGbBand(vol){
+  if(vol>=2000) return {fc:'FC6',sku:'FC6-10-SMGS1-1026-02-DD',range:'2000+ GB/day'};
+  if(vol>=1000) return {fc:'FC5',sku:'FC5-10-SMGS1-1026-02-DD',range:'1000–1999 GB/day'};
+  if(vol>=500)  return {fc:'FC4',sku:'FC4-10-SMGS1-1026-02-DD',range:'500–999 GB/day'};
+  if(vol>=250)  return {fc:'FC3',sku:'FC3-10-SMGS1-1026-02-DD',range:'250–499 GB/day'};
+  if(vol>=100)  return {fc:'FC2',sku:'FC2-10-SMGS1-1026-02-DD',range:'100–249 GB/day'};
+  return          {fc:'FC1',sku:'FC1-10-SMGS1-1026-02-DD',range:'40–99 GB/day'};
+}
+// GB UEBA
+function getUebaBand(qty,prefix){
+  if(qty>=1000) return {fc:'FC3',sku:'FC3-10-'+prefix+'-334-02-DD',range:'1000+ Agents'};
+  if(qty>=500)  return {fc:'FC2',sku:'FC2-10-'+prefix+'-334-02-DD',range:'500–999 Agents'};
+  return          {fc:'FC1',sku:'FC1-10-'+prefix+'-334-02-DD',range:'25–499 Agents'};
+}
+// GB Advanced Agent
+function getAgentBand(qty,prefix){
+  if(qty>=1000) return {fc:'FC3',sku:'FC3-10-'+prefix+'-182-02-DD',range:'1000+ Agents'};
+  if(qty>=500)  return {fc:'FC2',sku:'FC2-10-'+prefix+'-182-02-DD',range:'500–999 Agents'};
+  return          {fc:'FC1',sku:'FC1-10-'+prefix+'-182-02-DD',range:'25–499 Agents'};
+}
+// GB IOC
+function getGbIocSku(gb){
+  const map=[
+    [99999,'FCL-10-SMGS1-149-02-DD','Unlimited GB/day IOC'],
+    [25000,'FCK-10-SMGS1-149-02-DD','Up to 25,000 GB/day IOC'],
+    [20000,'FCJ-10-SMGS1-149-02-DD','Up to 20,000 GB/day IOC'],
+    [15000,'FCI-10-SMGS1-149-02-DD','Up to 15,000 GB/day IOC'],
+    [10000,'FCH-10-SMGS1-149-02-DD','Up to 10,000 GB/day IOC'],
+    [9000,'FCG-10-SMGS1-149-02-DD','Up to 9,000 GB/day IOC'],
+    [8000,'FCF-10-SMGS1-149-02-DD','Up to 8,000 GB/day IOC'],
+    [7000,'FCE-10-SMGS1-149-02-DD','Up to 7,000 GB/day IOC'],
+    [6000,'FCD-10-SMGS1-149-02-DD','Up to 6,000 GB/day IOC'],
+    [5000,'FCC-10-SMGS1-149-02-DD','Up to 5,000 GB/day IOC'],
+    [4000,'FCB-10-SMGS1-149-02-DD','Up to 4,000 GB/day IOC'],
+    [3000,'FCA-10-SMGS1-149-02-DD','Up to 3,000 GB/day IOC'],
+    [2000,'FC9-10-SMGS1-149-02-DD','Up to 2,000 GB/day IOC'],
+    [1000,'FC8-10-SMGS1-149-02-DD','Up to 1,000 GB/day IOC'],
+    [700,'FC7-10-SMGS1-149-02-DD','Up to 700 GB/day IOC'],
+    [500,'FC6-10-SMGS1-149-02-DD','Up to 500 GB/day IOC'],
+    [400,'FC5-10-SMGS1-149-02-DD','Up to 400 GB/day IOC'],
+    [300,'FC4-10-SMGS1-149-02-DD','Up to 300 GB/day IOC'],
+    [200,'FC3-10-SMGS1-149-02-DD','Up to 200 GB/day IOC'],
+    [100,'FC2-10-SMGS1-149-02-DD','Up to 100 GB/day IOC'],
+    [50,'FC1-10-SMGS1-149-02-DD','Up to 50 GB/day IOC'],
+  ];
+  for(const [limit,sku,desc] of map){ if(gb<=limit) return {sku,desc}; }
+  return {sku:'FCL-10-SMGS1-149-02-DD',desc:'Unlimited GB/day IOC'};
+}
+
+// Device+EPS points → Support/IOC SKU
+function getSupportSkuByPoints(pts, isHW){
+  const code = isHW ? 'FSM99-240' : 'FSM97-248';
+  const tiers=[
+    [5000,'FCE-10-'+code+'-02-DD','1–5,000 pts'],
+    [4500,'FCD-10-'+code+'-02-DD','1–4,500 pts'],
+    [4000,'FCC-10-'+code+'-02-DD','1–4,000 pts'],
+    [3000,'FCB-10-'+code+'-02-DD','1–3,000 pts'],
+    [2000,'FCA-10-'+code+'-02-DD','1–2,000 pts'],
+    [1500,'FC9-10-'+code+'-02-DD','1–1,500 pts'],
+    [1000,'FC8-10-'+code+'-02-DD','1–1,000 pts'],
+    [750,'FC7-10-'+code+'-02-DD','1–750 pts'],
+    [500,'FC6-10-'+code+'-02-DD','1–500 pts'],
+    [400,'FC5-10-'+code+'-02-DD','1–400 pts'],
+    [300,'FC4-10-'+code+'-02-DD','1–300 pts'],
+    [200,'FC3-10-'+code+'-02-DD','1–200 pts'],
+    [100,'FC2-10-'+code+'-02-DD','1–100 pts'],
+    [50,'FC1-10-'+code+'-02-DD','1–50 pts'],
+  ];
+  for(const [limit,sku,range] of tiers){ if(pts<=limit) return {sku,range}; }
+  return tiers[0];
+}
+function getIocSkuByPoints(pts, prefix){
+  const code = prefix+'-149';
+  const tiers=[
+    [5000,'FCE-10-'+code+'-02-DD','1–5,000 pts'],
+    [4500,'FCD-10-'+code+'-02-DD','1–4,500 pts'],
+    [4000,'FCC-10-'+code+'-02-DD','1–4,000 pts'],
+    [3000,'FCB-10-'+code+'-02-DD','1–3,000 pts'],
+    [2000,'FCA-10-'+code+'-02-DD','1–2,000 pts'],
+    [1500,'FC9-10-'+code+'-02-DD','1–1,500 pts'],
+    [1000,'FC8-10-'+code+'-02-DD','1–1,000 pts'],
+    [750,'FC7-10-'+code+'-02-DD','1–750 pts'],
+    [500,'FC6-10-'+code+'-02-DD','1–500 pts'],
+    [400,'FC5-10-'+code+'-02-DD','1–400 pts'],
+    [300,'FC4-10-'+code+'-02-DD','1–300 pts'],
+    [200,'FC3-10-'+code+'-02-DD','1–200 pts'],
+    [100,'FC2-10-'+code+'-02-DD','1–100 pts'],
+    [50,'FC1-10-'+code+'-02-DD','1–50 pts'],
+  ];
+  for(const [limit,sku,range] of tiers){ if(pts<=limit) return {sku,range}; }
+  return tiers[0];
+}
+function getHaSkuByPoints(pts){
+  const code='FSM98-593';
+  const tiers=[
+    [999999,'FCY-10-'+code+'-02-DD','100,000+ pts'],
+    [100000,'FCU-10-'+code+'-02-DD','1–100,000 pts'],
+    [50000,'FCP-10-'+code+'-02-DD','1–50,000 pts'],
+    [20000,'FCK-10-'+code+'-02-DD','1–20,000 pts'],
+    [10000,'FCG-10-'+code+'-02-DD','1–10,000 pts'],
+    [7500,'FCF-10-'+code+'-02-DD','1–7,500 pts'],
+    [5000,'FCE-10-'+code+'-02-DD','1–5,000 pts'],
+    [4500,'FCD-10-'+code+'-02-DD','1–4,500 pts'],
+    [4000,'FCC-10-'+code+'-02-DD','1–4,000 pts'],
+    [3000,'FCB-10-'+code+'-02-DD','1–3,000 pts'],
+    [2000,'FCA-10-'+code+'-02-DD','1–2,000 pts'],
+    [1500,'FC9-10-'+code+'-02-DD','1–1,500 pts'],
+    [1000,'FC8-10-'+code+'-02-DD','1–1,000 pts'],
+    [750,'FC7-10-'+code+'-02-DD','1–750 pts'],
+    [500,'FC6-10-'+code+'-02-DD','1–500 pts'],
+    [400,'FC5-10-'+code+'-02-DD','1–400 pts'],
+    [300,'FC4-10-'+code+'-02-DD','1–300 pts'],
+    [200,'FC3-10-'+code+'-02-DD','1–200 pts'],
+    [100,'FC2-10-'+code+'-02-DD','1–100 pts'],
+    [50,'FC1-10-'+code+'-02-DD','1–50 pts'],
+  ];
+  for(const [limit,sku,range] of tiers){ if(pts<=limit) return {sku,range}; }
+  return {sku:'FCY-10-'+code+'-02-DD',range:'100,000+ pts'};
+}
+
+// Device+EPS OPEX device tier SKUs
+function getOpexDeviceSku(qty){
+  if(qty>=4000) return {sku:'FC6-10-FSM98-180-02-DD',minQty:4000};
+  if(qty>=2000) return {sku:'FC5-10-FSM98-180-02-DD',minQty:2000};
+  if(qty>=1000) return {sku:'FC4-10-FSM98-180-02-DD',minQty:1000};
+  if(qty>=500)  return {sku:'FC3-10-FSM98-180-02-DD',minQty:500};
+  if(qty>=150)  return {sku:'FC2-10-FSM98-180-02-DD',minQty:150};
+  return          {sku:'FC1-10-FSM98-180-02-DD',minQty:50};
+}
+function getOpexEndpointSku(qty){
+  if(qty>=5000) return {sku:'FC8-10-FSM98-184-02-DD',minQty:5000};
+  if(qty>=4000) return {sku:'FC7-10-FSM98-184-02-DD',minQty:4000};
+  if(qty>=500)  return {sku:'FC4-10-FSM98-184-02-DD',minQty:500};
+  if(qty>=300)  return {sku:'FC3-10-FSM98-184-02-DD',minQty:300};
+  if(qty>=150)  return {sku:'FC2-10-FSM98-184-02-DD',minQty:150};
+  return          {sku:'FC1-10-FSM98-184-02-DD',minQty:50};
+}
+function getOpexAgentSku(qty){
+  if(qty>=1000) return {sku:'FC5-10-FSM98-182-02-DD',minQty:1000};
+  if(qty>=500)  return {sku:'FC4-10-FSM98-182-02-DD',minQty:500};
+  if(qty>=200)  return {sku:'FC3-10-FSM98-182-02-DD',minQty:200};
+  if(qty>=100)  return {sku:'FC2-10-FSM98-182-02-DD',minQty:100};
+  return          {sku:'FC1-10-FSM98-182-02-DD',minQty:50};
+}
+function getOpexUebaSku(qty){
+  if(qty>=10000) return {sku:'FC9-10-FSM98-334-02-DD',minQty:10000};
+  if(qty>=500)   return {sku:'FC4-10-FSM98-334-02-DD',minQty:500};
+  return           {sku:'FC1-10-FSM98-334-02-DD',minQty:25};
+}
+
+// CAPEX packing
+function packCapexDevices(qty){
+  // Tiers: 50-base, then upgrade SKUs
+  const upgrades=[[3950,'FSM-AIO-3950-UG'],[1950,'FSM-AIO-1950-UG'],[950,'FSM-AIO-950-UG'],[450,'FSM-AIO-450-UG'],[250,'FSM-AIO-250-UG'],[100,'FSM-AIO-100-UG']];
+  const result=[];
+  let rem=qty;
+  for(const [size,sku] of upgrades){
+    const cnt=Math.floor(rem/size);
+    if(cnt>0){result.push({sku,qty:cnt,devices:size*cnt});rem-=size*cnt;}
+  }
+  return result;
+}
+function packCapexEndpoints(qty){
+  const upgrades=[[4950,'FSM-EPD-4950-UG'],[3950,'FSM-EPD-3950-UG'],[1950,'FSM-EPD-1950-UG'],[950,'FSM-EPD-950-UG'],[450,'FSM-EPD-450-UG'],[250,'FSM-EPD-250-UG'],[100,'FSM-EPD-100-UG'],[50,'FSM-EPD-50-UG']];
+  return packGeneric(qty,upgrades);
+}
+function packCapexAgents(qty){
+  const upgrades=[[1000,'FSM-AGT-ADV-1000-UG'],[500,'FSM-AGT-ADV-500-UG'],[200,'FSM-AGT-ADV-200-UG'],[100,'FSM-AGT-ADV-100-UG'],[50,'FSM-AGT-ADV-50-UG']];
+  return packGeneric(qty,upgrades);
+}
+function packCapexUeba(qty){
+  const upgrades=[[10000,'FSM-UEBA-10000-UG'],[500,'FSM-UEBA-500-UG'],[25,'FSM-UEBA-25-UG']];
+  return packGeneric(qty,upgrades);
+}
+function packGeneric(total,tiers){
+  const result=[];let rem=total;
+  for(const [size,sku] of tiers){
+    const cnt=Math.floor(rem/size);
+    if(cnt>0){result.push({sku,qty:cnt,size});rem-=size*cnt;}
+  }
+  if(rem>0&&tiers.length){result.push({sku:tiers[tiers.length-1][1],qty:1,size:tiers[tiers.length-1][0]});}
+  return result;
+}
+
+// ─────────────────────────────────────────────
+// UTILITY
+// ─────────────────────────────────────────────
+function iv(id){return parseInt(document.getElementById(id).value)||0;}
+function sv(id){return document.getElementById(id).value;}
+function cb(id){return document.getElementById(id).checked;}
+function toggleAddonQty(wrapId){
+  const chk=document.getElementById(wrapId.replace('-qty',''));
+  const wrap=document.getElementById(wrapId);
+  if(wrap) wrap.style.display=chk.checked?'flex':'none';
+}
+function row(sku,desc,qty,kind,note=''){return {sku,desc,qty,kind,note};}
+function sec(label){return {section:label};}
+
+// ─────────────────────────────────────────────
+// GENERATE BOM
+// ─────────────────────────────────────────────
+function generateBOM(){
+  clearErrors();
+  let valid=true;
+  const rows=[];
+
+  if(_currentTab==='capex'){
+    valid = buildCapexRows(rows);
+  } else if(_currentTab==='opex-dev'){
+    valid = buildOpexDevRows(rows);
+  } else if(_currentTab==='opex-gb'){
+    valid = buildGbRows(rows);
+  } else if(_currentTab==='cloud'){
+    valid = buildCloudRows(rows);
+  }
+
+  if(!valid) return false;
+
+  // Add-ons
+  buildAddonRows(rows);
+
+  _lastRows = rows;
+  _lastLabel = buildLabel();
+  _lastMeta  = buildMeta();
+
+  renderBOM(rows);
+  document.getElementById('bom-section').style.display='block';
+  document.getElementById('bom-section').scrollIntoView({behavior:'smooth'});
+  document.getElementById('smsg').textContent='';
+  return true;
+}
+
+// ──── CAPEX BOM BUILDER ────
+function buildCapexRows(rows){
+  const deploy = _capexDeploy;
+  rows.push(sec('CAPEX / Perpetual Licensing'));
+
+  if(deploy==='vm'){
+    const devices=iv('cx-devices');
+    if(devices<50){showError('cx-devices','cx-devices-err');return false;}
+
+    rows.push(row('FSM-AIO-BASE','FortiSIEM All-in-One Base License (50 devices, 500 EPS). Required with all CAPEX VM licenses.',1,'req','Required base'));
+
+    // Pack additional devices
+    if(devices>50){
+      const packs=packCapexDevices(devices-50);
+      for(const p of packs){
+        rows.push(row(p.sku,'FortiSIEM CAPEX Device Upgrade License ('+p.size+' devices)',p.qty,'req','Device upgrade'));
+      }
+    }
+
+    // Endpoints
+    const eps=iv('cx-endpoints');
+    if(eps>0){
+      const packs=packCapexEndpoints(eps);
+      for(const p of packs){rows.push(row(p.sku,'FortiSIEM CAPEX Endpoint License ('+p.size+' endpoints)',p.qty,'opt','Endpoint'));}
+    }
+    // Agents
+    const agents=iv('cx-agents');
+    if(agents>0){
+      const packs=packCapexAgents(agents);
+      for(const p of packs){rows.push(row(p.sku,'FortiSIEM CAPEX Advanced Agent License ('+p.size+' agents)',p.qty,'opt','Log & FIM'));}
+    }
+    // UEBA
+    const ueba=iv('cx-ueba');
+    if(ueba>0){
+      const packs=packCapexUeba(ueba);
+      for(const p of packs){rows.push(row(p.sku,'FortiSIEM CAPEX UEBA Agent Telemetry ('+p.size+' agents)',p.qty,'opt','UEBA'));}
+    }
+    // Extra EPS
+    const extraEps=iv('cx-eps');
+    if(extraEps>0){
+      rows.push(row('FSM-EPS-100-UG','FortiSIEM Additional Events per Second (1 EPS per unit)',extraEps,'opt','Additional EPS'));
+    }
+
+    // Support / IOC
+    const pts=calcPoints(devices,eps,agents,ueba);
+    if(cb('ao-support')){
+      const s=getSupportSkuByPoints(pts,false);
+      rows.push(sec('Support & Services'));
+      rows.push(row(s.sku,'FortiSIEM 24×7 FortiCare Contract – VM Deployment ('+s.range+' points)',1,'req','24×7 support'));
+    }
+    if(cb('ao-ioc')){
+      const s=getIocSkuByPoints(pts,'FSM98');
+      if(!rows.find(r=>r.section==='Support & Services')) rows.push(sec('Support & Services'));
+      rows.push(row(s.sku,'FortiGuard IOC Service for FortiSIEM ('+s.range+' points)',1,'opt','Threat intel'));
+    }
+    if(cb('ao-ha')){
+      const s=getHaSkuByPoints(pts);
+      if(!rows.find(r=>r.section==='Support & Services')) rows.push(sec('Support & Services'));
+      rows.push(row(s.sku,'FortiSIEM High Availability Super ('+s.range+' points)',1,'opt','HA Super'));
+    }
+
+  } else {
+    // Hardware
+    const hwSkuMap={hw500:'FSM-500G',hw2200:'FSM-2200G',hw3600:'FSM-3600G'};
+    const hwCareMap={hw500:'FC-10-FSM5G-247-02-DD',hw2200:'FC-10-FM22G-247-02-DD',hw3600:'FC-10-FM36G-247-02-DD'};
+    const hwBaseMap={hw500:null,hw2200:'FSM-AIO-2200-BASE',hw3600:'FSM-AIO-3600-BASE'};
+    const hwBaseDescMap={hw2200:'FSM-AIO-2200-BASE – 100 devices/1,000 EPS perpetual base for FSM-2200G',hw3600:'FSM-AIO-3600-BASE – 500 devices/5,000 EPS perpetual base for FSM-3600G'};
+    const hwDescMap={hw500:'FSM-500G Collector Hardware Appliance (5,000 EPS)',hw2200:'FSM-2200G Hardware Appliance (20,000 EPS)',hw3600:'FSM-3600G Hardware Appliance (50,000 EPS)'};
+
+    rows.push(row(hwSkuMap[deploy],hwDescMap[deploy],1,'req','Hardware appliance'));
+    if(hwBaseMap[deploy]){
+      rows.push(row(hwBaseMap[deploy],hwBaseDescMap[deploy],1,'req','Perpetual base license'));
+    }
+
+    const baseDevices=deploy==='hw2200'?100:deploy==='hw3600'?500:0;
+    const addDevices=iv('cx-hw-devices');
+    const addEndpoints=iv('cx-hw-endpoints');
+    const addAgents=iv('cx-hw-agents');
+    const addUeba=iv('cx-hw-ueba');
+    const addEps=iv('cx-hw-eps');
+
+    if(addDevices>0){
+      const packs=packCapexDevices(addDevices);
+      for(const p of packs){rows.push(row(p.sku,'FortiSIEM CAPEX Device Upgrade ('+p.size+' devices)',p.qty,'opt','Additional devices'));}
+    }
+    if(addEndpoints>0){const packs=packCapexEndpoints(addEndpoints);for(const p of packs){rows.push(row(p.sku,'FortiSIEM CAPEX Endpoint License ('+p.size+')',p.qty,'opt',''));}}
+    if(addAgents>0){const packs=packCapexAgents(addAgents);for(const p of packs){rows.push(row(p.sku,'FortiSIEM CAPEX Advanced Agent License ('+p.size+')',p.qty,'opt',''));}}
+    if(addUeba>0){const packs=packCapexUeba(addUeba);for(const p of packs){rows.push(row(p.sku,'FortiSIEM CAPEX UEBA Telemetry ('+p.size+')',p.qty,'opt',''));}}
+    if(addEps>0){rows.push(row('FSM-EPS-100-UG','Additional EPS',addEps,'opt',''));}
+
+    const totalDevices=baseDevices+addDevices;
+    const pts=calcPoints(totalDevices,addEndpoints,addAgents,addUeba);
+
+    if(cb('ao-hw-care')){
+      rows.push(sec('Hardware FortiCare'));
+      rows.push(row(hwCareMap[deploy],'FortiCare Premium Support for '+hwSkuMap[deploy]+' Hardware Appliance',1,'req','HW FortiCare — does NOT include product support'));
+    }
+    if(cb('ao-support')){
+      rows.push(sec('Product Support & Services'));
+      const s=getSupportSkuByPoints(pts,true);
+      rows.push(row(s.sku,'FortiSIEM 24×7 FortiCare Contract – HW Deployment ('+s.range+' points)',1,'req','HW product support'));
+    }
+    if(cb('ao-ioc')){
+      const s=getIocSkuByPoints(pts,'FSM98');
+      rows.push(row(s.sku,'FortiGuard IOC Service ('+s.range+' points)',1,'opt',''));
+    }
+    if(cb('ao-ha')){
+      const s=getHaSkuByPoints(pts);
+      rows.push(row(s.sku,'FortiSIEM High Availability Super ('+s.range+' points)',1,'opt',''));
+    }
+  }
+  return true;
+}
+
+// ──── OPEX DEVICE+EPS BOM BUILDER ────
+function buildOpexDevRows(rows){
+  const devices=iv('od-devices');
+  if(devices<50){showError('od-devices','od-devices-err');return false;}
+  const endpoints=iv('od-endpoints');
+  const agents=iv('od-agents');
+  const ueba=iv('od-ueba');
+  const extraEps=iv('od-eps');
+
+  rows.push(sec('OPEX / Subscription — Device + EPS Licensing'));
+
+  const dSku=getOpexDeviceSku(devices);
+  rows.push(row(dSku.sku,'FortiSIEM Subscription – Devices (min qty '+dSku.minQty+', 10 EPS each)',devices,'req','1 unit = 1 device'));
+
+  if(endpoints>0){
+    const eSku=getOpexEndpointSku(endpoints);
+    rows.push(row(eSku.sku,'FortiSIEM Subscription – Endpoints (min qty '+eSku.minQty+', 2 EPS each)',endpoints,'opt','1 unit = 1 endpoint'));
+  }
+  if(agents>0){
+    const aSku=getOpexAgentSku(agents);
+    rows.push(row(aSku.sku,'FortiSIEM Subscription – Advanced Agents (Log & FIM)',agents,'opt','Requires device/endpoint license'));
+  }
+  if(ueba>0){
+    const uSku=getOpexUebaSku(ueba);
+    rows.push(row(uSku.sku,'FortiSIEM Subscription – UEBA Agent Telemetry',ueba,'opt','Agent-based UEBA'));
+  }
+  if(extraEps>0){
+    rows.push(row('FC1-10-FSM98-183-02-DD','FortiSIEM Subscription – Additional EPS (1 unit = 1 EPS)',extraEps,'opt','Additional EPS'));
+  }
+
+  const pts=calcPoints(devices,endpoints,agents,ueba);
+  rows.push(sec('Support & Services'));
+  if(cb('ao-support')){
+    const s=getSupportSkuByPoints(pts,false);
+    rows.push(row(s.sku,'FortiSIEM 24×7 FortiCare Contract – VM Deployment ('+s.range+' points)',1,'req','Required support'));
+  }
+  if(cb('ao-ioc')){
+    const s=getIocSkuByPoints(pts,'FSM98');
+    rows.push(row(s.sku,'FortiGuard IOC Service ('+s.range+' points)',1,'opt',''));
+  }
+  if(cb('ao-ha')){
+    const s=getHaSkuByPoints(pts);
+    rows.push(row(s.sku,'FortiSIEM High Availability Super ('+s.range+' points)',1,'opt','HA Super'));
+  }
+  return true;
+}
+
+// ──── OPEX GB/DAY BOM BUILDER ────
+function buildGbRows(rows){
+  const vol=iv('gb-volume');
+  if(vol<40){showError('gb-volume','gb-volume-err');return false;}
+
+  rows.push(sec('OPEX / Subscription — GB Per Day Licensing'));
+  const band=getGbBand(vol);
+  rows.push(row(band.sku,'FortiSIEM Subscription – '+band.range+' logs/day ('+vol+' GB/day). Includes HA Super, FortiCare Premium.',1,'req','Price by tier; 1 GB/day increments'));
+  rows.push({sku:'ℹ',desc:'GB/Day calculation based on uncompressed raw log size. HA Super and FortiCare Premium are included.',qty:null,kind:'note',note:''});
+
+  const ueba=iv('gb-ueba');
+  if(ueba>0){
+    const b=getUebaBand(ueba,'SMGS1');
+    rows.push(row(b.sku,'FortiSIEM GB UEBA Agent Telemetry Subscription ('+b.range+')',ueba,'opt','UEBA add-on'));
+  }
+  const agents=iv('gb-agents');
+  if(agents>0){
+    const b=getAgentBand(agents,'SMGS1');
+    rows.push(row(b.sku,'FortiSIEM GB Advanced Agent Subscription ('+b.range+'). FIM, advanced monitoring.',agents,'opt','Agent add-on'));
+  }
+  const iocVal=sv('gb-ioc');
+  if(iocVal!=='0'){
+    const ioc=getGbIocSku(parseInt(iocVal));
+    rows.push(row(ioc.sku,'FortiGuard IOC Service – '+ioc.desc,1,'opt','IOC add-on'));
+  }
+  return true;
+}
+
+// ──── CLOUD BOM BUILDER ────
+function buildCloudRows(rows){
+  const region=sv('cl-region');
+  const tier=sv('cl-fcu-tier');
+  const qty=iv('cl-fcu-qty');
+  const storage=iv('cl-storage');
+  const archive=iv('cl-archive');
+
+  // Validate qty for tier
+  if(tier==='FC2'&&qty!==1){showError('cl-fcu-qty','cl-fcu-err');return false;}
+  if(tier==='FC3'&&(qty<2||qty>4)){showError('cl-fcu-qty','cl-fcu-err');return false;}
+  if(tier==='FC4'&&(qty<5||qty>60)){showError('cl-fcu-qty','cl-fcu-err');return false;}
+  if(storage<1){showError('cl-storage','cl-storage-err');return false;}
+
+  const regionCode = region==='A'?'SMCLD':'SMCLB';
+  const regionLabel = region==='A'?'Region A':'Region B';
+  const fcuSku=tier+'-10-'+regionCode+'-543-02-DD';
+  const storageSku='FC-10-'+regionCode+'-541-02-DD';
+  const archiveSku='FC-10-'+regionCode+'-542-02-DD';
+
+  const totalFcu=qty*10;
+  const eps=(totalFcu*100).toLocaleString();
+
+  rows.push(sec('FortiSIEM Cloud (SaaS) — '+regionLabel));
+  rows.push(row(fcuSku,'FortiSIEM Compute Units (FCU) – 10 FCU per unit. '+regionLabel+'. Annual Subscription. Includes FortiCare Premium.',qty,'req',totalFcu+' FCU = '+eps+' EPS'));
+  rows.push(row(storageSku,'FortiSIEM Cloud Online Storage – 500 GB per unit. '+regionLabel+'. Annual Subscription.',storage,'req','Min 1 block required'));
+  if(archive>0){
+    rows.push(row(archiveSku,'FortiSIEM Cloud Archive Storage – 500 GB per unit. '+regionLabel+'.',archive,'opt','Optional archive'));
+  }
+  rows.push({sku:'ℹ',desc:'FortiSIEM Cloud includes all device/endpoint/agent/EPS/UEBA/IOC/FortiCare in the FCU license. No separate licensing required.',qty:null,kind:'note',note:''});
+  return true;
+}
+
+// ──── ADD-ONS ────
+function buildAddonRows(rows){
+  let hasAddon=false;
+  const ao=[];
+
+  if(cb('ao-manager')){
+    const cnt=iv('ao-manager-count');
+    if(cnt>=5&&cnt<=50){
+      ao.push(row('FC1-10-SMMGR-574-02-DD','FortiSIEM Manager – Centralized multi-instance management ('+cnt+' instances). Requires FSM v6.5.0+. Includes M&S.',cnt,'opt','Min 5 / max 50 instances'));
+    }
+  }
+  if(cb('ao-sas')){
+    const cnt=iv('ao-sas-count');
+    if(cnt>=1&&cnt<=10){
+      ao.push(row('FC1-10-SIMPC-1055-02-DD','FortiSIEM Security Automation Service – '+cnt+' concurrent playbook execution(s). ~3,000 playbooks/day each. Requires v7.4.0+.',cnt,'opt','Max qty 10'));
+    }
+  }
+
+  if(ao.length>0){
+    rows.push(sec('Add-on Licenses'));
+    rows.push(...ao);
+  }
+}
+
+// ─────────────────────────────────────────────
+// LABEL / META
+// ─────────────────────────────────────────────
+function buildLabel(){
+  if(_currentTab==='capex'){
+    if(_capexDeploy==='vm') return 'FortiSIEM CAPEX VM – '+iv('cx-devices')+' devices';
+    const map={hw500:'FSM-500G Collector',hw2200:'FSM-2200G',hw3600:'FSM-3600G'};
+    return 'FortiSIEM CAPEX '+map[_capexDeploy];
+  }
+  if(_currentTab==='opex-dev') return 'FortiSIEM OPEX – '+iv('od-devices')+' devices';
+  if(_currentTab==='opex-gb') return 'FortiSIEM GB/Day – '+iv('gb-volume')+' GB/day';
+  const fcu=iv('cl-fcu-qty')*10;
+  return 'FortiSIEM Cloud – '+fcu+' FCU – Region '+sv('cl-region');
+}
+function buildMeta(){
+  const m={model:'FortiSIEM',licenseModel:_currentTab.toUpperCase()};
+  if(_currentTab==='capex'){m.deployment=_capexDeploy;m.devices=iv('cx-devices');}
+  else if(_currentTab==='opex-dev'){m.devices=iv('od-devices');}
+  else if(_currentTab==='opex-gb'){m.gbPerDay=iv('gb-volume');}
+  else{m.fcu=iv('cl-fcu-qty')*10;m.region='Region '+sv('cl-region');}
+  return m;
+}
+
+// ─────────────────────────────────────────────
+// RENDER BOM TABLE
+// ─────────────────────────────────────────────
+function renderBOM(rows){
+  const tbody=document.getElementById('bom-tbody');
+  tbody.innerHTML='';
+  rows.forEach(r=>{
+    if(r.section!==undefined){
+      tbody.innerHTML+=`<tr class="section-row"><td colspan="5">${r.section}</td></tr>`;
+      return;
+    }
+    const kindMap={req:'badge-req',opt:'badge-opt',mand:'badge-mand',inc:'badge-inc',note:''};
+    const labelMap={req:'Required',opt:'Optional',mand:'Mandatory',inc:'Included',note:''};
+    const badge=r.kind&&r.kind!=='note'?`<span class="badge ${kindMap[r.kind]}">${labelMap[r.kind]}</span>`:'';
+    tbody.innerHTML+=`<tr>
+      <td><span class="sku">${r.sku}</span></td>
+      <td>${r.desc}</td>
+      <td style="text-align:center">${r.qty!==null?r.qty:''}</td>
+      <td style="text-align:center">${badge}</td>
+      <td class="nc">${r.note||''}</td>
+    </tr>`;
+  });
+}
+
+// ─────────────────────────────────────────────
+// ADD TO PROJECT BOM
+// ─────────────────────────────────────────────
+function addToProjectBOM(){
+  if(!generateBOM()) return;
+  window.parent.postMessage({
+    type:'FORTIBOM_ADD',
+    product:'FortiSIEM',
+    label:_lastLabel,
+    rows:_lastRows,
+    meta:_lastMeta
+  },'*');
+  const msg=document.getElementById('smsg');
+  msg.textContent='✓ Added to Project BOM';
+  msg.style.color='#2E7D32';
+  setTimeout(()=>{msg.textContent='';},3000);
+}
+
+// ─────────────────────────────────────────────
+// VALIDATION HELPERS
+// ─────────────────────────────────────────────
+function showError(fieldId,errId){
+  document.getElementById(fieldId).classList.add('invalid');
+  document.getElementById(errId).style.display='block';
+}
+function clearErrors(){
+  document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
+  document.querySelectorAll('.err').forEach(e=>e.style.display='none');
+}
+
+// ─────────────────────────────────────────────
+// COPY TSV
+// ─────────────────────────────────────────────
+function copyTSV(){
+  const lines=['Part Number\tDescription\tQty\tType\tNotes'];
+  _lastRows.forEach(r=>{
+    if(r.section){lines.push('\t'+r.section+'\t\t\t');}
+    else{lines.push([r.sku,r.desc,r.qty??'',r.kind||'',r.note||''].join('\t'));}
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    const msg=document.getElementById('smsg');msg.textContent='✓ TSV copied';
+    setTimeout(()=>{msg.textContent='';},2000);
+  });
+}
+
+// ─────────────────────────────────────────────
+// RESET
+// ─────────────────────────────────────────────
+function resetForm(){
+  clearErrors();
+  // Reset all inputs to defaults
+  document.querySelectorAll('input[type=number]').forEach(el=>{el.value=el.defaultValue||0;});
+  document.querySelectorAll('select').forEach(el=>{el.selectedIndex=0;});
+  document.querySelectorAll('input[type=checkbox]').forEach(el=>{
+    el.checked = el.id==='ao-support'; // keep support checked by default
+  });
+  document.querySelectorAll('.addon-qty-wrap').forEach(el=>{el.style.display='none';});
+  // Reset capex deploy
+  selectCapexDeploy('vm');
+  // Reset tabs to capex
+  switchTab('capex');
+  document.getElementById('bom-section').style.display='none';
+  _lastRows=[];_lastLabel='';_lastMeta={};
+  document.getElementById('smsg').textContent='';
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+updateCapexPoints();
+updateCloudFCU();
+</script>
+</body>
+</html>

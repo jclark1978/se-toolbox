@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FortiSandbox BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.5;background:var(--forti-bg);color:var(--forti-text);padding:20px}
+h2{font-size:16px;font-weight:700;color:var(--forti-text)}
+h3{font-size:13px;font-weight:600;color:var(--forti-text)}
+label{font-size:12px;font-weight:600;color:var(--forti-text-secondary);display:block;margin-bottom:4px}
+label .req{color:var(--forti-red)}
+select,input[type=number],input[type=text]{background:#fff;border:1px solid var(--forti-input-border);border-radius:3px;padding:6px 9px;font-size:13px;width:100%;font-family:inherit;color:var(--forti-text)}
+select:focus,input[type=number]:focus,input[type=text]:focus{outline:none;border-color:var(--forti-red);box-shadow:0 0 0 2px rgba(238,49,36,.1)}
+input.invalid,select.invalid{border-color:var(--forti-red)!important}
+.err{color:var(--forti-red);font-size:11px;display:none;margin-top:2px}
+.card{background:#fff;border:1px solid var(--forti-border);border-radius:4px;margin-bottom:14px;overflow:hidden}
+.card-head{background:var(--forti-section-header);border-bottom:1px solid var(--forti-border);padding:9px 18px;display:flex;align-items:center;gap:8px}
+.card-body{padding:14px 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr));gap:14px}
+.callout{border-radius:3px;padding:9px 12px;font-size:12px;line-height:1.6;display:flex;gap:8px}
+.info{background:var(--forti-info-bg);border:1px solid var(--forti-info-border);color:var(--forti-info-text)}
+.warn{background:var(--forti-warn-bg);border:1px solid var(--forti-warn-border);color:var(--forti-warn-text)}
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px;margin-top:6px}
+.model-card{border:2px solid var(--forti-border);border-radius:4px;padding:10px 12px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
+.model-card:hover{border-color:#aaa}
+.model-card.selected{border-color:var(--forti-red);background:#FEF8F8}
+.model-card .mc-name{font-weight:700;font-size:13px}
+.model-card .mc-sub{font-size:11px;color:var(--forti-text-secondary);margin-top:2px}
+.model-card .mc-tag{font-size:10px;background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5;border-radius:2px;padding:1px 5px;display:inline-block;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--forti-table-head);border:1px solid var(--forti-border);padding:7px 11px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--forti-text-secondary);text-align:left}
+tbody td{border:1px solid var(--forti-border);padding:7px 11px;vertical-align:top}
+tbody tr:nth-child(even) td{background:var(--forti-table-stripe)}
+.section-row td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--forti-text-secondary);padding:5px 11px;border-top:2px solid #C5CAD9}
+.badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 4px;display:inline-block;white-space:nowrap}
+.badge-req{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2}
+.badge-opt{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5}
+.badge-mand{background:#FFF8EE;color:#8A5800;border:1px solid #F5D9A0}
+.badge-inc{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5}
+.sku-mono{font-family:'Courier New',monospace;font-size:11px;color:#1A4E82}
+.nc{color:var(--forti-text-muted)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:13px;font-weight:600;border:none;border-radius:3px;cursor:pointer;font-family:inherit}
+.btn-primary{background:var(--forti-red);color:#fff}
+.btn-primary:hover{background:#CC2519}
+.btn-success{background:#2E7D32;color:#fff}
+.btn-success:hover{background:#256427}
+.btn-ghost{background:var(--forti-bg);color:var(--forti-text);border:1px solid var(--forti-input-border)}
+.btn-ghost:hover{background:#E5E9F0}
+.btn-sm{padding:5px 10px;font-size:12px}
+.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+#smsg{font-size:12px;color:#2E7D32;font-weight:600}
+.cb-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--forti-border)}
+.cb-row:last-child{border-bottom:none}
+.cb-row input[type=checkbox]{margin-top:2px;accent-color:var(--forti-red);cursor:pointer}
+.cb-row label{font-size:12px;font-weight:500;color:var(--forti-text);cursor:pointer;margin:0}
+.cb-row .cb-sku{font-family:'Courier New',monospace;font-size:10px;color:#1A4E82;display:block;margin-top:1px}
+.cb-row .cb-note{font-size:11px;color:var(--forti-text-muted)}
+.disabled-opt{opacity:.4;pointer-events:none}
+.comp-table th{font-size:10px;padding:6px 10px}
+.comp-table td{font-size:11px;padding:6px 10px}
+.check-cell{text-align:center;color:#2E7D32;font-size:14px}
+.addon-cell{text-align:center;color:#8A5800;font-size:10px}
+.page-header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.icon-box{width:44px;height:44px;background:var(--forti-red);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-box svg{fill:#fff}
+.page-header h1{font-size:20px;font-weight:700;color:var(--forti-text);line-height:1.2}
+.page-header .doc-id{font-size:11px;color:var(--forti-text-muted)}
+.qty-small{width:80px!important}
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--forti-text-secondary);margin:12px 0 6px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════ PAGE HEADER -->
+<div class="page-header">
+  <div class="icon-box">
+    <svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+  </div>
+  <div>
+    <h1>FortiSandbox BOM Generator</h1>
+    <div class="doc-id">FSA-OG-R41-20251216 &nbsp;·&nbsp; FortiSandbox and FortiGuard Sandbox Service Ordering Guide</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ OVERVIEW TABLE -->
+<div class="card">
+  <div class="card-head"><h2>Subscription Tiers &amp; Deployment Overview</h2></div>
+  <div class="card-body" style="overflow-x:auto">
+    <div class="callout info" style="margin-bottom:12px">
+      ℹ️ FortiSandbox detects unknown, zero-day malware and phishing threats. Advanced AI (v5.0) adds purpose-built AI engine, Real-time Anti-Phishing, and IOC Threat Enrichment.
+    </div>
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>FortiGuard Essentials</th>
+          <th>Sandbox Essentials</th>
+          <th>Advanced Sandbox</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>IPS Engine &amp; Database</td><td class="check-cell">✓</td><td class="check-cell">✓</td><td class="check-cell">✓</td></tr>
+        <tr><td>AV Engine &amp; Database</td><td class="check-cell">✓</td><td class="check-cell">✓</td><td class="check-cell">✓</td></tr>
+        <tr><td>Web Filtering</td><td class="check-cell">✓</td><td class="check-cell">✓</td><td class="check-cell">✓</td></tr>
+        <tr><td>Sandbox Tracer Engine</td><td></td><td class="check-cell">✓</td><td class="check-cell">✓</td></tr>
+        <tr><td>Cloud File Query</td><td></td><td class="check-cell">✓</td><td class="check-cell">✓</td></tr>
+        <tr><td>Industrial Security (OT)</td><td></td><td class="check-cell">✓</td><td class="check-cell">✓</td></tr>
+        <tr><td>Advanced AI Engine</td><td></td><td></td><td class="check-cell">✓</td></tr>
+        <tr><td>Real-time Anti-Phishing</td><td></td><td></td><td class="check-cell">✓</td></tr>
+        <tr><td>IOC Threat Enrichment</td><td></td><td></td><td class="check-cell">✓</td></tr>
+        <tr>
+          <td><strong>Subscription Tier</strong></td>
+          <td colspan="2" style="text-align:center;font-size:11px;color:#3557A5;font-weight:600">Standard (Sandbox Threat Intelligence)</td>
+          <td style="text-align:center;font-size:11px;color:#8A5800;font-weight:600">Advanced AI Subscription</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ DEPLOYMENT TYPE -->
+<div class="card">
+  <div class="card-head"><h2>1 · Select Deployment Type</h2></div>
+  <div class="card-body">
+    <label>Deployment Type <span class="req">*</span></label>
+    <div class="model-grid" id="dep-grid">
+      <div class="model-card selected" data-dep="saas-amp" onclick="selectDep(this)">
+        <div class="mc-name">SaaS – AMP</div>
+        <div class="mc-sub">Advanced Malware Protection (Detection)</div>
+        <div class="mc-tag">FortiGate SaaS</div>
+      </div>
+      <div class="model-card" data-dep="saas-ilmps" onclick="selectDep(this)">
+        <div class="mc-name">SaaS – IL MPS</div>
+        <div class="mc-sub">Inline Malware Prevention (Detection + Prevention)</div>
+        <div class="mc-tag">FortiGate SaaS</div>
+      </div>
+      <div class="model-card" data-dep="paas" onclick="selectDep(this)">
+        <div class="mc-name">PaaS (FortiCloud)</div>
+        <div class="mc-sub">Fortinet-hosted, subscription, North America &amp; Europe</div>
+        <div class="mc-tag">SOC Augmentation</div>
+      </div>
+      <div class="model-card" data-dep="vm" onclick="selectDep(this)">
+        <div class="mc-name">Virtual Appliance (VM)</div>
+        <div class="mc-sub">FSA-VMS – public/private cloud or on-prem</div>
+        <div class="mc-tag">SOC Augmentation</div>
+      </div>
+      <div class="model-card" data-dep="hw" onclick="selectDep(this)">
+        <div class="mc-name">Hardware Appliance</div>
+        <div class="mc-sub">FSA-500G / 1500G / 3000G</div>
+        <div class="mc-tag">SOC Augmentation</div>
+      </div>
+    </div>
+    <div id="dep-err" class="err">Please select a deployment type.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SAAS SECTION -->
+<div id="section-saas" class="card">
+  <div class="card-head"><h2>2 · SaaS Configuration (FortiGate)</h2></div>
+  <div class="card-body">
+    <div class="callout info" style="margin-bottom:12px">
+      ℹ️ SaaS services are bundled with FortiGate subscriptions. Select the FortiGate model to generate the correct a-la-carte or bundle SKU. Both services are available in North America, Europe, and Asia regions.
+    </div>
+    <div class="grid">
+      <div>
+        <label>FortiGate Model <span class="req">*</span></label>
+        <select id="fg-model" onchange="onSaasChange()">
+          <option value="60F">FortiGate-60F</option>
+        </select>
+        <div class="nc" style="font-size:11px;margin-top:4px">Note: FortiGate-60F shown as reference. Comparable SKUs available for all models.</div>
+      </div>
+      <div>
+        <label>Quantity <span class="req">*</span></label>
+        <input type="number" id="saas-qty" class="qty-small" value="1" min="1" oninput="onSaasChange()">
+        <div id="saas-qty-err" class="err">Quantity must be ≥ 1.</div>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <label>Service Type</label>
+      <div id="saas-type-display" style="font-size:12px;color:var(--forti-text-secondary);padding:6px 0"></div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="cb-row">
+        <input type="checkbox" id="saas-care" checked>
+        <div>
+          <label for="saas-care">24×7 FortiCare Premium Support</label>
+          <span class="cb-sku">FC-10-0060F-247-02-DD</span>
+          <span class="cb-note">Recommended · per unit</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PAAS SECTION -->
+<div id="section-paas" class="card" style="display:none">
+  <div class="card-head"><h2>2 · PaaS Configuration (FortiSandbox PaaS)</h2></div>
+  <div class="card-body">
+    <div class="callout info" style="margin-bottom:12px">
+      ℹ️ FortiSandbox PaaS is licensed by Cloud VM capacity. Firmware v5.0.2 GA required. Available in North America and Europe regions only.
+    </div>
+    <div class="grid">
+      <div>
+        <label>Subscription Tier <span class="req">*</span></label>
+        <select id="paas-tier" onchange="onPaasChange()">
+          <option value="advanced">Advanced AI Subscription (includes RTAP)</option>
+          <option value="standard">Standard Sandbox Threat Intelligence</option>
+        </select>
+      </div>
+      <div>
+        <label>Cloud VM Expansion Bundles</label>
+        <select id="paas-vm-bundle" onchange="onPaasChange()">
+          <option value="1">+1 Cloud VM Bundle</option>
+          <option value="5">+5 Cloud VM Bundle</option>
+        </select>
+      </div>
+      <div>
+        <label>Number of VM Bundles <span class="req">*</span></label>
+        <input type="number" id="paas-qty" value="1" min="1" oninput="onPaasChange()">
+        <div id="paas-qty-err" class="err">Quantity must be ≥ 1.</div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="cb-row" id="paas-rtap-row">
+        <input type="checkbox" id="paas-rtap">
+        <div>
+          <label for="paas-rtap">Real-Time Anti-Phishing (RTAP) – a-la-carte</label>
+          <span class="cb-sku">FC1/FC2-10-SACLP-682-01-DD</span>
+          <span class="cb-note">Not needed if Advanced AI tier selected (RTAP already included)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ VM SECTION -->
+<div id="section-vm" class="card" style="display:none">
+  <div class="card-head"><h2>2 · Virtual Appliance (FSA-VMS) Configuration</h2></div>
+  <div class="card-body">
+    <div class="callout info" style="margin-bottom:12px">
+      ℹ️ FSA-VMS supports 0–64 Nested VMs and 0–200 Cloud VMs. No Universal VMs are included — all VM seats must be purchased separately. Microsoft licenses required for each Nested VM (Cloud VMs are pre-licensed).
+    </div>
+    <div class="grid">
+      <div>
+        <label>Number of FSA-VMS Units <span class="req">*</span></label>
+        <input type="number" id="vm-qty" value="1" min="1" max="99" oninput="onVmChange()">
+        <div id="vm-qty-err" class="err">Quantity must be 1–99.</div>
+      </div>
+      <div>
+        <label>FortiGuard Subscription Tier <span class="req">*</span></label>
+        <select id="vm-tier" onchange="onVmChange()">
+          <option value="advanced">Advanced AI Subscription</option>
+          <option value="standard">Standard Subscription</option>
+        </select>
+      </div>
+      <div>
+        <label>Nested Universal VMs (per unit)</label>
+        <input type="number" id="vm-nested" value="0" min="0" max="64" oninput="onVmChange()">
+        <div class="nc" style="font-size:11px;margin-top:2px">0–64 per unit · SKU covers 0–8; higher tier SKUs available</div>
+        <div id="vm-nested-err" class="err">Max 64 per unit.</div>
+      </div>
+      <div>
+        <label>Windows 10 Licenses (per unit)</label>
+        <input type="number" id="vm-win10" value="0" min="0" oninput="onVmChange()">
+        <div class="nc" style="font-size:11px;margin-top:2px">1 per Nested VM; Cloud VMs pre-licensed</div>
+      </div>
+      <div>
+        <label>Windows 11 Licenses (per unit)</label>
+        <input type="number" id="vm-win11" value="0" min="0" oninput="onVmChange()">
+      </div>
+      <div>
+        <label>Office 2021 Licenses (per unit)</label>
+        <input type="number" id="vm-office" value="0" min="0" oninput="onVmChange()">
+        <div class="nc" style="font-size:11px;margin-top:2px">Recommend 1 per 5 Windows licenses</div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="cb-row">
+        <input type="checkbox" id="vm-care" checked>
+        <div>
+          <label for="vm-care">FortiCare Premium Support</label>
+          <span class="cb-sku">FC1-10-SAVMS-258-02-DD</span>
+          <span class="cb-note">Per unit</span>
+        </div>
+      </div>
+      <div class="cb-row">
+        <input type="checkbox" id="vm-mta">
+        <div>
+          <label for="vm-mta">Mailbox MTA License (100–1,000 mailboxes)</label>
+          <span class="cb-sku">FC1-10-FSA01-321-02-DD</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ HW SECTION -->
+<div id="section-hw" class="card" style="display:none">
+  <div class="card-head"><h2>2 · Hardware Appliance Configuration</h2></div>
+  <div class="card-body">
+    <label>Select Model <span class="req">*</span></label>
+    <div class="model-grid" id="hw-model-grid">
+      <div class="model-card" data-hw="500G" onclick="selectHw(this)">
+        <div class="mc-name">FSA-500G</div>
+        <div class="mc-sub">2 default VMs · up to 14 Nested / 80 Cloud</div>
+        <div class="mc-tag">Mid-range</div>
+      </div>
+      <div class="model-card" data-hw="1500G" onclick="selectHw(this)">
+        <div class="mc-name">FSA-1500G</div>
+        <div class="mc-sub">2 default VMs · up to 28 Nested / 120 Cloud</div>
+        <div class="mc-tag">Enterprise</div>
+      </div>
+      <div class="model-card" data-hw="3000G" onclick="selectHw(this)">
+        <div class="mc-name">FSA-3000G</div>
+        <div class="mc-sub">8 default VMs · up to 150 Nested / 200 Cloud</div>
+        <div class="mc-tag">Large Enterprise</div>
+      </div>
+    </div>
+    <div id="hw-model-err" class="err" style="margin-top:4px">Please select a model.</div>
+
+    <div class="grid" style="margin-top:14px">
+      <div>
+        <label>Quantity <span class="req">*</span></label>
+        <input type="number" id="hw-qty" value="1" min="1" max="99" oninput="onHwChange()">
+        <div id="hw-qty-err" class="err">Quantity must be 1–99.</div>
+      </div>
+      <div>
+        <label>FortiGuard Subscription Tier <span class="req">*</span></label>
+        <select id="hw-tier" onchange="onHwChange()">
+          <option value="advanced">Advanced AI Subscription (v5.0 required)</option>
+          <option value="standard">Standard Subscription</option>
+        </select>
+      </div>
+      <div>
+        <label>Additional Universal VMs (per unit, beyond default)</label>
+        <input type="number" id="hw-extra-vm" value="0" min="0" oninput="onHwChange()">
+        <div class="nc" style="font-size:11px;margin-top:2px">Default VMs included per model; add extra here</div>
+      </div>
+      <div>
+        <label>Windows 10 Licenses (additional, per unit)</label>
+        <input type="number" id="hw-win10" value="0" min="0" oninput="onHwChange()">
+      </div>
+      <div>
+        <label>Windows 11 Licenses (additional, per unit)</label>
+        <input type="number" id="hw-win11" value="0" min="0" oninput="onHwChange()">
+      </div>
+      <div>
+        <label>Office 2021 Licenses (additional, per unit)</label>
+        <input type="number" id="hw-office" value="0" min="0" oninput="onHwChange()">
+        <div class="nc" style="font-size:11px;margin-top:2px">1 Office 2021 activated per unit by default</div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px">
+      <div class="cb-row">
+        <input type="checkbox" id="hw-mta">
+        <div>
+          <label for="hw-mta">Mailbox MTA License (100–1,000 mailboxes)</label>
+          <span class="cb-sku">FC1-10-FSA01-321-02-DD</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="section-label">Optional Accessories (1500G / 3000G)</div>
+      <div style="overflow-x:auto">
+        <table class="comp-table">
+          <thead><tr><th>Accessory</th><th>500G SKU</th><th>1500G SKU</th><th>3000G SKU</th></tr></thead>
+          <tbody>
+            <tr><td>Hard Disk</td><td class="nc">—</td><td>SP-FSA1500G-SSD</td><td>SP-FSA3000G-HDD</td></tr>
+            <tr><td>Power Supply</td><td class="nc">—</td><td>SP-FPX2000G-PS</td><td>SP-FSA3000G-PS</td></tr>
+            <tr><td>Transceiver (SX)</td><td class="nc">—</td><td>FN-TRAN-SX</td><td>FN-TRAN-SFP+SR</td></tr>
+            <tr><td>Transceiver (SR)</td><td class="nc">—</td><td>FN-TRAN-SFP+SR</td><td class="nc">—</td></tr>
+            <tr><td>Transceiver (LR)</td><td class="nc">—</td><td class="nc">—</td><td>FN-TRAN-SFP+LR</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn" style="margin-top:8px">⚠ Accessories are hardware SKUs with no term suffix. Add them manually to the BOM after export if required.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ ACTIONS -->
+<div class="actions">
+  <button class="btn btn-primary" onclick="generateBOM()">▶ Preview BOM</button>
+  <button class="btn btn-success" onclick="addToProjectBOM()">＋ Add to Project BOM</button>
+  <button class="btn btn-ghost" onclick="resetForm()">↺ Reset</button>
+  <span id="smsg"></span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ BOM PREVIEW -->
+<div id="bom-section" style="display:none">
+  <div class="card">
+    <div class="card-head" style="justify-content:space-between">
+      <h2>BOM Preview</h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="copyTsv()">Copy TSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">Print</button>
+      </div>
+    </div>
+    <div class="card-body" style="padding:0;overflow-x:auto">
+      <table id="bom-table">
+        <thead><tr><th>Part Number</th><th>Description</th><th>Qty</th><th>Type</th><th>Notes</th></tr></thead>
+        <tbody id="bom-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── State ─────────────────────────────────────────────────────── */
+let _dep = 'saas-amp';
+let _hwModel = null;
+let _lastRows = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+/* ── Model definitions ─────────────────────────────────────────── */
+const HW_MODELS = {
+  '500G':  { sku:'FSA-500G',  care:'FC-10-FS5HG', advSub:'FC-10-FS5HG-1092-02-DD', stdSub:'FC-10-FS5HG-499-02-DD', vmSub:'FC1-10-FS5HG-1035-02-DD', defaultVm:2, maxNested:14, maxCloud:80,  inc:'1×Win11, 1×Win10, 1×Office21 (1×Win10 activated)' },
+  '1500G': { sku:'FSA-1500G', care:'FC-10-FS15G', advSub:'FC-10-FS15G-1092-02-DD', stdSub:'FC-10-FS15G-499-02-DD', vmSub:'FC1-10-FS15G-1035-02-DD', defaultVm:2, maxNested:28, maxCloud:120, inc:'1×Win11, 1×Win10, 1×Office21 (1×Win10 activated)' },
+  '3000G': { sku:'FSA-3000G', care:'FC-10-SA3KG', advSub:'FC-10-SA3KG-1092-02-DD', stdSub:'FC-10-SA3KG-499-02-DD', vmSub:'FC1-10-SA3KG-1035-02-DD', defaultVm:8, maxNested:150, maxCloud:200, inc:'4×Win10, 4×Win11, 1×Office21 (1×Win10 activated)' },
+};
+
+/* ── Deployment selection ─────────────────────────────────────── */
+function selectDep(el) {
+  document.querySelectorAll('#dep-grid .model-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  _dep = el.dataset.dep;
+  updateDepSections();
+}
+
+function updateDepSections() {
+  document.getElementById('section-saas').style.display = (_dep==='saas-amp'||_dep==='saas-ilmps') ? '' : 'none';
+  document.getElementById('section-paas').style.display = _dep==='paas'  ? '' : 'none';
+  document.getElementById('section-vm').style.display   = _dep==='vm'    ? '' : 'none';
+  document.getElementById('section-hw').style.display   = _dep==='hw'    ? '' : 'none';
+
+  if (_dep==='saas-amp'||_dep==='saas-ilmps') onSaasChange();
+  if (_dep==='paas') onPaasChange();
+}
+
+function onSaasChange(){}
+function onPaasChange(){
+  const tier = document.getElementById('paas-tier').value;
+  const rtapRow = document.getElementById('paas-rtap-row');
+  if (tier==='advanced') { rtapRow.style.opacity='0.4'; rtapRow.style.pointerEvents='none'; document.getElementById('paas-rtap').checked=false; }
+  else { rtapRow.style.opacity='1'; rtapRow.style.pointerEvents=''; }
+}
+function onVmChange(){}
+function onHwChange(){}
+
+function selectHw(el){
+  document.querySelectorAll('#hw-model-grid .model-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  _hwModel = el.dataset.hw;
+  document.getElementById('hw-model-err').style.display='none';
+}
+
+/* ── Validation helpers ─────────────────────────────────────────── */
+function validateQty(id, errId, min, max){
+  const v=parseInt(document.getElementById(id).value);
+  const ok = !isNaN(v) && v>=min && (max===undefined||v<=max);
+  document.getElementById(id).classList.toggle('invalid',!ok);
+  document.getElementById(errId).style.display=ok?'none':'block';
+  return ok ? v : null;
+}
+
+/* ── BOM generation ─────────────────────────────────────────────── */
+function generateBOM(){
+  const rows=[];
+  let ok=true;
+
+  if (_dep==='saas-amp'||_dep==='saas-ilmps'){
+    const qty = validateQty('saas-qty','saas-qty-err',1);
+    if(!qty){ok=false;}
+    if(ok){
+      const isIL = _dep==='saas-ilmps';
+      rows.push({section:'Hardware & Support'});
+      rows.push({sku:'FG-60F',desc:'FortiGate-60F (reference model — comparable SKUs available for all FG models)',qty,kind:'req',note:'Hardware'});
+      if(document.getElementById('saas-care').checked)
+        rows.push({sku:'FC-10-0060F-247-02-DD',desc:'24×7 FortiCare Premium Support – FortiGate-60F',qty,kind:'opt',note:'Per unit'});
+      rows.push({section:'FortiGuard Security Services'});
+      if(isIL){
+        rows.push({sku:'FC-10-0060F-809-02-DD',desc:'FortiGuard Enterprise Protection (includes Inline Malware Prevention Service – IL MPS)',qty,kind:'req',note:'Includes IL MPS'});
+        rows.push({sku:'⚠',desc:'A-la-carte alternative: FC-10-0060F-577-02-DD (FortiGuard AI-based IL MPS only)',qty:null,kind:'note',note:'Use 577 SKU if not purchasing full Enterprise Protection bundle'});
+      } else {
+        rows.push({sku:'FC-10-0060F-100-02-DD',desc:'FortiGuard Advanced Malware Protection (AMP) Service – FortiGate-60F',qty,kind:'req',note:'Includes Sandbox Detection'});
+      }
+      _lastLabel=`FortiGate SaaS (${isIL?'IL MPS':'AMP'}) ×${qty}`;
+      _lastMeta={deployment:'SaaS',service:isIL?'Inline Malware Prevention':'Advanced Malware Protection',qty};
+    }
+  }
+  else if(_dep==='paas'){
+    const tier=document.getElementById('paas-tier').value;
+    const bundle=document.getElementById('paas-vm-bundle').value;
+    const qty=validateQty('paas-qty','paas-qty-err',1);
+    if(!qty){ok=false;}
+    if(ok){
+      const band=bundle==='5'?'FC2':'FC1';
+      rows.push({section:'FortiSandbox PaaS Subscriptions'});
+      if(tier==='advanced'){
+        rows.push({sku:`${band}-10-SACLP-1298-01-DD`,desc:`Advanced AI Sandbox Subscription with VM Expansion Bundle (+${bundle} Cloud VM) – PaaS`,qty,kind:'req',note:`${band} · +${bundle} Cloud VM bundle · Includes RTAP`});
+      } else {
+        rows.push({sku:`${band}-10-SACLP-433-01-DD`,desc:`(Standard) Sandbox Threat Intelligence Subscription with VM Expansion Bundle (+${bundle} Cloud VM) – PaaS`,qty,kind:'req',note:`${band} · +${bundle} Cloud VM bundle`});
+        if(document.getElementById('paas-rtap').checked)
+          rows.push({sku:`${band}-10-SACLP-682-01-DD`,desc:'Real-Time Anti-Phishing (RTAP) – PaaS a-la-carte',qty,kind:'opt',note:`${band} · a-la-carte`});
+      }
+      rows.push({sku:'⚠',desc:'PaaS requires firmware v5.0.2 GA. Available in North America and Europe regions only.',qty:null,kind:'note',note:''});
+      _lastLabel=`FSA PaaS (${tier==='advanced'?'Adv AI':'Standard'}) +${bundle}VM ×${qty}`;
+      _lastMeta={deployment:'PaaS',tier,vmBundle:`+${bundle}`,qty};
+    }
+  }
+  else if(_dep==='vm'){
+    const units=validateQty('vm-qty','vm-qty-err',1,99);
+    const nested=parseInt(document.getElementById('vm-nested').value)||0;
+    const win10=parseInt(document.getElementById('vm-win10').value)||0;
+    const win11=parseInt(document.getElementById('vm-win11').value)||0;
+    const office=parseInt(document.getElementById('vm-office').value)||0;
+    if(!units){ok=false;}
+    if(nested>64){document.getElementById('vm-nested-err').style.display='block';ok=false;}
+    else{document.getElementById('vm-nested-err').style.display='none';}
+    if(ok){
+      const tier=document.getElementById('vm-tier').value;
+      rows.push({section:'FSA-VMS Base Unit'});
+      rows.push({sku:'FSA-VMS',desc:'FortiSandbox Virtual Machine Appliance',qty:units,kind:'req',note:'Base unit'});
+      rows.push({section:'FortiGuard Subscriptions'});
+      if(tier==='advanced'){
+        rows.push({sku:'FC1-10-SAVMS-1248-02-DD',desc:'Advanced AI Subscription – FSA-VMS (includes AI Engine, RTAP, IOC, Standard subscriptions)',qty:units,kind:'req',note:'Per unit · v5.0 required'});
+      } else {
+        rows.push({sku:'FC1-10-SAVMS-1146-02-DD',desc:'(Standard) Sandbox Threat Intelligence Subscription – FSA-VMS',qty:units,kind:'req',note:'Per unit'});
+      }
+      if(nested>0){
+        rows.push({section:'Universal VM Subscriptions'});
+        rows.push({sku:'FC1-10-SAVMS-1035-02-DD',desc:'Universal VM Subscription/Renewal – FSA-VMS (0–8 Nested VMs per SKU)',qty:units*nested,kind:'req',note:`${nested} VMs × ${units} units`});
+      }
+      if(win10>0||win11>0||office>0){
+        rows.push({section:'Microsoft Licenses'});
+        if(win10>0) rows.push({sku:'FSA-LIC-WIN10-1',desc:'Microsoft Windows 10 License for FortiSandbox',qty:units*win10,kind:'req',note:`${win10}/unit × ${units} units`});
+        if(win11>0) rows.push({sku:'FSA-LIC-WIN11-1',desc:'Microsoft Windows 11 License for FortiSandbox',qty:units*win11,kind:'req',note:`${win11}/unit × ${units} units`});
+        if(office>0) rows.push({sku:'FSA-UPG-OFFICE2021-1',desc:'Microsoft Office 2021 License Upgrade for FortiSandbox',qty:units*office,kind:'req',note:`${office}/unit × ${units} units`});
+      }
+      if(document.getElementById('vm-care').checked){
+        rows.push({section:'Support'});
+        rows.push({sku:'FC1-10-SAVMS-258-02-DD',desc:'FortiCare Premium Support – FSA-VMS',qty:units,kind:'opt',note:'Per unit'});
+      }
+      if(document.getElementById('vm-mta').checked){
+        rows.push({section:'Add-on'});
+        rows.push({sku:'FC1-10-FSA01-321-02-DD',desc:'Mailbox MTA License (100–1,000 mailboxes)',qty:1,kind:'opt',note:'Shared license'});
+      }
+      rows.push({sku:'⚠',desc:'Cloud VMs are pre-licensed. Microsoft licenses only required for Nested VMs.',qty:null,kind:'note',note:''});
+      _lastLabel=`FSA-VMS ×${units} (${tier==='advanced'?'Adv AI':'Standard'})`;
+      _lastMeta={deployment:'VM',units,tier,nestedVms:nested};
+    }
+  }
+  else if(_dep==='hw'){
+    if(!_hwModel){document.getElementById('hw-model-err').style.display='block';ok=false;}
+    const units=validateQty('hw-qty','hw-qty-err',1,99);
+    if(!units){ok=false;}
+    if(ok){
+      const m=HW_MODELS[_hwModel];
+      const tier=document.getElementById('hw-tier').value;
+      const extraVm=parseInt(document.getElementById('hw-extra-vm').value)||0;
+      const win10=parseInt(document.getElementById('hw-win10').value)||0;
+      const win11=parseInt(document.getElementById('hw-win11').value)||0;
+      const office=parseInt(document.getElementById('hw-office').value)||0;
+      rows.push({section:'Hardware Appliance'});
+      rows.push({sku:m.sku,desc:`FortiSandbox ${_hwModel} Appliance – ${m.inc}`,qty:units,kind:'req',note:'Base unit'});
+      rows.push({section:'FortiGuard Subscriptions'});
+      if(tier==='advanced'){
+        rows.push({sku:m.advSub,desc:`Advanced AI Subscription – FSA-${_hwModel} (includes AI Engine, RTAP, IOC, Standard)`,qty:units,kind:'req',note:'Per unit · v5.0 required'});
+      } else {
+        rows.push({sku:m.stdSub,desc:`(Standard) Sandbox Threat Intelligence Subscription – FSA-${_hwModel}`,qty:units,kind:'req',note:'Per unit'});
+      }
+      if(extraVm>0){
+        rows.push({section:'Universal VM Subscriptions'});
+        rows.push({sku:m.vmSub,desc:`Universal VM Subscription – FSA-${_hwModel} (additional VMs beyond default)`,qty:units*extraVm,kind:'req',note:`${extraVm} extra/unit × ${units} units`});
+      }
+      if(win10>0||win11>0||office>0){
+        rows.push({section:'Microsoft Licenses (Additional)'});
+        if(win10>0) rows.push({sku:'FSA-LIC-WIN10-1',desc:'Microsoft Windows 10 License for FortiSandbox',qty:units*win10,kind:'req',note:`${win10}/unit × ${units} units`});
+        if(win11>0) rows.push({sku:'FSA-LIC-WIN11-1',desc:'Microsoft Windows 11 License for FortiSandbox',qty:units*win11,kind:'req',note:`${win11}/unit × ${units} units`});
+        if(office>0) rows.push({sku:'FSA-UPG-OFFICE2021-1',desc:'Microsoft Office 2021 License Upgrade',qty:units*office,kind:'req',note:`${office}/unit × ${units} units`});
+      }
+      if(document.getElementById('hw-mta').checked){
+        rows.push({section:'Add-on'});
+        rows.push({sku:'FC1-10-FSA01-321-02-DD',desc:'Mailbox MTA License (100–1,000 mailboxes)',qty:1,kind:'opt',note:'Shared license'});
+      }
+      if(units>1){
+        rows.push({sku:'⚠',desc:'Multi-unit orders: seat-based licenses must be listed separately per unit to prevent license stacking.',qty:null,kind:'note',note:''});
+      }
+      rows.push({sku:'⚠',desc:`FSA-${_hwModel} comes with ${m.defaultVm} default Universal VMs (${m.inc}). Additional VMs require Universal VM subscription + Microsoft licenses.`,qty:null,kind:'note',note:''});
+      _lastLabel=`FSA-${_hwModel} ×${units} (${tier==='advanced'?'Adv AI':'Standard'})`;
+      _lastMeta={deployment:'Hardware',model:`FSA-${_hwModel}`,units,tier};
+    }
+  }
+
+  if(!ok) return false;
+  _lastRows=rows;
+  renderBOM(rows);
+  document.getElementById('bom-section').style.display='';
+  document.getElementById('bom-section').scrollIntoView({behavior:'smooth',block:'start'});
+  return true;
+}
+
+/* ── Render ──────────────────────────────────────────────────────── */
+function renderBOM(rows){
+  const tb=document.getElementById('bom-tbody');
+  tb.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    if(r.section!==undefined){
+      tr.className='section-row';
+      tr.innerHTML=`<td colspan="5">${r.section}</td>`;
+    } else {
+      const badge=r.kind==='req'?'<span class="badge badge-req">Required</span>':
+                  r.kind==='mand'?'<span class="badge badge-mand">Mandatory</span>':
+                  r.kind==='opt'?'<span class="badge badge-opt">Optional</span>':
+                  r.kind==='inc'?'<span class="badge badge-inc">Included</span>':'';
+      tr.innerHTML=`
+        <td><span class="sku-mono">${r.sku}</span></td>
+        <td class="nc">${r.desc}</td>
+        <td style="text-align:center">${r.qty!==null&&r.qty!==undefined?r.qty:''}</td>
+        <td>${badge}</td>
+        <td class="nc" style="font-size:11px">${r.note||''}</td>`;
+    }
+    tb.appendChild(tr);
+  });
+}
+
+/* ── Add to Project BOM ───────────────────────────────────────── */
+function addToProjectBOM(){
+  if(!generateBOM()) return;
+  window.parent.postMessage({
+    type:'FORTIBOM_ADD',
+    product:'FortiSandbox',
+    label:_lastLabel,
+    rows:_lastRows,
+    meta:_lastMeta
+  },'*');
+  const s=document.getElementById('smsg');
+  s.textContent='✓ Added to Project BOM';
+  setTimeout(()=>{s.textContent=''},3000);
+}
+
+/* ── Copy TSV ─────────────────────────────────────────────────── */
+function copyTsv(){
+  const lines=['Part Number\tDescription\tQty\tType\tNotes'];
+  _lastRows.forEach(r=>{
+    if(r.section) lines.push(`\t[${r.section}]\t\t\t`);
+    else lines.push(`${r.sku}\t${r.desc}\t${r.qty??''}\t${r.kind??''}\t${r.note??''}`);
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    const s=document.getElementById('smsg');s.textContent='Copied to clipboard';setTimeout(()=>{s.textContent=''},2000);
+  });
+}
+
+/* ── Reset ────────────────────────────────────────────────────── */
+function resetForm(){
+  document.getElementById('saas-qty').value=1;
+  document.getElementById('paas-qty').value=1;
+  document.getElementById('vm-qty').value=1;
+  document.getElementById('vm-nested').value=0;
+  document.getElementById('vm-win10').value=0;
+  document.getElementById('vm-win11').value=0;
+  document.getElementById('vm-office').value=0;
+  document.getElementById('hw-qty').value=1;
+  document.getElementById('hw-extra-vm').value=0;
+  document.getElementById('hw-win10').value=0;
+  document.getElementById('hw-win11').value=0;
+  document.getElementById('hw-office').value=0;
+  document.querySelectorAll('.model-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelector('[data-dep="saas-amp"]').classList.add('selected');
+  _dep='saas-amp'; _hwModel=null;
+  document.querySelectorAll('.err').forEach(e=>e.style.display='none');
+  document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
+  document.getElementById('bom-section').style.display='none';
+  document.getElementById('smsg').textContent='';
+  updateDepSections();
+  _lastRows=[];_lastLabel='';_lastMeta={};
+}
+
+/* ── Init ─────────────────────────────────────────────────────── */
+updateDepSections();
+onPaasChange();
+</script>
+</body>
+</html>

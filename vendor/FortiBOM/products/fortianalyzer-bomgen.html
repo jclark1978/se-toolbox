@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FortiAnalyzer BOM Generator</title>
+<style>
+:root {
+  --forti-red:#EE3124;--forti-border:#DDE1E9;--forti-bg:#F2F4F7;--forti-white:#FFFFFF;
+  --forti-text:#2A2F3A;--forti-text-secondary:#6B7589;--forti-text-muted:#9BA5BA;
+  --forti-section-header:#F7F9FC;--forti-input-border:#C8CDD9;--forti-table-head:#EEF1F6;
+  --forti-table-stripe:#F7F9FC;--forti-info-bg:#EEF3FF;--forti-info-border:#B8CBF5;
+  --forti-info-text:#3557A5;--forti-warn-bg:#FFF8EE;--forti-warn-border:#F5D9A0;--forti-warn-text:#8A5800;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.5;
+  background:var(--forti-bg);color:var(--forti-text);padding:20px;}
+.page-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+.icon-box{width:44px;height:44px;background:var(--forti-red);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.icon-box svg{fill:#fff;}
+.page-header h1{font-size:18px;font-weight:700;color:var(--forti-text);}
+.page-header p{font-size:11px;color:var(--forti-text-muted);margin-top:1px;}
+.card{background:var(--forti-white);border:1px solid var(--forti-border);border-radius:4px;margin-bottom:14px;overflow:hidden;}
+.card-header{background:var(--forti-section-header);border-bottom:1px solid var(--forti-border);padding:9px 18px;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--forti-text-secondary);display:flex;align-items:center;gap:8px;}
+.card-body{padding:14px 18px;}
+label{display:block;font-size:12px;font-weight:600;color:var(--forti-text-secondary);margin-bottom:4px;margin-top:10px;}
+label:first-child{margin-top:0;}
+label .req{color:var(--forti-red);}
+input[type=number],select{background:#fff;border:1px solid var(--forti-input-border);border-radius:3px;padding:6px 9px;font-size:13px;width:100%;}
+input[type=number]:focus,select:focus{outline:none;border-color:var(--forti-red);box-shadow:0 0 0 2px rgba(238,49,36,.1);}
+input.invalid,select.invalid{border-color:var(--forti-red)!important;}
+.err{display:none;font-size:11px;color:var(--forti-red);margin-top:3px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;margin-top:4px;}
+.mc{border:1px solid var(--forti-border);border-radius:4px;padding:10px 12px;cursor:pointer;background:#fff;transition:all .15s;}
+.mc:hover{border-color:#aab;background:#fafbfc;}
+.mc.sel{border:2px solid var(--forti-red);background:#FEF8F8;}
+.mc .mn{font-weight:700;font-size:12px;color:var(--forti-text);}
+.mc .md{font-size:11px;color:var(--forti-text-muted);margin-top:2px;}
+.callout{border-radius:3px;padding:9px 12px;font-size:12px;line-height:1.6;display:flex;gap:8px;margin-top:8px;}
+.info{background:var(--forti-info-bg);border:1px solid var(--forti-info-border);color:var(--forti-info-text);}
+.warn{background:var(--forti-warn-bg);border:1px solid var(--forti-warn-border);color:var(--forti-warn-text);}
+.addon-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--forti-border);}
+.addon-row:last-child{border-bottom:none;}
+.addon-row input[type=checkbox]{margin-top:3px;flex-shrink:0;accent-color:var(--forti-red);}
+.addon-label{flex:1;}
+.addon-label strong{font-size:12px;color:var(--forti-text);}
+.addon-label span{display:block;font-size:11px;color:var(--forti-text-muted);}
+.addon-row.disabled{opacity:.4;pointer-events:none;}
+.btn-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px;}
+button{border:none;border-radius:3px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.btn-primary{background:var(--forti-red);color:#fff;}
+.btn-green{background:#2E7D32;color:#fff;}
+.btn-neutral{background:#e2e5ec;color:var(--forti-text);}
+button:hover{opacity:.88;}
+#smsg{font-size:12px;color:var(--forti-text-muted);}
+#smsg.ok{color:#2E7D32;font-weight:600;}
+#smsg.err{color:var(--forti-red);font-weight:600;}
+#bom-section{display:none;margin-top:4px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--forti-table-head);border:1px solid var(--forti-border);padding:7px 11px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--forti-text-secondary);text-align:left;}
+tbody td{border:1px solid var(--forti-border);padding:7px 11px;vertical-align:top;}
+tbody tr:nth-child(even) td{background:var(--forti-table-stripe);}
+.section-row td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--forti-text-secondary);padding:5px 11px;border-top:2px solid #C5CAD9;}
+.badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 4px;display:inline-block;}
+.badge-req{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2;}
+.badge-opt{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5;}
+.badge-mand{background:#FFF8EE;color:#8A5800;border:1px solid #F5D9A0;}
+.badge-inc{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5;}
+.sku{font-family:'Courier New',monospace;font-size:11px;color:#1A4E82;}
+.nc{color:var(--forti-text-muted);font-size:11px;}
+.tbl-actions{display:flex;gap:8px;margin-bottom:8px;}
+.compare-table th{font-size:10px;padding:6px 10px;}
+.compare-table td{font-size:11px;padding:5px 10px;}
+.chk{color:#2E7D32;font-weight:700;}
+.dash{color:#bbb;}
+.note-small{font-size:10px;color:var(--forti-text-muted);margin-top:3px;}
+.tab-bar{display:flex;gap:4px;margin-bottom:-1px;}
+.tab{padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--forti-border);border-bottom:none;border-radius:3px 3px 0 0;background:var(--forti-bg);color:var(--forti-text-secondary);}
+.tab.active{background:#fff;color:var(--forti-red);border-bottom:1px solid #fff;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.band-ind{display:none;background:#EEF3FF;border:1px solid #B8CBF5;border-radius:3px;padding:4px 10px;font-size:12px;color:#3557A5;margin-top:4px;}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="icon-box">
+    <svg width="26" height="26" viewBox="0 0 24 24"><path d="M3 3h18v4H3zm0 6h18v4H3zm0 6h18v4H3z"/></svg>
+  </div>
+  <div>
+    <h1>FortiAnalyzer™ BOM Generator</h1>
+    <p>Unified Data Lake, Visibility &amp; Automation · FAZ-OG-R24-20251218</p>
+  </div>
+</div>
+
+<!-- DEPLOYMENT TYPE OVERVIEW -->
+<div class="card">
+  <div class="card-header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--forti-text-secondary)"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.5 7.5L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95zM11 2.05C5.95 2.55 2 6.82 2 12c0 3.76 2.09 7.07 5.22 8.78L6 22h5V2.05z"/></svg>
+    Deployment Type Comparison
+  </div>
+  <div class="card-body" style="overflow-x:auto;">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Appliance (On-Prem)</th>
+          <th>VM (On-Prem)</th>
+          <th>FortiAnalyzer Cloud</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Ingestion-Based License</td><td class="chk">✓</td><td class="chk">✓</td><td class="dash">—</td></tr>
+        <tr><td>Per-Device License</td><td class="dash">—</td><td class="dash">—</td><td class="chk">✓</td></tr>
+        <tr><td>GB/Day Expansion</td><td class="dash">—</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+        <tr><td>3rd-Party Logging</td><td class="chk">✓</td><td class="chk">✓</td><td class="nc" style="font-size:11px;">Via Cloud Connector*</td></tr>
+        <tr><td>Multi-Tenancy (ADOM)</td><td class="chk">✓</td><td class="chk">✓</td><td class="nc" style="font-size:11px;">FortiCloud OU</td></tr>
+        <tr><td>FortiAI Assist</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+        <tr><td>Security Automation</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+        <tr><td>IOC &amp; Outbreak Detection</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td></tr>
+        <tr><td>FortiTIP Integration</td><td class="chk">✓</td><td class="dash">—</td><td class="dash">—</td></tr>
+        <tr><td>High Availability</td><td class="chk">✓</td><td class="chk">✓</td><td class="dash">N/A</td></tr>
+        <tr><td>Log Forwarding</td><td class="chk">✓</td><td class="chk">✓</td><td class="dash">—</td></tr>
+        <tr><td>FortiCare Elite</td><td class="chk">✓</td><td class="chk">✓</td><td class="dash">N/A</td></tr>
+        <tr><td>Collector Mode</td><td class="chk">✓</td><td class="chk">✓</td><td class="dash">N/A</td></tr>
+        <tr><td>FortiFlex</td><td class="dash">N/A</td><td class="chk">✓</td><td class="dash">N/A</td></tr>
+        <tr><td>FAZaaS</td><td class="chk">✓</td><td class="dash">N/A</td><td class="dash">N/A</td></tr>
+      </tbody>
+    </table>
+    <div class="note-small" style="margin-top:6px;">* 3rd-party log sources via on-prem FortiAnalyzer Cloud Connector.</div>
+  </div>
+</div>
+
+<!-- DEPLOYMENT TYPE TABS -->
+<div class="card">
+  <div class="card-header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--forti-text-secondary)"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    Select Deployment Type <span class="req">*</span>
+  </div>
+  <div class="card-body" style="padding-bottom:0;">
+    <div class="tab-bar">
+      <div class="tab active" id="tab-hw" onclick="switchTab('hw')">Hardware Appliance</div>
+      <div class="tab" id="tab-vm" onclick="switchTab('vm')">VM (On-Prem)</div>
+      <div class="tab" id="tab-cloud" onclick="switchTab('cloud')">FortiAnalyzer Cloud</div>
+    </div>
+  </div>
+
+  <!-- ── HARDWARE TAB ── -->
+  <div class="tab-panel active card-body" id="panel-hw" style="border-top:1px solid var(--forti-border);">
+    <label>Hardware Model <span class="req">*</span></label>
+    <div class="model-grid" id="hw-model-grid">
+      <div class="mc" onclick="selectHW('150G')"><div class="mn">FAZ-150G</div><div class="md">Entry · 500GB</div></div>
+      <div class="mc" onclick="selectHW('300G')"><div class="mn">FAZ-300G</div><div class="md">Entry · 4TB</div></div>
+      <div class="mc" onclick="selectHW('810G')"><div class="mn">FAZ-810G</div><div class="md">Mid-range</div></div>
+      <div class="mc" onclick="selectHW('1000G')"><div class="mn">FAZ-1000G</div><div class="md">Mid-range</div></div>
+      <div class="mc" onclick="selectHW('3100G')"><div class="mn">FAZ-3100G</div><div class="md">Enterprise</div></div>
+      <div class="mc" onclick="selectHW('3510G')"><div class="mn">FAZ-3510G</div><div class="md">Enterprise</div></div>
+      <div class="mc" onclick="selectHW('3750G')"><div class="mn">FAZ-3750G</div><div class="md">Enterprise</div></div>
+    </div>
+    <div class="err" id="err-hw-model">Please select a hardware model.</div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div>
+        <label>Quantity <span class="req">*</span></label>
+        <input type="number" id="hw-qty" min="1" value="1" oninput="onHwQtyChange()">
+        <div class="err" id="err-hw-qty">Quantity must be ≥ 1.</div>
+      </div>
+      <div>
+        <label>Bundle Type <span class="req">*</span></label>
+        <select id="hw-bundle" onchange="onHwBundleChange()">
+          <option value="bundle">Hardware Bundle (BDL-1263-DD) — Best Value</option>
+          <option value="hw-only">Hardware Only (no services)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="hw-ha-section" style="margin-top:10px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="hw-ha" onchange="onHwHaChange()" accent-color="var(--forti-red)"> Enable High Availability (HA) — doubles quantity, same model required
+      </label>
+      <div id="hw-ha-info" class="callout info" style="display:none;margin-top:6px;">
+        HA requires 2× same model, same firmware, same GB/day. Each node needs its own FortiAI subscription if selected.
+      </div>
+    </div>
+
+    <div id="hw-fortitip-row" style="margin-top:10px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="hw-fortitip"> Add FortiTIP SaaS Extension (included in Hardware Bundle)
+      </label>
+      <div class="note-small">FortiTIP is exclusive to appliance deployments.</div>
+    </div>
+  </div>
+
+  <!-- ── VM TAB ── -->
+  <div class="tab-panel card-body" id="panel-vm" style="border-top:1px solid var(--forti-border);">
+    <div class="callout info">
+      <span>ℹ</span>
+      <span><strong>VM Subscription Bundle</strong> is all-in-one (FortiCare Premium + IOC + Outbreak + Security Automation). <strong>VM Perpetual</strong> has à-la-carte services; add-on tier must match GB/day tier.</span>
+    </div>
+
+    <label style="margin-top:12px;">VM License Type <span class="req">*</span></label>
+    <select id="vm-type" onchange="onVmTypeChange()">
+      <option value="sub">VM Subscription Bundle (FCx-10-AZVMS-465-01-DD) — Fully Stackable</option>
+      <option value="perp">VM Perpetual (FAZ-VM-GBx) — À-la-carte Services</option>
+    </select>
+
+    <label>GB/Day Ingestion Tier <span class="req">*</span></label>
+    <select id="vm-tier" onchange="onVmTierChange()">
+      <option value="">— Select tier —</option>
+      <option value="5">5 GB/Day</option>
+      <option value="25">25 GB/Day (Perpetual only)</option>
+      <option value="50">50 GB/Day (Subscription)</option>
+      <option value="100">100 GB/Day (Perpetual only)</option>
+      <option value="500">500 GB/Day</option>
+      <option value="2000">2000 GB/Day (Perpetual only)</option>
+    </select>
+    <div class="err" id="err-vm-tier">Please select a GB/day tier.</div>
+    <div class="band-ind" id="vm-band-ind">Band: <code id="vm-band-text">FC1</code> · <span id="vm-band-desc">1–6 GB/Day</span></div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div>
+        <label>Quantity (stacks) <span class="req">*</span></label>
+        <input type="number" id="vm-qty" min="1" value="1">
+        <div class="err" id="err-vm-qty">Quantity must be ≥ 1.</div>
+      </div>
+      <div id="vm-ha-col">
+        <label style="margin-top:0;display:flex;align-items:center;gap:8px;cursor:pointer;padding-top:20px;">
+          <input type="checkbox" id="vm-ha"> Enable HA (2× identical VM required)
+        </label>
+      </div>
+    </div>
+
+    <!-- Perpetual-only: à-la-carte services -->
+    <div id="vm-perp-services" style="margin-top:12px;display:none;">
+      <label>À-la-carte Services (Perpetual VM)</label>
+      <div class="addon-row">
+        <input type="checkbox" id="vp-forticare" checked>
+        <div class="addon-label"><strong>FortiCare Premium Support</strong><span>Required for support. FCx-10-LV0VM-248-02-DD</span></div>
+      </div>
+      <div class="addon-row">
+        <input type="checkbox" id="vp-ioc" checked>
+        <div class="addon-label"><strong>IOC &amp; Outbreak Detection Service</strong><span>Daily IOC updates + outbreak alerts. FCx-10-LV0VM-661-02-DD</span></div>
+      </div>
+      <div class="addon-row">
+        <input type="checkbox" id="vp-soc" checked>
+        <div class="addon-label"><strong>Security Automation Service</strong><span>SIEM rules, event handlers, SOAR playbooks. FCx-10-LV0VM-335-02-DD</span></div>
+      </div>
+      <div class="addon-row">
+        <input type="checkbox" id="vp-elite">
+        <div class="addon-label"><strong>FortiCare Elite (replaces Premium)</strong><span>Enhanced SLA support. FCx-10-LV0VM-285-02-DD</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CLOUD TAB ── -->
+  <div class="tab-panel card-body" id="panel-cloud" style="border-top:1px solid var(--forti-border);">
+    <div class="callout info">
+      <span>ℹ</span>
+      <span>FortiAnalyzer Cloud includes IOC, Outbreak Detection, and Security Automation. Default retention: 3 months analytics / 12 months archive.</span>
+    </div>
+
+    <label style="margin-top:12px;">Cloud License Model <span class="req">*</span></label>
+    <select id="cld-model" onchange="onCldModelChange()">
+      <option value="perdev">Per-Device Subscription (FortiGate / FortiWeb)</option>
+      <option value="gbday">GB/Day Subscription (FortiClient, FortiMail, 3rd-party, extra capacity)</option>
+    </select>
+
+    <!-- Per-Device -->
+    <div id="cld-perdev-section">
+      <label>Device Type <span class="req">*</span></label>
+      <select id="cld-dev-type">
+        <option value="fg">FortiGate</option>
+        <option value="fw">FortiWeb</option>
+      </select>
+
+      <label>FortiGate / FortiWeb Model Code <span class="req">*</span></label>
+      <input type="text" id="cld-model-code" placeholder="e.g. GT70G, FWB00" oninput="onCldModelCodeInput()" style="text-transform:uppercase;">
+      <div class="err" id="err-cld-model-code">Enter a model code (e.g. GT70G).</div>
+      <div class="note-small">Used to build SKU: FC-10-[MODEL]-585-02-DD. Each device requires its own license.</div>
+
+      <label>Quantity of Devices <span class="req">*</span></label>
+      <input type="number" id="cld-dev-qty" min="1" value="1">
+      <div class="err" id="err-cld-dev-qty">Quantity must be ≥ 1.</div>
+
+      <div style="margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="cld-ha-pair"> Devices in HA pairs (2× licenses per HA pair)
+        </label>
+      </div>
+
+      <div style="margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="cld-extra-gb"> Add GB/Day expansion (beyond default device entitlement)
+        </label>
+      </div>
+      <div id="cld-extra-gb-section" style="display:none;margin-top:8px;">
+        <label>GB/Day Expansion Tier</label>
+        <select id="cld-extra-gb-tier">
+          <option value="5">5 GB/Day — FC1-10-AZCLD-463-01-DD</option>
+          <option value="50">50 GB/Day — FC2-10-AZCLD-463-01-DD</option>
+          <option value="500">500 GB/Day — FC3-10-AZCLD-463-01-DD</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- GB/Day -->
+    <div id="cld-gbday-section" style="display:none;">
+      <label>GB/Day Tier <span class="req">*</span></label>
+      <select id="cld-gb-tier">
+        <option value="5">5 GB/Day — FC1-10-AZCLD-463-01-DD</option>
+        <option value="50">50 GB/Day — FC2-10-AZCLD-463-01-DD</option>
+        <option value="500">500 GB/Day — FC3-10-AZCLD-463-01-DD</option>
+      </select>
+      <div class="note-small">Capacity is shared across all devices in the same FortiCloud account. Purchase multiple for &gt;5 GB/day if needed.</div>
+      <label>Quantity <span class="req">*</span></label>
+      <input type="number" id="cld-gb-qty" min="1" value="1">
+      <div class="err" id="err-cld-gb-qty">Quantity must be ≥ 1.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD-ON SERVICES (universal) -->
+<div class="card">
+  <div class="card-header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--forti-text-secondary)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Optional Add-On Services
+  </div>
+  <div class="card-body" id="addon-body">
+    <div class="addon-row" id="ao-ot">
+      <input type="checkbox" id="ao-ot-cb">
+      <div class="addon-label"><strong>OT Security Service</strong><span>Advanced OT analytics, risk/compliance reports, event handlers. FCx-10-xxxxx-159-0x-DD</span></div>
+    </div>
+    <div class="addon-row" id="ao-asr">
+      <input type="checkbox" id="ao-asr-cb">
+      <div class="addon-label"><strong>Attack Surface Rating &amp; Compliance</strong><span>Security posture scoring, PCI/CIS compliance, Shadow-IT. FCx-10-xxxxx-175-0x-DD</span></div>
+    </div>
+    <div class="addon-row" id="ao-fortiai">
+      <input type="checkbox" id="ao-fortiai-cb" onchange="onFortiAiChange()">
+      <div class="addon-label"><strong>FortiAI Service</strong><span>GenAI-powered SOC analysis, triage and investigation. FCx-10-xxxxx-1118-0x-DD</span></div>
+    </div>
+    <div class="addon-row" id="ao-fortiai-topup" style="padding-left:32px;display:none;">
+      <input type="checkbox" id="ao-fortiai-topup-cb">
+      <div class="addon-label"><strong>FortiAI Token Top-Up</strong><span>Additional AI tokens (base subscription required). FC1-10-AITAZ-1089-02-DD</span></div>
+    </div>
+    <div class="addon-row" id="ao-managed">
+      <input type="checkbox" id="ao-managed-cb">
+      <div class="addon-label"><strong>Managed FortiAnalyzer Service</strong><span>SOCaaS monitoring of FAZ health, config &amp; performance. FCx-10-xxxxx-464-0x-DD</span></div>
+    </div>
+    <div class="addon-row" id="ao-backup">
+      <input type="checkbox" id="ao-backup-cb">
+      <div class="addon-label"><strong>Backup to Public Cloud Service</strong><span>10TB storage connector to public cloud. FC-10-FAZ00-286-02-DD</span></div>
+    </div>
+    <div class="addon-row" id="ao-elite" style="display:none;">
+      <input type="checkbox" id="ao-elite-cb">
+      <div class="addon-label"><strong>FortiCare Elite Upgrade</strong><span>Upgrade from Premium to Elite support tier. FCx-10-xxxxx-204-0x-DD</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTION BUTTONS -->
+<div class="card">
+  <div class="card-body">
+    <div class="btn-row">
+      <button class="btn-primary" onclick="generateBOM()">▶ Preview BOM</button>
+      <button class="btn-green" onclick="addToProjectBOM()">＋ Add to Project BOM</button>
+      <button class="btn-neutral" onclick="resetForm()">↺ Reset</button>
+      <span id="smsg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- BOM PREVIEW -->
+<div id="bom-section" class="card">
+  <div class="card-header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--forti-text-secondary)"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+    BOM Preview
+  </div>
+  <div class="card-body">
+    <div class="tbl-actions">
+      <button class="btn-neutral" onclick="copyTSV()" style="font-size:12px;padding:5px 12px;">Copy TSV</button>
+      <button class="btn-neutral" onclick="window.print()" style="font-size:12px;padding:5px 12px;">Print</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="bom-table">
+        <thead><tr><th>Part Number</th><th>Description</th><th>Qty</th><th>Type</th><th>Notes</th></tr></thead>
+        <tbody id="bom-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   DATA MODELS
+   ===================================================================== */
+
+const HW_MODELS = {
+  '150G':  { hw:'FAZ-150G',  bun:'FAZ-150G-BDL-1263-DD',  care:'FC-10-L150G-247-02-DD',  renew:'FC-10-L150G-1263-02-DD',  ot:'FC-10-L150G-159-02-DD',  asr:'FC-10-L150G-175-02-DD',  ai:'FC-10-L150G-1118-02-DD',  mng:'FC-10-L150G-464-02-DD',  elite:'FC-10-L150G-204-02-DD' },
+  '300G':  { hw:'FAZ-300G',  bun:'FAZ-300G-BDL-1263-DD',  care:'FC-10-L03HG-247-02-DD',  renew:'FC-10-L03HG-1263-02-DD', ot:'FC-10-L03HG-159-02-DD',  asr:'FC-10-L03HG-175-02-DD',  ai:'FC-10-L03HG-1118-02-DD',  mng:'FC-10-L03HG-464-02-DD',  elite:'FC-10-L03HG-204-02-DD' },
+  '810G':  { hw:'FAZ-810G',  bun:'FAZ-810G-BDL-1263-DD',  care:'FC-10-AZ81G-247-02-DD',  renew:'FC-10-AZ81G-1263-02-DD', ot:'FC-10-AZ81G-159-02-DD',  asr:'FC-10-AZ81G-175-02-DD',  ai:'FC-10-AZ81G-1118-02-DD',  mng:'FC-10-AZ81G-464-02-DD',  elite:'FC-10-AZ81G-204-02-DD' },
+  '1000G': { hw:'FAZ-1000G', bun:'FAZ-1000G-BDL-1263-DD', care:'FC-10-AZ1KG-247-02-DD',  renew:'FC-10-AZ1KG-1263-02-DD', ot:'FC-10-AZ1KG-159-02-DD',  asr:'FC-10-AZ1KG-175-02-DD',  ai:'FC-10-AZ1KG-1118-02-DD',  mng:'FC-10-AZ1KG-464-02-DD',  elite:'FC-10-AZ1KG-204-02-DD' },
+  '3100G': { hw:'FAZ-3100G', bun:'FAZ-3100G-BDL-1263-DD', care:'FC-10-AZ31G-247-02-DD',  renew:'FC-10-AZ31G-1263-02-DD', ot:'FC-10-AZ31G-159-02-DD',  asr:'FC-10-AZ31G-175-02-DD',  ai:'FC-10-AZ31G-1118-02-DD',  mng:'FC-10-AZ31G-464-02-DD',  elite:'FC-10-AZ31G-204-02-DD' },
+  '3510G': { hw:'FAZ-3510G', bun:'FAZ-3510G-BDL-1263-DD', care:'FC-10-AZ3AG-247-02-DD',  renew:'FC-10-AZ3AG-1263-02-DD', ot:'FC-10-AZ3AG-159-02-DD',  asr:'FC-10-AZ3AG-175-02-DD',  ai:'FC-10-AZ3AG-1118-02-DD',  mng:'FC-10-AZ3AG-464-02-DD',  elite:'FC-10-AZ3AG-204-02-DD' },
+  '3750G': { hw:'FAZ-3750G', bun:'FAZ-3750G-BDL-1263-DD', care:'FC-10-L375G-247-02-DD',  renew:'FC-10-L375G-1263-02-DD', ot:'FC-10-L375G-159-02-DD',  asr:'FC-10-L375G-175-02-DD',  ai:'FC-10-L375G-1118-02-DD',  mng:'FC-10-L375G-464-02-DD',  elite:'FC-10-L375G-204-02-DD' },
+};
+
+// VM Subscription tiers: only 5, 50, 500 GB/day
+const VM_SUB_TIERS = {
+  '5':   { bun:'FC1-10-AZVMS-465-01-DD', ot:'FC1-10-AZVMS-159-01-DD', asr:'FC1-10-AZVMS-175-01-DD', ai:'FC1-10-AZVMS-1118-01-DD', elite:'FC1-10-AZVMS-1137-01-DD' },
+  '50':  { bun:'FC2-10-AZVMS-465-01-DD', ot:'FC2-10-AZVMS-159-01-DD', asr:'FC2-10-AZVMS-175-01-DD', ai:'FC2-10-AZVMS-1118-01-DD', elite:'FC2-10-AZVMS-1137-01-DD' },
+  '500': { bun:'FC3-10-AZVMS-465-01-DD', ot:'FC3-10-AZVMS-159-01-DD', asr:'FC3-10-AZVMS-175-01-DD', ai:'FC3-10-AZVMS-1118-01-DD', elite:'FC3-10-AZVMS-1137-01-DD' },
+};
+
+// VM Perpetual tiers: 1,5,25,100,500,2000 GB/day
+const VM_PERP_SKU = { '1':'FAZ-VM-GB1','5':'FAZ-VM-GB5','25':'FAZ-VM-GB25','100':'FAZ-VM-GB100','500':'FAZ-VM-GB500','2000':'FAZ-VM-GB2000' };
+
+// VM Perpetual band prefix by total GB/day
+function vmPerpBand(gbday) {
+  if (gbday <= 6)    return 'FC1';
+  if (gbday <= 11)   return 'FC2';
+  if (gbday <= 26)   return 'FC3';
+  if (gbday <= 101)  return 'FC5';
+  if (gbday <= 501)  return 'FC6';
+  if (gbday <= 2001) return 'FC7';
+  return 'FC4'; // unlimited
+}
+function vmPerpBandDesc(gbday) {
+  if (gbday <= 6)    return '1–6 GB/Day';
+  if (gbday <= 11)   return '1–11 GB/Day';
+  if (gbday <= 26)   return '1–26 GB/Day';
+  if (gbday <= 101)  return '1–101 GB/Day';
+  if (gbday <= 501)  return '1–501 GB/Day';
+  if (gbday <= 2001) return '1–2001 GB/Day';
+  return 'Unlimited';
+}
+
+// Cloud GB/Day tiers
+const CLD_GB_TIERS = {
+  '5':   { sku:'FC1-10-AZCLD-463-01-DD', ot:'FC1-10-AZCLD-159-01-DD', asr:'FC1-10-AZCLD-175-01-DD', ai:'FC1-10-AZCLD-1118-01-DD' },
+  '50':  { sku:'FC2-10-AZCLD-463-01-DD', ot:'FC2-10-AZCLD-159-01-DD', asr:'FC2-10-AZCLD-175-01-DD', ai:'FC2-10-AZCLD-1118-01-DD' },
+  '500': { sku:'FC3-10-AZCLD-463-01-DD', ot:'FC3-10-AZCLD-159-01-DD', asr:'FC3-10-AZCLD-175-01-DD', ai:'FC3-10-AZCLD-1118-01-DD' },
+};
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+let _activeTab = 'hw';
+let _selectedHW = null;
+let _lastRows = [];
+let _lastLabel = '';
+let _lastMeta = {};
+
+/* =====================================================================
+   TAB SWITCHING
+   ===================================================================== */
+function switchTab(tab) {
+  _activeTab = tab;
+  ['hw','vm','cloud'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+  });
+  updateAddonVisibility();
+  clearStatus();
+}
+
+/* =====================================================================
+   HW MODEL SELECTION
+   ===================================================================== */
+function selectHW(model) {
+  _selectedHW = model;
+  document.querySelectorAll('#hw-model-grid .mc').forEach(el => el.classList.remove('sel'));
+  event.currentTarget.classList.add('sel');
+  document.getElementById('err-hw-model').style.display = 'none';
+  // FortiTIP only on hardware
+  updateAddonVisibility();
+}
+function onHwQtyChange(){}
+function onHwBundleChange(){}
+function onHwHaChange() {
+  const ha = document.getElementById('hw-ha').checked;
+  document.getElementById('hw-ha-info').style.display = ha ? 'flex' : 'none';
+}
+
+/* =====================================================================
+   VM CONTROLS
+   ===================================================================== */
+function onVmTypeChange() {
+  const t = document.getElementById('vm-type').value;
+  document.getElementById('vm-perp-services').style.display = t==='perp' ? 'block' : 'none';
+  // Rebuild tier options for type
+  const tierSel = document.getElementById('vm-tier');
+  tierSel.innerHTML = '<option value="">— Select tier —</option>';
+  if (t==='sub') {
+    [['5','5 GB/Day'],['50','50 GB/Day'],['500','500 GB/Day']].forEach(([v,l]) => {
+      const o = new Option(l,v); tierSel.appendChild(o);
+    });
+  } else {
+    [['1','1 GB/Day'],['5','5 GB/Day'],['25','25 GB/Day'],['100','100 GB/Day'],['500','500 GB/Day'],['2000','2000 GB/Day']].forEach(([v,l]) => {
+      const o = new Option(l,v); tierSel.appendChild(o);
+    });
+  }
+  onVmTierChange();
+  updateAddonVisibility();
+}
+function onVmTierChange() {
+  const gbday = parseInt(document.getElementById('vm-tier').value)||0;
+  const ind = document.getElementById('vm-band-ind');
+  const t = document.getElementById('vm-type').value;
+  if (gbday && t==='perp') {
+    const band = vmPerpBand(gbday);
+    document.getElementById('vm-band-text').textContent = band;
+    document.getElementById('vm-band-desc').textContent = vmPerpBandDesc(gbday);
+    ind.style.display = 'block';
+  } else {
+    ind.style.display = 'none';
+  }
+  updateAddonVisibility();
+}
+
+/* =====================================================================
+   CLOUD CONTROLS
+   ===================================================================== */
+function onCldModelChange() {
+  const m = document.getElementById('cld-model').value;
+  document.getElementById('cld-perdev-section').style.display = m==='perdev' ? 'block' : 'none';
+  document.getElementById('cld-gbday-section').style.display = m==='gbday' ? 'block' : 'none';
+  updateAddonVisibility();
+}
+function onCldModelCodeInput() {
+  const v = document.getElementById('cld-model-code').value.trim().toUpperCase();
+  document.getElementById('cld-model-code').value = v;
+}
+document.getElementById('cld-extra-gb').addEventListener('change', function(){
+  document.getElementById('cld-extra-gb-section').style.display = this.checked ? 'block' : 'none';
+});
+
+/* =====================================================================
+   ADD-ON VISIBILITY
+   ===================================================================== */
+function updateAddonVisibility() {
+  const tab = _activeTab;
+  // Elite upgrade shown for hw & vm only
+  document.getElementById('ao-elite').style.display = (tab==='hw'||tab==='vm') ? 'flex' : 'none';
+  // Cloud: no managed service for cloud
+  document.getElementById('ao-managed').classList.toggle('disabled', tab==='cloud');
+  // FortiTIP — hw only (shown as note in hw panel, not in addons since it's in bundle)
+}
+
+function onFortiAiChange() {
+  const cb = document.getElementById('ao-fortiai-cb').checked;
+  document.getElementById('ao-fortiai-topup').style.display = cb ? 'flex' : 'none';
+  if (!cb) document.getElementById('ao-fortiai-topup-cb').checked = false;
+}
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+function v(id){ return document.getElementById(id); }
+function setErr(id, show) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = show ? 'block' : 'none';
+}
+function clearStatus() {
+  const s = v('smsg'); s.textContent=''; s.className='';
+}
+
+/* =====================================================================
+   GENERATE BOM
+   ===================================================================== */
+function generateBOM() {
+  clearStatus();
+  const rows = [];
+  let label = '';
+  let meta = {};
+  let valid = true;
+
+  if (_activeTab === 'hw') {
+    // Validate
+    if (!_selectedHW) { setErr('err-hw-model',true); valid=false; }
+    const qtyEl = v('hw-qty'); const qty = parseInt(qtyEl.value)||0;
+    if (qty < 1) { setErr('err-hw-qty',true); valid=false; }
+    if (!valid) { showStatus('Please fix errors above.','err'); return false; }
+    setErr('err-hw-model',false); setErr('err-hw-qty',false);
+
+    const m = HW_MODELS[_selectedHW];
+    const bundle = v('hw-bundle').value === 'bundle';
+    const ha = v('hw-ha').checked;
+    const totalQty = ha ? qty*2 : qty;
+    label = `FAZ-${_selectedHW} ×${totalQty}${ha?' (HA)':''}`;
+    meta = { model:`FAZ-${_selectedHW}`, qty:totalQty, ha, bundle };
+
+    rows.push({ section: 'Hardware' });
+    if (bundle) {
+      rows.push({ sku:m.bun, desc:`FortiAnalyzer ${_selectedHW} Hardware Bundle (FortiCare Premium + IOC + Outbreak + Security Automation + FortiTIP)`, qty:totalQty, kind:'req', note:'Hardware Bundle — best value' });
+    } else {
+      rows.push({ sku:m.hw, desc:`FortiAnalyzer ${_selectedHW} Appliance`, qty:totalQty, kind:'req', note:'Hardware only' });
+      rows.push({ sku:'⚠', desc:'No support/services selected. Add FortiCare and service SKUs via renewal bundle.', qty:null, kind:'note', note:'' });
+    }
+    if (ha) {
+      rows.push({ sku:'⚠', desc:`HA requires 2× identical FAZ-${_selectedHW} at same firmware version and operation mode.`, qty:null, kind:'note', note:'' });
+    }
+
+    // Add-ons (hardware)
+    buildAddonRows(rows, m, totalQty, 'hw');
+
+  } else if (_activeTab === 'vm') {
+    const vmType = v('vm-type').value;
+    const tier = v('vm-tier').value;
+    const qty = parseInt(v('vm-qty').value)||0;
+    if (!tier) { setErr('err-vm-tier',true); valid=false; }
+    if (qty < 1) { setErr('err-vm-qty',true); valid=false; }
+    if (!valid) { showStatus('Please fix errors above.','err'); return false; }
+    setErr('err-vm-tier',false); setErr('err-vm-qty',false);
+
+    const ha = v('vm-ha').checked;
+    const totalQty = ha ? qty*2 : qty;
+    const gbPerStack = parseInt(tier);
+    const totalGB = gbPerStack * (ha ? qty : qty); // per stack
+    label = `FAZ VM ${vmType==='sub'?'Subscription':'Perpetual'} ${tier}GB/Day ×${qty}${ha?' (HA)':''}`;
+    meta = { type:vmType, tier, qty:totalQty, ha };
+
+    if (vmType === 'sub') {
+      const t = VM_SUB_TIERS[tier];
+      if (!t) { showStatus('Selected tier not available for VM Subscription. Choose 5, 50, or 500 GB/Day.','err'); return false; }
+      rows.push({ section: 'VM Subscription Bundle' });
+      rows.push({ sku:t.bun, desc:`FortiAnalyzer VM Subscription Bundle — ${tier} GB/Day (FortiCare Premium + IOC + Outbreak + Security Automation)`, qty:totalQty, kind:'req', note:'Fully stackable' });
+      buildVmSubAddonRows(rows, t, totalQty);
+    } else {
+      // Perpetual — pack tiers
+      rows.push({ section: 'VM Perpetual License' });
+      const perpPacks = packVMPerp(gbPerStack);
+      perpPacks.forEach(p => {
+        rows.push({ sku:VM_PERP_SKU[p.tier], desc:`FortiAnalyzer VM Perpetual License — ${p.tier} GB/Day`, qty:p.qty * (ha?2:qty), kind:'req', note:'Stackable; multiple stacks' });
+      });
+
+      // À-la-carte services
+      const band = vmPerpBand(totalGB);
+      rows.push({ section: 'VM Perpetual À-la-carte Services' });
+      if (v('vp-forticare').checked && !v('vp-elite').checked) {
+        rows.push({ sku:`${band}-10-LV0VM-248-02-DD`, desc:'FortiCare Premium Support — VM Perpetual', qty:totalQty, kind:'req', note:`Band ${band} · ${vmPerpBandDesc(totalGB)}` });
+      }
+      if (v('vp-ioc').checked) {
+        rows.push({ sku:`${band}-10-LV0VM-661-02-DD`, desc:'IOC & Outbreak Detection Service — VM Perpetual', qty:totalQty, kind:'req', note:`Band ${band}` });
+      }
+      if (v('vp-soc').checked) {
+        rows.push({ sku:`${band}-10-LV0VM-335-02-DD`, desc:'Security Automation Service — VM Perpetual', qty:totalQty, kind:'req', note:`Band ${band}` });
+      }
+      if (v('vp-elite').checked) {
+        rows.push({ sku:`${band}-10-LV0VM-285-02-DD`, desc:'FortiCare Elite Support — VM Perpetual', qty:totalQty, kind:'req', note:`Band ${band} · replaces Premium` });
+      }
+      buildVmPerpAddonRows(rows, band, totalQty, totalGB);
+    }
+
+  } else if (_activeTab === 'cloud') {
+    const cldModel = v('cld-model').value;
+    if (cldModel === 'perdev') {
+      const devType = v('cld-dev-type').value;
+      const modelCode = v('cld-model-code').value.trim().toUpperCase();
+      const devQty = parseInt(v('cld-dev-qty').value)||0;
+      const haP = v('cld-ha-pair').checked;
+      const totalDev = haP ? devQty*2 : devQty;
+      if (!modelCode) { setErr('err-cld-model-code',true); valid=false; }
+      if (devQty < 1) { setErr('err-cld-dev-qty',true); valid=false; }
+      if (!valid) { showStatus('Please fix errors above.','err'); return false; }
+      setErr('err-cld-model-code',false); setErr('err-cld-dev-qty',false);
+
+      const prefix = devType==='fg' ? 'FG' : 'FWB';
+      const perDevSku = `FC-10-${modelCode}-585-02-DD`;
+      label = `FortiAnalyzer Cloud — ${totalDev}× ${modelCode}`;
+      meta = { model:modelCode, qty:totalDev, ha:haP };
+
+      rows.push({ section: 'FortiAnalyzer Cloud — Per-Device Subscription' });
+      rows.push({ sku:perDevSku, desc:`FortiAnalyzer Cloud Device License — ${devType==='fg'?'FortiGate':'FortiWeb'} ${modelCode} (Central Logging + Analytics + IOC + Outbreak + Security Automation)`, qty:totalDev, kind:'req', note:'200 MB/Day default per device' });
+      if (haP) {
+        rows.push({ sku:'⚠', desc:'HA pairs: each FortiGate in an HA pair requires its own FAZ Cloud subscription.', qty:null, kind:'note', note:'' });
+      }
+
+      // Optional GB/day expansion
+      if (v('cld-extra-gb').checked) {
+        const gbTier = v('cld-extra-gb-tier').value;
+        const t = CLD_GB_TIERS[gbTier];
+        rows.push({ section: 'Optional GB/Day Expansion' });
+        rows.push({ sku:t.sku, desc:`FortiAnalyzer Cloud GB/Day Expansion — ${gbTier} GB/Day (shared pool)`, qty:1, kind:'opt', note:'Supplements per-device entitlement' });
+        buildCldAddonRows(rows, t, 1, gbTier);
+      } else {
+        buildCldAddonRows(rows, null, 0, '5');
+      }
+
+    } else {
+      const gbTier = v('cld-gb-tier').value;
+      const gbQty = parseInt(v('cld-gb-qty').value)||0;
+      if (gbQty < 1) { setErr('err-cld-gb-qty',true); valid=false; }
+      if (!valid) { showStatus('Please fix errors above.','err'); return false; }
+      setErr('err-cld-gb-qty',false);
+
+      const t = CLD_GB_TIERS[gbTier];
+      label = `FortiAnalyzer Cloud GB/Day ${gbTier} GB ×${gbQty}`;
+      meta = { tier:gbTier, qty:gbQty };
+
+      rows.push({ section: 'FortiAnalyzer Cloud — GB/Day Subscription' });
+      rows.push({ sku:t.sku, desc:`FortiAnalyzer Cloud Base Subscription — ${gbTier} GB/Day (Central Logging + Analytics + IOC + Outbreak + Security Automation + FortiCare Premium)`, qty:gbQty, kind:'req', note:'Shared across FortiCloud account' });
+      buildCldAddonRows(rows, t, gbQty, gbTier);
+    }
+  }
+
+  // Backup to cloud (universal)
+  if (v('ao-backup-cb').checked) {
+    rows.push({ section: 'Cloud Backup' });
+    rows.push({ sku:'FC-10-FAZ00-286-02-DD', desc:'FortiAnalyzer Backup to Public Cloud Service — 10TB', qty:1, kind:'opt', note:'Universal SKU' });
+  }
+
+  _lastRows = rows;
+  _lastLabel = label;
+  _lastMeta = meta;
+  renderBOM(rows);
+  showStatus('BOM generated.','ok');
+  return true;
+}
+
+/* ===== ADD-ON HELPERS ===== */
+function buildAddonRows(rows, m, qty, tab) {
+  const addons = [];
+  if (v('ao-ot-cb').checked)      addons.push({ sku:m.ot,    desc:'OT Security Service', note:'Advanced OT analytics' });
+  if (v('ao-asr-cb').checked)     addons.push({ sku:m.asr,   desc:'Attack Surface Rating & Compliance', note:'PCI/CIS compliance, Shadow-IT' });
+  if (v('ao-fortiai-cb').checked) addons.push({ sku:m.ai,    desc:'FortiAI Service', note:'GenAI SOC analysis' });
+  if (v('ao-managed-cb').checked) addons.push({ sku:m.mng,   desc:'Managed FortiAnalyzer Service', note:'SOCaaS health monitoring' });
+  if (v('ao-elite-cb') && v('ao-elite-cb').checked) addons.push({ sku:m.elite, desc:'FortiCare Elite Upgrade', note:'Premium → Elite' });
+  if (v('ao-fortiai-topup-cb').checked) addons.push({ sku:'FC1-10-AITAZ-1089-02-DD', desc:'FortiAI Token Top-Up', note:'Base subscription required' });
+  if (addons.length) {
+    rows.push({ section: 'Service Add-Ons' });
+    addons.forEach(a => rows.push({ sku:a.sku, desc:a.desc, qty, kind:'opt', note:a.note }));
+  }
+}
+
+function buildVmSubAddonRows(rows, t, qty) {
+  const addons = [];
+  if (v('ao-ot-cb').checked)      addons.push({ sku:t.ot,    desc:'OT Security Service — VM Subscription' });
+  if (v('ao-asr-cb').checked)     addons.push({ sku:t.asr,   desc:'Attack Surface Rating & Compliance — VM Subscription' });
+  if (v('ao-fortiai-cb').checked) addons.push({ sku:t.ai,    desc:'FortiAI Service — VM Subscription' });
+  if (v('ao-elite-cb') && v('ao-elite-cb').checked) addons.push({ sku:t.elite, desc:'FortiCare Elite Upgrade — VM Subscription', note:'Tier must match' });
+  if (v('ao-fortiai-topup-cb').checked) addons.push({ sku:'FC1-10-AITAZ-1089-02-DD', desc:'FortiAI Token Top-Up' });
+  if (addons.length) {
+    rows.push({ section: 'Service Add-Ons' });
+    addons.forEach(a => rows.push({ sku:a.sku, desc:a.desc, qty, kind:'opt', note: a.note||'Tier must match ingestion tier' }));
+  }
+}
+
+function buildVmPerpAddonRows(rows, band, qty, gbday) {
+  const addons = [];
+  if (v('ao-ot-cb').checked)      addons.push({ sku:`${band}-10-LV0VM-159-02-DD`, desc:'OT Security Service — VM Perpetual' });
+  if (v('ao-asr-cb').checked)     addons.push({ sku:`${band}-10-LV0VM-175-02-DD`, desc:'Attack Surface Rating & Compliance — VM Perpetual' });
+  if (v('ao-fortiai-cb').checked) addons.push({ sku:`${band}-10-LV0VM-1118-02-DD`, desc:'FortiAI Service — VM Perpetual' });
+  if (v('ao-fortiai-topup-cb').checked) addons.push({ sku:'FC1-10-AITAZ-1089-02-DD', desc:'FortiAI Token Top-Up' });
+  if (addons.length) {
+    rows.push({ section: 'Service Add-Ons' });
+    addons.forEach(a => rows.push({ sku:a.sku, desc:a.desc, qty, kind:'opt', note:`Band ${band} · ${vmPerpBandDesc(gbday)}` }));
+  }
+}
+
+function buildCldAddonRows(rows, t, qty, gbTier) {
+  if (!t) return;
+  const addons = [];
+  if (v('ao-ot-cb').checked)      addons.push({ sku:t.ot,  desc:'OT Security Service — FAZ Cloud' });
+  if (v('ao-asr-cb').checked)     addons.push({ sku:t.asr, desc:'Attack Surface Rating & Compliance — FAZ Cloud' });
+  if (v('ao-fortiai-cb').checked) addons.push({ sku:t.ai,  desc:'FortiAI Service — FAZ Cloud' });
+  if (v('ao-fortiai-topup-cb').checked) addons.push({ sku:'FC1-10-AITAZ-1089-02-DD', desc:'FortiAI Token Top-Up' });
+  if (addons.length) {
+    rows.push({ section: 'Service Add-Ons' });
+    addons.forEach(a => rows.push({ sku:a.sku, desc:a.desc, qty:qty||1, kind:'opt', note:`${gbTier} GB/Day tier` }));
+  }
+}
+
+/* ===== VM PERPETUAL TIER PACKING ===== */
+function packVMPerp(gbday) {
+  const tiers = [2000,500,100,25,5,1];
+  let rem = gbday;
+  const result = [];
+  for (const t of tiers) {
+    const q = Math.floor(rem / t);
+    if (q > 0) { result.push({ tier:String(t), qty:q }); rem -= q*t; }
+  }
+  if (rem > 0) result.push({ tier:'1', qty:1 });
+  return result;
+}
+
+/* ===== RENDER BOM ===== */
+function renderBOM(rows) {
+  const tbody = v('bom-tbody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    if (r.section !== undefined) {
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${r.section}</td>`;
+    } else {
+      const badge = r.kind === 'req' ? '<span class="badge badge-req">Required</span>'
+                  : r.kind === 'opt' ? '<span class="badge badge-opt">Optional</span>'
+                  : r.kind === 'mand' ? '<span class="badge badge-mand">Mandatory</span>'
+                  : r.kind === 'inc' ? '<span class="badge badge-inc">Included</span>'
+                  : '';
+      const skuCell = r.sku === '⚠' ? `<span style="color:var(--forti-warn-text)">⚠ Note</span>`
+                    : `<span class="sku">${r.sku}</span>`;
+      tr.innerHTML = `
+        <td>${skuCell}</td>
+        <td class="nc">${r.desc}</td>
+        <td style="text-align:center;">${r.qty !== null ? r.qty : ''}</td>
+        <td>${badge}</td>
+        <td class="nc">${r.note||''}</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  v('bom-section').style.display = 'block';
+  v('bom-section').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+/* ===== STATUS ===== */
+function showStatus(msg, type) {
+  const s = v('smsg');
+  s.textContent = msg;
+  s.className = type;
+}
+
+/* ===== ADD TO PROJECT BOM ===== */
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  window.parent.postMessage({
+    type: 'FORTIBOM_ADD',
+    product: 'FortiAnalyzer',
+    label: _lastLabel,
+    rows: _lastRows,
+    meta: _lastMeta
+  }, '*');
+  showStatus('✓ Added to Project BOM!', 'ok');
+}
+
+/* ===== COPY TSV ===== */
+function copyTSV() {
+  const lines = [['Part Number','Description','Qty','Type','Notes'].join('\t')];
+  _lastRows.forEach(r => {
+    if (r.section) { lines.push([`### ${r.section}`,'','','',''].join('\t')); }
+    else { lines.push([r.sku||'', r.desc||'', r.qty!=null?r.qty:'', r.kind||'', r.note||''].join('\t')); }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => showStatus('Copied to clipboard.','ok'));
+}
+
+/* ===== RESET ===== */
+function resetForm() {
+  _selectedHW = null;
+  _lastRows = []; _lastLabel = ''; _lastMeta = {};
+  document.querySelectorAll('#hw-model-grid .mc').forEach(el => el.classList.remove('sel'));
+  v('hw-qty').value = 1;
+  v('hw-bundle').value = 'bundle';
+  v('hw-ha').checked = false;
+  v('hw-ha-info').style.display = 'none';
+  v('hw-fortitip').checked = false;
+  v('vm-type').value = 'sub';
+  v('vm-perp-services').style.display = 'none';
+  v('vm-tier').value = '';
+  v('vm-band-ind').style.display = 'none';
+  v('vm-qty').value = 1;
+  v('vm-ha').checked = false;
+  v('vp-forticare').checked = true;
+  v('vp-ioc').checked = true;
+  v('vp-soc').checked = true;
+  v('vp-elite').checked = false;
+  v('cld-model').value = 'perdev';
+  v('cld-perdev-section').style.display = 'block';
+  v('cld-gbday-section').style.display = 'none';
+  v('cld-dev-type').value = 'fg';
+  v('cld-model-code').value = '';
+  v('cld-dev-qty').value = 1;
+  v('cld-ha-pair').checked = false;
+  v('cld-extra-gb').checked = false;
+  v('cld-extra-gb-section').style.display = 'none';
+  v('cld-gb-tier').value = '5';
+  v('cld-gb-qty').value = 1;
+  ['ao-ot-cb','ao-asr-cb','ao-fortiai-cb','ao-fortiai-topup-cb','ao-managed-cb','ao-backup-cb','ao-elite-cb'].forEach(id => {
+    if (v(id)) v(id).checked = false;
+  });
+  v('ao-fortiai-topup').style.display = 'none';
+  v('ao-elite').style.display = 'none';
+  ['err-hw-model','err-hw-qty','err-vm-tier','err-vm-qty','err-cld-model-code','err-cld-dev-qty','err-cld-gb-qty'].forEach(id => setErr(id,false));
+  v('bom-section').style.display = 'none';
+  v('bom-tbody').innerHTML = '';
+  clearStatus();
+  switchTab('hw');
+}
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+updateAddonVisibility();
+onVmTypeChange();
+</script>
+</body>
+</html>

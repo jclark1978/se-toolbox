@@ -1,8 +1,9 @@
-const CACHE_NAME = "fortisku-cache-v18";
+const CACHE_NAME = "fortisku-cache-v19";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./fortisku/",
+  "./bom-builder/",
   "./hardware-lifecycle/",
   "./software-lifecycle/",
   "./ordering-guides/",
@@ -15,6 +16,9 @@ const APP_SHELL = [
   "./src/features/finder/ui.js",
   "./src/features/finder/bom.js",
   "./src/features/finder/bomExport.js",
+  "./src/features/bom-builder/main.js",
+  "./src/features/bom-builder/page.css",
+  "./src/features/bom-builder/theme-bridge.css",
   "./src/features/hardware-lifecycle/main.js",
   "./src/features/hardware-lifecycle/rss.js",
   "./src/features/hardware-lifecycle/search.js",
@@ -43,6 +47,8 @@ const APP_SHELL = [
   "./src/shared/data/csv.js",
   "./vendor/minisearch.min.js",
   "./vendor/idb-keyval.mjs",
+  "./vendor/FortiBOM/index.html",
+  "./vendor/FortiBOM/products/fortigate-bomgen.html",
   "./vendor/xlsx.mjs",
   "./sw.js"
 ];

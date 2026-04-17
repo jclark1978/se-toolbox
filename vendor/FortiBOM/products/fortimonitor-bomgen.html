@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiMonitor — BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size: 13px; line-height: 1.5; color: var(--forti-text); background: var(--forti-bg); padding: 20px; }
+
+/* Header */
+.page-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.header-icon { width: 42px; height: 42px; background: var(--forti-red); border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.header-icon svg { width: 24px; height: 24px; fill: white; }
+.header-text h1 { font-size: 20px; font-weight: 700; color: var(--forti-text); }
+.header-text p { font-size: 11px; color: var(--forti-text-muted); margin-top: 2px; }
+
+/* Cards */
+.card { background: var(--forti-white); border: 1px solid var(--forti-border); border-radius: 4px; margin-bottom: 14px; overflow: hidden; }
+.card-header { background: var(--forti-section-header); border-bottom: 1px solid var(--forti-border); padding: 9px 18px; display: flex; align-items: center; gap: 8px; }
+.card-header h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--forti-text-secondary); }
+.card-body { padding: 16px 18px; }
+
+/* Grid */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 12px; font-weight: 600; color: var(--forti-text); }
+.req-star { color: var(--forti-red); }
+.form-group input[type=number], .form-group select {
+  background: white; border: 1px solid var(--forti-input-border); border-radius: 3px;
+  padding: 6px 9px; font-size: 13px; width: 100%; color: var(--forti-text);
+  transition: border-color .15s, box-shadow .15s;
+}
+.form-group input[type=number]:focus, .form-group select:focus {
+  outline: none; border-color: var(--forti-red); box-shadow: 0 0 0 2px rgba(238,49,36,.1);
+}
+.form-group input.invalid, .form-group select.invalid {
+  border-color: var(--forti-red);
+}
+.err-msg { font-size: 11px; color: var(--forti-red); display: none; margin-top: 2px; }
+
+/* Band indicator */
+.band-indicator {
+  display: none; background: var(--forti-info-bg); border: 1px solid var(--forti-info-border);
+  border-radius: 3px; padding: 4px 10px; font-size: 12px; color: var(--forti-info-text); margin-top: 4px;
+}
+
+/* Callouts */
+.callout { border-radius: 3px; padding: 9px 12px; font-size: 12px; line-height: 1.6; display: flex; gap: 8px; margin-top: 12px; }
+.info { background: var(--forti-info-bg); border: 1px solid var(--forti-info-border); color: var(--forti-info-text); }
+.warn { background: var(--forti-warn-bg); border: 1px solid var(--forti-warn-border); color: var(--forti-warn-text); }
+.callout-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+
+/* Add-on checkboxes */
+.addon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px,100%),1fr)); gap: 10px; }
+.addon-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--forti-border); border-radius: 4px; background: var(--forti-white); cursor: pointer; transition: border-color .15s; }
+.addon-item:hover:not(.disabled-addon) { border-color: var(--forti-red); }
+.addon-item input[type=checkbox] { margin-top: 2px; flex-shrink: 0; accent-color: var(--forti-red); }
+.addon-label { flex: 1; }
+.addon-label strong { display: block; font-size: 12px; font-weight: 600; color: var(--forti-text); }
+.addon-label span { font-size: 11px; color: var(--forti-text-muted); }
+.addon-label code { font-family: 'Courier New', monospace; font-size: 10px; color: #1A4E82; }
+.disabled-addon { opacity: 0.4; pointer-events: none; }
+
+/* Pack size selector within add-on */
+.addon-pack-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.addon-pack-row label { font-size: 11px; color: var(--forti-text-secondary); white-space: nowrap; }
+.addon-pack-row select { width: auto; padding: 3px 6px; font-size: 11px; border: 1px solid var(--forti-input-border); border-radius: 3px; background: white; }
+
+/* Actions */
+.action-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 18px; background: var(--forti-section-header); border-top: 1px solid var(--forti-border); }
+.btn { padding: 8px 18px; font-size: 13px; font-weight: 600; border: none; border-radius: 3px; cursor: pointer; transition: opacity .15s, background .15s; }
+.btn:hover { opacity: .88; }
+.btn-primary { background: var(--forti-red); color: white; }
+.btn-success { background: #2E7D32; color: white; }
+.btn-secondary { background: #5A6478; color: white; }
+.btn-sm { padding: 5px 11px; font-size: 11px; font-weight: 600; border: none; border-radius: 3px; cursor: pointer; }
+#smsg { font-size: 12px; color: #2E7D32; font-weight: 600; }
+
+/* BOM Preview Table */
+#bom-section { display: none; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { background: var(--forti-table-head); border: 1px solid var(--forti-border); padding: 7px 11px; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--forti-text-secondary); text-align: left; }
+tbody td { border: 1px solid var(--forti-border); padding: 7px 11px; vertical-align: top; }
+tbody tr:nth-child(even) td { background: var(--forti-table-stripe); }
+.section-row td { background: #EAECF3 !important; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--forti-text-secondary); padding: 5px 11px; border-top: 2px solid #C5CAD9; }
+.badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-radius: 2px; padding: 1px 4px; display: inline-block; }
+.badge-req  { background: #FEF0EE; color: #C0392B; border: 1px solid #F5C6C2; }
+.badge-opt  { background: #EEF3FF; color: #3557A5; border: 1px solid #B8CBF5; }
+.badge-mand { background: #FFF8EE; color: #8A5800; border: 1px solid #F5D9A0; }
+.badge-inc  { background: #EEF3FF; color: #3557A5; border: 1px solid #B8CBF5; }
+.sku-cell { font-family: 'Courier New', monospace; font-size: 11px; color: #1A4E82; white-space: nowrap; }
+.nc { color: var(--forti-text-muted); }
+.bom-actions { display: flex; gap: 8px; padding: 10px 0 0 0; }
+
+/* Comparison table */
+.comp-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.comp-table th { background: var(--forti-table-head); border: 1px solid var(--forti-border); padding: 6px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--forti-text-secondary); text-align: left; }
+.comp-table td { border: 1px solid var(--forti-border); padding: 6px 10px; vertical-align: top; }
+.comp-table tr:nth-child(even) td { background: var(--forti-table-stripe); }
+.comp-table .section-hdr td { background: #EAECF3 !important; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--forti-text-secondary); }
+.check { color: #2E7D32; font-size: 13px; }
+.dash { color: var(--forti-text-muted); }
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="header-icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <h1>FortiMonitor</h1>
+    <p>Cloud-Native SaaS Monitoring Platform · Ordering Guide FMN-OG-R15-20251117</p>
+  </div>
+</div>
+
+<!-- FEATURE COMPARISON TABLE -->
+<div class="card">
+  <div class="card-header"><h2>Product Capabilities (Instance Monitoring)</h2></div>
+  <div class="card-body" style="overflow-x:auto;">
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th style="min-width:220px;">Feature</th>
+          <th style="min-width:160px;">Included</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="section-hdr"><td colspan="2">Supported Endpoints</td></tr>
+        <tr><td>Network Devices &amp; Servers</td><td><span class="check">✓</span></td></tr>
+        <tr><td>Containers</td><td><span class="check">✓</span></td></tr>
+        <tr><td>FortiGate &amp; Fabric Devices</td><td><span class="check">✓</span></td></tr>
+        <tr><td>LAN Edge Devices</td><td><span class="check">✓</span></td></tr>
+        <tr><td>End User Agent (Windows / Mac)</td><td><span class="check">✓</span></td></tr>
+        <tr><td>VMware</td><td><span class="check">✓</span></td></tr>
+        <tr><td>DEM Synthetic Transaction Monitoring</td><td><span class="check">✓</span></td></tr>
+        <tr class="section-hdr"><td colspan="2">Monitoring &amp; Analytics</td></tr>
+        <tr><td>Data Retention</td><td>24 months</td></tr>
+        <tr><td>Full Incident Management Workflows</td><td><span class="check">✓</span></td></tr>
+        <tr><td>Advanced Alerting Capabilities</td><td><span class="check">✓</span></td></tr>
+        <tr><td>DEM Analytics (MOS Score, Wi-Fi, Packet Loss…)</td><td><span class="check">✓</span></td></tr>
+        <tr><td>Dashboards and Reporting</td><td><span class="check">✓</span></td></tr>
+        <tr><td>On-premise, Hybrid &amp; Cloud Monitoring</td><td><span class="check">✓</span></td></tr>
+        <tr><td>Netflow (cloud-hosted, tiered)</td><td><span class="check">✓</span> Add-on</td></tr>
+        <tr class="section-hdr"><td colspan="2">Operations &amp; Automation</td></tr>
+        <tr><td>Single Sign On · REST API · Multitenancy</td><td><span class="check">✓</span></td></tr>
+        <tr><td>Custom Playbook Automation</td><td><span class="check">✓</span></td></tr>
+        <tr><td>Automated Incident Solutions</td><td><span class="check">✓</span></td></tr>
+        <tr class="section-hdr"><td colspan="2">Hardware Platform</td></tr>
+        <tr><td>FortiMonitor 100F (OnSight Appliance)</td><td><span class="check">✓</span> Optional</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SUBSCRIPTION PACKS -->
+<div class="card">
+  <div class="card-header"><h2>Subscription Packs</h2></div>
+  <div class="card-body">
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <span>Packs <strong>stack on quantity</strong>. The generator uses largest-pack-first packing. E.g. 2 × 25-pack = 50 devices. Select the endpoint types and quantities you need below.</span>
+    </div>
+
+    <div style="margin-top:16px; display:flex; flex-direction:column; gap:16px;">
+
+      <!-- Devices/Servers -->
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--forti-text); margin-bottom:8px;">
+          Device / Server Subscriptions
+          <span style="font-size:11px; font-weight:400; color:var(--forti-text-muted);">— FC2/3/4/5-10-MNCLD-436-01-DD (25/500/2,000/10,000-pack)</span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Total Devices / Servers <span class="req-star">*</span></label>
+            <input type="number" id="f-devices" min="0" value="0" oninput="updateBandIndicators()">
+            <span class="err-msg" id="err-devices">Enter 0 or more</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Containers -->
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--forti-text); margin-bottom:8px;">
+          Container Subscriptions
+          <span style="font-size:11px; font-weight:400; color:var(--forti-text-muted);">— FC2/3/4/5-10-MNCLD-439-01-DD (25/500/2,000/10,000-pack)</span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Total Containers</label>
+            <input type="number" id="f-containers" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- FortiGate -->
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--forti-text); margin-bottom:8px;">
+          FortiGate Subscriptions
+          <span style="font-size:11px; font-weight:400; color:var(--forti-text-muted);">— FC2/3/4/5-10-MNCLD-456-01-DD (25/500/2,000/10,000-pack)</span>
+        </div>
+        <div class="callout info" style="margin-bottom:8px; margin-top:0;">
+          <span class="callout-icon">ℹ</span>
+          <span>Each FortiGate pack includes monitoring for up to 9 connected Security Fabric devices (FortiAP, FortiSwitch, etc.).</span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Total FortiGate Devices</label>
+            <input type="number" id="f-fortigate" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- LAN Edge -->
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--forti-text); margin-bottom:8px;">
+          LAN Edge Device Subscriptions
+          <span style="font-size:11px; font-weight:400; color:var(--forti-text-muted);">— FC2/3/4/5-10-MNCLD-459-01-DD (25/500/2,000/10,000-pack)</span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Total LAN Edge Devices</label>
+            <input type="number" id="f-lanedge" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- End User Agents -->
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--forti-text); margin-bottom:8px;">
+          End User Agent Subscriptions
+          <span style="font-size:11px; font-weight:400; color:var(--forti-text-muted);">— FC1/2/3/4/5-10-MNCLD-529-01-12 (10/25/100/2,000/10,000-pack)</span>
+        </div>
+        <div class="callout warn" style="margin-bottom:8px; margin-top:0;">
+          <span class="callout-icon">⚠</span>
+          <span>End User Agent SKUs use a fixed <strong>-12</strong> (annual) suffix per the ordering guide — these are NOT co-term/-DD SKUs.</span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Total End User Agents</label>
+            <input type="number" id="f-agents" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- STM (DEM) -->
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--forti-text); margin-bottom:8px;">
+          STM / DEM Instances
+          <span style="font-size:11px; font-weight:400; color:var(--forti-text-muted);">— FC2/3/4/5-10-MNCLD-441-01-12 (25/500/2,000/10,000-pack)</span>
+        </div>
+        <div class="callout warn" style="margin-bottom:8px; margin-top:0;">
+          <span class="callout-icon">⚠</span>
+          <span>STM SKUs also use fixed <strong>-12</strong> suffix per ordering guide. Each STM check from a single location (OnSight or Public PoP) consumes one license.</span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Total STM Instances</label>
+            <input type="number" id="f-stm" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- HARDWARE -->
+<div class="card">
+  <div class="card-header"><h2>Hardware Platform (Optional)</h2></div>
+  <div class="card-body">
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <span>The <strong>FortiMonitor 100F</strong> appliance (SKU: <code style="font-family:'Courier New',monospace;font-size:11px;color:#1A4E82;">FMN-100F</code>) delivers all OnSight vCollector functionality in a hardware form factor. Requires an active FortiMonitor subscription.</span>
+    </div>
+    <div style="margin-top:14px;">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>FortiMonitor 100F Appliances</label>
+          <input type="number" id="f-hw100f" min="0" value="0">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD-ONS -->
+<div class="card">
+  <div class="card-header"><h2>Add-On Services</h2></div>
+  <div class="card-body">
+
+    <!-- Netflow -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px; font-weight:700; color:var(--forti-text); margin-bottom:8px;">
+        FortiMonitor Cloud Netflow
+        <span style="font-size:11px; font-weight:400; color:var(--forti-text-muted);">— SKUs stack · each unit = 5,000 FPS</span>
+      </div>
+      <div class="callout info" style="margin-bottom:10px; margin-top:0;">
+        <span class="callout-icon">ℹ</span>
+        <span>Enter total FPS needed for each retention tier. The BOM will auto-stack the required number of 5,000-FPS units (e.g. 12,000 FPS → 3 × SKU). Leave at 0 to omit.</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr)); gap:12px;">
+
+        <div style="border:1px solid var(--forti-border); border-radius:4px; padding:12px; background:white;">
+          <div style="font-size:12px; font-weight:600; margin-bottom:6px;">15-day Retention</div>
+          <div style="font-size:10px; font-family:'Courier New',monospace; color:#1A4E82; margin-bottom:8px;">FC1-10-MNCLD-760-01-DD</div>
+          <div class="form-group">
+            <label style="font-size:11px;">Required FPS</label>
+            <input type="number" id="f-nf15-fps" min="0" value="0" step="1000" oninput="updateNetflowIndicator('15')">
+          </div>
+          <div class="band-indicator" id="nf15-ind">
+            <span id="nf15-ind-text"></span>
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--forti-border); border-radius:4px; padding:12px; background:white;">
+          <div style="font-size:12px; font-weight:600; margin-bottom:6px;">30-day Retention</div>
+          <div style="font-size:10px; font-family:'Courier New',monospace; color:#1A4E82; margin-bottom:8px;">FC1-10-MNCLD-761-01-DD</div>
+          <div class="form-group">
+            <label style="font-size:11px;">Required FPS</label>
+            <input type="number" id="f-nf30-fps" min="0" value="0" step="1000" oninput="updateNetflowIndicator('30')">
+          </div>
+          <div class="band-indicator" id="nf30-ind">
+            <span id="nf30-ind-text"></span>
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--forti-border); border-radius:4px; padding:12px; background:white;">
+          <div style="font-size:12px; font-weight:600; margin-bottom:6px;">90-day Retention</div>
+          <div style="font-size:10px; font-family:'Courier New',monospace; color:#1A4E82; margin-bottom:8px;">FC1-10-MNCLD-762-01-DD</div>
+          <div class="form-group">
+            <label style="font-size:11px;">Required FPS</label>
+            <input type="number" id="f-nf90-fps" min="0" value="0" step="1000" oninput="updateNetflowIndicator('90')">
+          </div>
+          <div class="band-indicator" id="nf90-ind">
+            <span id="nf90-ind-text"></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BPS Onboarding -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px; font-weight:700; color:var(--forti-text); margin-bottom:8px;">FortiCare Best Practices (BPS) Onboarding</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Include BPS Onboarding Service?</label>
+          <select id="f-bps">
+            <option value="none">— None —</option>
+            <option value="fc1">&lt;250 Endpoints · FC1-10-MNBPS-310-02-DD</option>
+            <option value="fc2">250–999 Endpoints · FC2-10-MNBPS-310-02-DD</option>
+            <option value="fc3">1,000–4,999 Endpoints · FC3-10-MNBPS-310-02-DD</option>
+            <option value="fc5">≥5,000 Endpoints · FC5-10-MNBPS-310-02-DD</option>
+          </select>
+        </div>
+      </div>
+      <div class="callout info" style="margin-top:8px;">
+        <span class="callout-icon">ℹ</span>
+        <span>BPS follows a 4-phase approach: Plan → Design → Deploy → Manage. Includes planning/onboarding reviews, design &amp; deployment engagement, weekly incident reviews, and quarterly optimization.</span>
+      </div>
+    </div>
+
+    <!-- Training -->
+    <div>
+      <div style="font-size:12px; font-weight:700; color:var(--forti-text); margin-bottom:8px;">Instructor-Led Training</div>
+      <div class="addon-grid">
+        <div class="addon-item" id="ao-training" onclick="toggleTraining()">
+          <input type="checkbox" id="cb-training">
+          <div class="addon-label">
+            <strong>FortiMonitor Training — 1 Day ILT</strong>
+            <span>Architecture, configuration labs, incident handling, countermeasures &amp; reports<br><code>FT-CTM-D01</code></span>
+          </div>
+        </div>
+      </div>
+      <div class="callout warn" style="margin-top:8px;">
+        <span class="callout-icon">⚠</span>
+        <span><strong>FT-CTM-D01</strong> is a training SKU with no term suffix. Contact your regional training representative for pricing and availability. Additional SKUs may be required.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="card" style="margin-bottom:14px;">
+  <div class="action-row">
+    <button class="btn btn-primary" onclick="generateBOM()">Preview BOM</button>
+    <button class="btn btn-success" onclick="addToProjectBOM()">Add to Project BOM</button>
+    <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+    <span id="smsg"></span>
+  </div>
+</div>
+
+<!-- BOM PREVIEW -->
+<div class="card" id="bom-section">
+  <div class="card-header"><h2>BOM Preview</h2></div>
+  <div class="card-body">
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:190px;">Part Number</th>
+            <th>Description</th>
+            <th style="width:50px; text-align:center;">Qty</th>
+            <th style="width:80px;">Type</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="bom-tbody"></tbody>
+      </table>
+    </div>
+    <div class="bom-actions">
+      <button class="btn-sm btn-secondary" style="background:#5A6478;color:white;" onclick="copyTSV()">Copy TSV</button>
+      <button class="btn-sm btn-secondary" style="background:#5A6478;color:white;" onclick="window.print()">Print</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let _lastRows  = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+// ─── Netflow live indicator ──────────────────────────────────────────────────────
+function updateNetflowIndicator(tier) {
+  var fps   = getNum('f-nf' + tier + '-fps');
+  var ind   = document.getElementById('nf' + tier + '-ind');
+  var txt   = document.getElementById('nf' + tier + '-ind-text');
+  if (fps <= 0) { ind.style.display = 'none'; return; }
+  var units = Math.ceil(fps / 5000);
+  txt.textContent = units + ' × 5,000 FPS unit' + (units > 1 ? 's' : '') + ' = ' + (units * 5000).toLocaleString() + ' FPS total';
+  ind.style.display = 'block';
+}
+
+function toggleTraining() {
+  var cb = document.getElementById('cb-training');
+  cb.checked = !cb.checked;
+}
+
+// ─── Packing utility ─────────────────────────────────────────────────────────
+function packTier(total, tiers) {
+  // tiers: [{qty, sku, desc}] sorted largest-first
+  let remaining = total;
+  const result = [];
+  for (const t of tiers) {
+    const n = Math.floor(remaining / t.qty);
+    if (n > 0) {
+      result.push({ sku: t.sku, desc: t.desc, qty: n });
+      remaining -= n * t.qty;
+    }
+  }
+  if (remaining > 0) {
+    const smallest = tiers[tiers.length - 1];
+    result.push({ sku: smallest.sku, desc: smallest.desc, qty: 1 });
+  }
+  return result;
+}
+
+// ─── Validate ────────────────────────────────────────────────────────────────
+function validateNum(fieldId, errId) {
+  const el  = document.getElementById(fieldId);
+  const err = document.getElementById(errId);
+  const val = parseInt(el.value, 10);
+  if (isNaN(val) || val < 0) {
+    el.classList.add('invalid');
+    if (err) { err.style.display = 'block'; }
+    return false;
+  }
+  el.classList.remove('invalid');
+  if (err) { err.style.display = 'none'; }
+  return true;
+}
+
+function getNum(id) {
+  const v = parseInt(document.getElementById(id).value, 10);
+  return isNaN(v) ? 0 : Math.max(0, v);
+}
+
+// ─── generateBOM ─────────────────────────────────────────────────────────────
+function generateBOM() {
+  // Validate
+  const ok = validateNum('f-devices', 'err-devices');
+  if (!ok) {
+    showStatus('Please fix validation errors.', 'error');
+    return false;
+  }
+
+  const devices    = getNum('f-devices');
+  const containers = getNum('f-containers');
+  const fortigate  = getNum('f-fortigate');
+  const lanedge    = getNum('f-lanedge');
+  const agents     = getNum('f-agents');
+  const stm        = getNum('f-stm');
+  const hw100f     = getNum('f-hw100f');
+
+  // At least one subscription required
+  if (devices === 0 && containers === 0 && fortigate === 0 && lanedge === 0 && agents === 0 && stm === 0 && hw100f === 0) {
+    const allNone = getNum('f-nf15-fps') === 0
+                 && getNum('f-nf30-fps') === 0
+                 && getNum('f-nf90-fps') === 0
+                 && document.getElementById('f-bps').value === 'none'
+                 && !document.getElementById('cb-training').checked;
+    if (allNone) {
+      showStatus('Add at least one subscription or service to the BOM.', 'error');
+      return false;
+    }
+  }
+
+  const rows = [];
+
+  // ── Device / Server packs ──────────────────────────────────────────────────
+  if (devices > 0) {
+    rows.push({ section: 'Device / Server Subscriptions' });
+    const tiers = [
+      { qty: 10000, sku: 'FC5-10-MNCLD-436-01-DD', desc: 'FortiMonitor Pro — Device/Server 10,000-pack (incl. 24×7 FortiCare)' },
+      { qty:  2000, sku: 'FC4-10-MNCLD-436-01-DD', desc: 'FortiMonitor Pro — Device/Server 2,000-pack (incl. 24×7 FortiCare)' },
+      { qty:   500, sku: 'FC3-10-MNCLD-436-01-DD', desc: 'FortiMonitor Pro — Device/Server 500-pack (incl. 24×7 FortiCare)' },
+      { qty:    25, sku: 'FC2-10-MNCLD-436-01-DD', desc: 'FortiMonitor Pro — Device/Server 25-pack (incl. 24×7 FortiCare)' },
+    ];
+    packTier(devices, tiers).forEach(r => {
+      rows.push({ sku: r.sku, desc: r.desc, qty: r.qty, kind: 'req', note: `Covers ${r.qty * (tiers.find(t=>t.sku===r.sku)||{qty:25}).qty} devices · co-term -DD` });
+    });
+  }
+
+  // ── Container packs ────────────────────────────────────────────────────────
+  if (containers > 0) {
+    rows.push({ section: 'Container Subscriptions' });
+    const tiers = [
+      { qty: 10000, sku: 'FC5-10-MNCLD-439-01-DD', desc: 'FortiMonitor Pro — Container 10,000-pack (incl. 24×7 FortiCare)' },
+      { qty:  2000, sku: 'FC4-10-MNCLD-439-01-DD', desc: 'FortiMonitor Pro — Container 2,000-pack (incl. 24×7 FortiCare)' },
+      { qty:   500, sku: 'FC3-10-MNCLD-439-01-DD', desc: 'FortiMonitor Pro — Container 500-pack (incl. 24×7 FortiCare)' },
+      { qty:    25, sku: 'FC2-10-MNCLD-439-01-DD', desc: 'FortiMonitor Pro — Container 25-pack (incl. 24×7 FortiCare)' },
+    ];
+    packTier(containers, tiers).forEach(r => {
+      rows.push({ sku: r.sku, desc: r.desc, qty: r.qty, kind: 'req', note: 'Priced on live/active containers · co-term -DD' });
+    });
+  }
+
+  // ── FortiGate packs ────────────────────────────────────────────────────────
+  if (fortigate > 0) {
+    rows.push({ section: 'FortiGate Subscriptions' });
+    const tiers = [
+      { qty: 10000, sku: 'FC5-10-MNCLD-456-01-DD', desc: 'FortiMonitor Pro — FortiGate 10,000-pack (incl. 24×7 FortiCare, up to 9 Fabric devices/FGT)' },
+      { qty:  2000, sku: 'FC4-10-MNCLD-456-01-DD', desc: 'FortiMonitor Pro — FortiGate 2,000-pack (incl. 24×7 FortiCare, up to 9 Fabric devices/FGT)' },
+      { qty:   500, sku: 'FC3-10-MNCLD-456-01-DD', desc: 'FortiMonitor Pro — FortiGate 500-pack (incl. 24×7 FortiCare, up to 9 Fabric devices/FGT)' },
+      { qty:    25, sku: 'FC2-10-MNCLD-456-01-DD', desc: 'FortiMonitor Pro — FortiGate 25-pack (incl. 24×7 FortiCare, up to 9 Fabric devices/FGT)' },
+    ];
+    packTier(fortigate, tiers).forEach(r => {
+      rows.push({ sku: r.sku, desc: r.desc, qty: r.qty, kind: 'req', note: 'Includes Fabric fabric monitoring · co-term -DD' });
+    });
+  }
+
+  // ── LAN Edge packs ─────────────────────────────────────────────────────────
+  if (lanedge > 0) {
+    rows.push({ section: 'LAN Edge Device Subscriptions' });
+    const tiers = [
+      { qty: 10000, sku: 'FC5-10-MNCLD-459-01-DD', desc: 'FortiMonitor — LAN Edge 10,000-pack (incl. 24×7 FortiCare)' },
+      { qty:  2000, sku: 'FC4-10-MNCLD-459-01-DD', desc: 'FortiMonitor — LAN Edge 2,000-pack (incl. 24×7 FortiCare)' },
+      { qty:   500, sku: 'FC3-10-MNCLD-459-01-DD', desc: 'FortiMonitor — LAN Edge 500-pack (incl. 24×7 FortiCare)' },
+      { qty:    25, sku: 'FC2-10-MNCLD-459-01-DD', desc: 'FortiMonitor — LAN Edge 25-pack (incl. 24×7 FortiCare)' },
+    ];
+    packTier(lanedge, tiers).forEach(r => {
+      rows.push({ sku: r.sku, desc: r.desc, qty: r.qty, kind: 'req', note: 'Pack size specific quantities · co-term -DD' });
+    });
+  }
+
+  // ── End User Agents (fixed -12 SKUs per ordering guide) ───────────────────
+  if (agents > 0) {
+    rows.push({ section: 'End User Agent Subscriptions (Annual -12)' });
+    const tiers = [
+      { qty: 10000, sku: 'FC5-10-MNCLD-529-01-12', desc: 'FortiMonitor End User Agent 10,000-pack — DEM-capable (Win/Mac)' },
+      { qty:  2000, sku: 'FC4-10-MNCLD-529-01-12', desc: 'FortiMonitor End User Agent 2,000-pack — DEM-capable (Win/Mac)' },
+      { qty:   100, sku: 'FC3-10-MNCLD-529-01-12', desc: 'FortiMonitor End User Agent 100-pack — DEM-capable (Win/Mac)' },
+      { qty:    25, sku: 'FC2-10-MNCLD-529-01-12', desc: 'FortiMonitor End User Agent 25-pack — DEM-capable (Win/Mac)' },
+      { qty:    10, sku: 'FC1-10-MNCLD-529-01-12', desc: 'FortiMonitor End User Agent 10-pack — DEM-capable (Win/Mac)' },
+    ];
+    packTier(agents, tiers).forEach(r => {
+      rows.push({ sku: r.sku, desc: r.desc, qty: r.qty, kind: 'req', note: 'Annual (-12) fixed term · max 15 outbound checks/agent' });
+    });
+    rows.push({ sku: '⚠', desc: 'End User Agent SKUs use fixed annual (-12) term — not subject to Project BOM term substitution', qty: null, kind: 'note', note: '' });
+  }
+
+  // ── STM / DEM Instances (fixed -12 SKUs per ordering guide) ───────────────
+  if (stm > 0) {
+    rows.push({ section: 'STM / DEM Instances (Annual -12)' });
+    const tiers = [
+      { qty: 10000, sku: 'FC5-10-MNCLD-441-01-12', desc: 'FortiMonitor STM (Synthetic Transaction Monitoring) 10,000-pack' },
+      { qty:  2000, sku: 'FC4-10-MNCLD-441-01-12', desc: 'FortiMonitor STM 2,000-pack' },
+      { qty:   500, sku: 'FC3-10-MNCLD-441-01-12', desc: 'FortiMonitor STM 500-pack' },
+      { qty:    25, sku: 'FC2-10-MNCLD-441-01-12', desc: 'FortiMonitor STM 25-pack' },
+    ];
+    packTier(stm, tiers).forEach(r => {
+      rows.push({ sku: r.sku, desc: r.desc, qty: r.qty, kind: 'req', note: 'Annual (-12) · 1 check from 1 location = 1 license · OnSight or Public PoP' });
+    });
+    rows.push({ sku: '⚠', desc: 'STM SKUs use fixed annual (-12) term — not subject to Project BOM term substitution', qty: null, kind: 'note', note: '' });
+  }
+
+  // ── FortiMonitor 100F Hardware ─────────────────────────────────────────────
+  if (hw100f > 0) {
+    rows.push({ section: 'Hardware Platform' });
+    rows.push({ sku: 'FMN-100F', desc: 'FortiMonitor 100F Appliance — OnSight vCollector hardware form factor', qty: hw100f, kind: 'req', note: 'Requires active FortiMonitor subscription · no term suffix' });
+  }
+
+  // ── Netflow (stackable · each unit = 5,000 FPS · round up) ────────────────
+  const nfTiers = [
+    { id: 'f-nf15-fps', sku: 'FC1-10-MNCLD-760-01-DD', retention: '15-day' },
+    { id: 'f-nf30-fps', sku: 'FC1-10-MNCLD-761-01-DD', retention: '30-day' },
+    { id: 'f-nf90-fps', sku: 'FC1-10-MNCLD-762-01-DD', retention: '90-day' },
+  ];
+  const nfRows = [];
+  nfTiers.forEach(function(t) {
+    const fps = getNum(t.id);
+    if (fps > 0) {
+      const units = Math.ceil(fps / 5000);
+      nfRows.push({ sku: t.sku, desc: 'FortiMonitor Cloud Netflow — 5,000 FPS · ' + t.retention + ' Retention (' + units + ' unit' + (units > 1 ? 's' : '') + ' = ' + (units * 5000).toLocaleString() + ' FPS)', qty: units, kind: 'opt', note: units + ' \xd7 5,000 FPS · co-term -DD' });
+    }
+  });
+  if (nfRows.length > 0) {
+    rows.push({ section: 'Cloud Netflow Add-On' });
+    nfRows.forEach(function(r) { rows.push(r); });
+  }
+
+  // ── BPS Onboarding ─────────────────────────────────────────────────────────
+  const bpsVal = document.getElementById('f-bps').value;
+  const bpsMap = {
+    fc1: { sku: 'FC1-10-MNBPS-310-02-DD', desc: 'FortiCare Best Practices Onboarding — <250 Endpoints', note: 'Co-term -DD · 2hr planning + 4hr design/deploy + 2hr weekly review' },
+    fc2: { sku: 'FC2-10-MNBPS-310-02-DD', desc: 'FortiCare Best Practices Onboarding — 250–999 Endpoints', note: 'Co-term -DD · 4hr planning + 8hr design/deploy + 4hr weekly review' },
+    fc3: { sku: 'FC3-10-MNBPS-310-02-DD', desc: 'FortiCare Best Practices Onboarding — 1,000–4,999 Endpoints', note: 'Co-term -DD · 4hr planning + 8hr design/deploy + 4hr weekly review' },
+    fc5: { sku: 'FC5-10-MNBPS-310-02-DD', desc: 'FortiCare Best Practices Onboarding — ≥5,000 Endpoints', note: 'Co-term -DD · 12hr planning + 20hr design/deploy + 8hr weekly review' },
+  };
+  if (bpsVal !== 'none' && bpsMap[bpsVal]) {
+    rows.push({ section: 'BPS Onboarding Service' });
+    const b = bpsMap[bpsVal];
+    rows.push({ sku: b.sku, desc: b.desc, qty: 1, kind: 'opt', note: b.note });
+  }
+
+  // ── Training ───────────────────────────────────────────────────────────────
+  if (document.getElementById('cb-training').checked) {
+    rows.push({ section: 'Training' });
+    rows.push({ sku: 'FT-CTM-D01', desc: 'FortiMonitor Instructor-Led Training — 1 Day', qty: 1, kind: 'opt', note: 'Contact regional training rep for pricing · no cert exam' });
+  }
+
+  // ── Build label & meta ─────────────────────────────────────────────────────
+  const parts = [];
+  if (devices > 0)    parts.push(`${devices} Device/Server`);
+  if (containers > 0) parts.push(`${containers} Container`);
+  if (fortigate > 0)  parts.push(`${fortigate} FortiGate`);
+  if (lanedge > 0)    parts.push(`${lanedge} LAN Edge`);
+  if (agents > 0)     parts.push(`${agents} End User Agents`);
+  if (stm > 0)        parts.push(`${stm} STM`);
+  if (hw100f > 0)     parts.push(`${hw100f}× 100F`);
+  _lastLabel = 'FortiMonitor — ' + (parts.length > 0 ? parts.join(' · ') : 'Add-ons only');
+  _lastMeta  = {
+    Product: 'FortiMonitor',
+    'Device/Servers': devices,
+    Containers: containers,
+    FortiGate: fortigate,
+    'LAN Edge': lanedge,
+    'End User Agents': agents,
+    'STM Instances': stm,
+    'HW 100F': hw100f,
+  };
+  _lastRows = rows;
+
+  renderBOM(rows);
+  showStatus('BOM generated.', 'ok');
+  return true;
+}
+
+// ─── renderBOM ────────────────────────────────────────────────────────────────
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+
+  rows.forEach(function(r) {
+    const tr = document.createElement('tr');
+    if (r.section) {
+      tr.className = 'section-row';
+      tr.innerHTML = '<td colspan="5">' + escHtml(r.section) + '</td>';
+    } else {
+      const badgeMap = { req: 'badge-req', opt: 'badge-opt', mand: 'badge-mand', inc: 'badge-inc', note: '' };
+      const labelMap = { req: 'REQUIRED', opt: 'OPTIONAL', mand: 'MANDATORY', inc: 'INCLUDED', note: '' };
+      const badgeCls = badgeMap[r.kind] || '';
+      const badgeLbl = labelMap[r.kind] || '';
+      const badge    = badgeCls ? '<span class="badge ' + badgeCls + '">' + badgeLbl + '</span>' : '';
+      const qty      = r.qty !== null && r.qty !== undefined ? r.qty : '—';
+      tr.innerHTML =
+        '<td class="sku-cell">' + escHtml(r.sku) + '</td>' +
+        '<td class="nc">' + escHtml(r.desc) + '</td>' +
+        '<td style="text-align:center;">' + qty + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td class="nc">' + escHtml(r.note || '') + '</td>';
+    }
+    tbody.appendChild(tr);
+  });
+
+  const sec = document.getElementById('bom-section');
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─── addToProjectBOM ──────────────────────────────────────────────────────────
+function addToProjectBOM() {
+  const ok = generateBOM();
+  if (!ok) return;
+  window.parent.postMessage({
+    type:    'FORTIBOM_ADD',
+    product: 'FortiMonitor',
+    label:   _lastLabel,
+    rows:    _lastRows,
+    meta:    _lastMeta
+  }, '*');
+  showStatus('Added to Project BOM ✓', 'ok');
+}
+
+// ─── resetForm ────────────────────────────────────────────────────────────────
+function resetForm() {
+  document.getElementById('f-devices').value    = '0';
+  document.getElementById('f-containers').value = '0';
+  document.getElementById('f-fortigate').value  = '0';
+  document.getElementById('f-lanedge').value    = '0';
+  document.getElementById('f-agents').value     = '0';
+  document.getElementById('f-stm').value        = '0';
+  document.getElementById('f-hw100f').value     = '0';
+  document.getElementById('f-bps').value        = 'none';
+  ['15','30','90'].forEach(function(t) { document.getElementById('f-nf'+t+'-fps').value='0'; updateNetflowIndicator(t); });
+  document.getElementById('cb-training').checked = false;
+  document.getElementById('bom-section').style.display = 'none';
+  document.getElementById('bom-tbody').innerHTML = '';
+  _lastRows  = [];
+  _lastLabel = '';
+  _lastMeta  = {};
+  showStatus('Reset.', 'ok');
+}
+
+// ─── copyTSV ─────────────────────────────────────────────────────────────────
+function copyTSV() {
+  if (!_lastRows.length) return;
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  _lastRows.forEach(function(r) {
+    if (r.section) {
+      lines.push('### ' + r.section + '\t\t\t\t');
+    } else {
+      lines.push([r.sku, r.desc, r.qty !== null && r.qty !== undefined ? r.qty : '', r.kind || '', r.note || ''].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(function() {
+    showStatus('TSV copied to clipboard ✓', 'ok');
+  }).catch(function() {
+    showStatus('Clipboard access denied.', 'error');
+  });
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('smsg');
+  el.textContent = msg;
+  el.style.color = (type === 'error') ? 'var(--forti-red)' : '#2E7D32';
+  setTimeout(function() { el.textContent = ''; }, 4000);
+}
+
+function updateBandIndicators() { /* reserved for future band display */ }
+</script>
+</body>
+</html>

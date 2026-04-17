@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FortiWeb BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size:13px; color:var(--forti-text); background:var(--forti-bg); padding:20px; line-height:1.5; }
+
+/* Cards */
+.card { background:var(--forti-white); border:1px solid var(--forti-border); border-radius:4px; margin-bottom:14px; overflow:hidden; }
+.card-header { background:var(--forti-section-header); border-bottom:1px solid var(--forti-border); padding:9px 18px; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); display:flex; align-items:center; gap:8px; }
+.card-body { padding:16px 18px; }
+
+/* Page header */
+.page-header { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.product-icon { width:44px; height:44px; background:var(--forti-red); border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.product-icon svg { width:26px; height:26px; fill:white; }
+.page-header h1 { font-size:22px; font-weight:700; color:var(--forti-text); }
+.page-header p { font-size:11px; color:var(--forti-text-muted); margin-top:2px; }
+
+/* Tabs */
+.tabs { display:flex; gap:0; border-bottom:2px solid var(--forti-border); margin-bottom:16px; }
+.tab { padding:7px 16px; font-size:12px; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; color:var(--forti-text-secondary); transition:color .15s; }
+.tab.active { color:var(--forti-red); border-bottom-color:var(--forti-red); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* Model cards */
+.model-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px; }
+.model-card { border:1px solid var(--forti-border); border-radius:4px; padding:10px 12px; cursor:pointer; background:white; transition:border-color .15s, background .15s; }
+.model-card:hover { border-color:#aab; background:#fafbfc; }
+.model-card.selected { border:2px solid var(--forti-red); background:#FEF8F8; }
+.model-card .mc-name { font-weight:700; font-size:13px; }
+.model-card .mc-sub { font-size:11px; color:var(--forti-text-secondary); margin-top:2px; }
+.model-card .mc-perf { font-size:10px; color:var(--forti-text-muted); margin-top:4px; }
+
+/* Form rows */
+.form-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-bottom:14px; }
+.form-row:last-child { margin-bottom:0; }
+label { font-size:12px; font-weight:600; color:var(--forti-text-secondary); display:block; margin-bottom:4px; }
+label .req { color:var(--forti-red); }
+input[type=number], select {
+  background:white; border:1px solid var(--forti-input-border); border-radius:3px;
+  padding:6px 9px; font-size:13px; width:100%; font-family:inherit;
+}
+input[type=number]:focus, select:focus {
+  border-color:var(--forti-red); box-shadow:0 0 0 2px rgba(238,49,36,.1); outline:none;
+}
+input.invalid, select.invalid { border-color:var(--forti-red) !important; }
+.err { font-size:11px; color:var(--forti-red); margin-top:3px; display:none; }
+
+/* Bundle selector */
+.bundle-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.bundle-card { border:1px solid var(--forti-border); border-radius:4px; padding:10px 12px; cursor:pointer; background:white; transition:border-color .15s; }
+.bundle-card:hover { border-color:#aab; }
+.bundle-card.selected { border:2px solid var(--forti-red); background:#FEF8F8; }
+.bundle-card .bc-name { font-weight:700; font-size:12px; }
+.bundle-card .bc-code { font-size:10px; color:var(--forti-text-muted); font-family:'Courier New',monospace; margin-top:2px; }
+.bundle-card .bc-inc { font-size:10px; color:var(--forti-text-secondary); margin-top:5px; line-height:1.4; }
+
+/* Addons */
+.addon-list { display:flex; flex-direction:column; gap:8px; }
+.addon-item { display:flex; align-items:flex-start; gap:10px; padding:8px 10px; border:1px solid var(--forti-border); border-radius:3px; background:white; }
+.addon-item input[type=checkbox] { margin-top:2px; flex-shrink:0; accent-color:var(--forti-red); width:14px; height:14px; }
+.addon-item label { font-weight:600; font-size:12px; color:var(--forti-text); margin:0; }
+.addon-item .ai-desc { font-size:11px; color:var(--forti-text-muted); }
+.addon-item .ai-sku { font-size:10px; font-family:'Courier New',monospace; color:#1A4E82; }
+.addon-item.disabled { opacity:.4; pointer-events:none; }
+
+/* Callouts */
+.callout { border-radius:3px; padding:9px 12px; font-size:12px; line-height:1.6; display:flex; gap:8px; margin-bottom:12px; }
+.info { background:var(--forti-info-bg); border:1px solid var(--forti-info-border); color:var(--forti-info-text); }
+.warn { background:var(--forti-warn-bg); border:1px solid var(--forti-warn-border); color:var(--forti-warn-text); }
+
+/* Action buttons */
+.actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+.btn { padding:8px 18px; border:none; border-radius:3px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:opacity .15s; }
+.btn:hover { opacity:.87; }
+.btn-primary { background:var(--forti-red); color:white; }
+.btn-success { background:#2E7D32; color:white; }
+.btn-secondary { background:#EEF1F6; color:var(--forti-text); border:1px solid var(--forti-border); }
+.btn-sm { padding:5px 12px; font-size:11px; }
+#smsg { font-size:12px; color:#2E7D32; font-weight:600; }
+#smsg.err-msg { color:var(--forti-red); }
+
+/* BOM table */
+#bom-section { display:none; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th { background:var(--forti-table-head); border:1px solid var(--forti-border); padding:7px 11px; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); text-align:left; }
+tbody td { border:1px solid var(--forti-border); padding:7px 11px; vertical-align:top; }
+tbody tr:nth-child(even) td { background:var(--forti-table-stripe); }
+.section-row td { background:#EAECF3!important; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--forti-text-secondary); padding:5px 11px; border-top:2px solid #C5CAD9; }
+.badge { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-radius:2px; padding:1px 4px; display:inline-block; }
+.badge-req  { background:#FEF0EE; color:#C0392B; border:1px solid #F5C6C2; }
+.badge-opt  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.badge-mand { background:#FFF8EE; color:#8A5800; border:1px solid #F5D9A0; }
+.badge-inc  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.sku-cell { font-family:'Courier New',monospace; font-size:11px; color:#1A4E82; white-space:nowrap; }
+.nc { color:var(--forti-text-muted); }
+
+/* Comparison table */
+.cmp-table { width:100%; border-collapse:collapse; font-size:11px; }
+.cmp-table th { background:var(--forti-table-head); border:1px solid var(--forti-border); padding:6px 8px; text-align:center; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--forti-text-secondary); }
+.cmp-table th:first-child { text-align:left; }
+.cmp-table td { border:1px solid var(--forti-border); padding:5px 8px; }
+.cmp-table tr:nth-child(even) td { background:var(--forti-table-stripe); }
+.cmp-table td:not(:first-child) { text-align:center; }
+.cmp-table .cmp-section { background:#EAECF3!important; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--forti-text-secondary); }
+.check { color:#2E7D32; font-size:13px; }
+.dash { color:var(--forti-text-muted); }
+.adv-label { font-size:9px; background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; border-radius:2px; padding:1px 3px; }
+.ent-label { font-size:9px; background:#FFF8EE; color:#8A5800; border:1px solid #F5D9A0; border-radius:2px; padding:1px 3px; }
+</style>
+</head>
+<body>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="product-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15H9V8h2v9zm4 0h-2V8h2v9zm-7-11V4h8v2H8z"/></svg>
+  </div>
+  <div>
+    <h1>FortiWeb</h1>
+    <p>Web Application Firewall — BOM Generator &nbsp;·&nbsp; FWEB-OG-R25-20260318</p>
+  </div>
+</div>
+
+<!-- Deployment Type Tabs -->
+<div class="card">
+  <div class="card-header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+    Deployment Type
+  </div>
+  <div class="card-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('hw')">Hardware Appliance (CAPEX)</div>
+      <div class="tab" onclick="switchTab('vm')">VM Subscription (OPEX)</div>
+      <div class="tab" onclick="switchTab('saas')">FortiAppSec Cloud WAF (OPEX)</div>
+    </div>
+
+    <!-- ===== HW TAB ===== -->
+    <div id="tab-hw" class="tab-panel active">
+      <div class="callout info" style="margin-bottom:14px;">
+        <span>ℹ</span>
+        <div>FortiWeb hardware bundles include the appliance + 1-year FortiGuard subscription. Choose Standard (BDL934), Advanced (BDL580), or Enterprise (BDL1266). 24×7 FortiCare support is included in all bundles.</div>
+      </div>
+
+      <label style="margin-bottom:8px;">Select Model <span class="req">*</span></label>
+      <div class="model-grid" id="hw-model-grid">
+        <!-- populated by JS -->
+      </div>
+      <div class="err" id="err-hw-model">Please select a hardware model.</div>
+
+      <div class="form-row" style="margin-top:14px;">
+        <div>
+          <label>Quantity <span class="req">*</span></label>
+          <input type="number" id="hw-qty" value="1" min="1" max="99" oninput="onHwChange()">
+          <div class="err" id="err-hw-qty">Quantity must be ≥ 1.</div>
+        </div>
+        <div>
+          <label>Bundle Tier <span class="req">*</span></label>
+          <select id="hw-bundle" onchange="onHwChange()">
+            <option value="std">Standard (BDL934)</option>
+            <option value="adv">Advanced (BDL580)</option>
+            <option value="ent">Enterprise (BDL1266)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="hw-bundle-info" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- ===== VM TAB ===== -->
+    <div id="tab-vm" class="tab-panel">
+      <div class="callout info" style="margin-bottom:14px;">
+        <span>ℹ</span>
+        <div>FortiWeb-VM S-series is a yearly subscription. Choose between Standard (916), Advanced (582), or Enterprise (1267) bundles. 24×7 FortiCare support is included.</div>
+      </div>
+
+      <label style="margin-bottom:8px;">Select VM Tier <span class="req">*</span></label>
+      <div class="model-grid" id="vm-model-grid">
+        <!-- populated by JS -->
+      </div>
+      <div class="err" id="err-vm-model">Please select a VM tier.</div>
+
+      <div class="form-row" style="margin-top:14px;">
+        <div>
+          <label>Quantity <span class="req">*</span></label>
+          <input type="number" id="vm-qty" value="1" min="1" max="99">
+          <div class="err" id="err-vm-qty">Quantity must be ≥ 1.</div>
+        </div>
+        <div>
+          <label>Subscription Bundle <span class="req">*</span></label>
+          <select id="vm-bundle">
+            <option value="std">Standard (FC?-10-WBVMS-916-02-DD)</option>
+            <option value="adv">Advanced (FC?-10-WBVMS-582-02-DD)</option>
+            <option value="ent">Enterprise (FC?-10-WBVMS-1267-02-DD)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SAAS TAB ===== -->
+    <div id="tab-saas" class="tab-panel">
+      <div class="callout info" style="margin-bottom:14px;">
+        <span>ℹ</span>
+        <div>FortiAppSec Cloud WAF requires a <strong>Bandwidth SKU</strong> + <strong>Applications SKU</strong> (both must be on the same plan tier). Bandwidth is seat-based at 25 Mbps/seat.</div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label>Plan <span class="req">*</span></label>
+          <select id="saas-plan" onchange="onSaasChange()">
+            <option value="std">Standard</option>
+            <option value="adv">Advanced</option>
+            <option value="ent">Enterprise</option>
+          </select>
+        </div>
+        <div>
+          <label>Total Bandwidth Needed (Mbps) <span class="req">*</span></label>
+          <input type="number" id="saas-bw" value="25" min="1" oninput="onSaasChange()">
+          <div class="err" id="err-saas-bw">Enter bandwidth ≥ 1 Mbps.</div>
+        </div>
+        <div>
+          <label>Number of Applications <span class="req">*</span></label>
+          <input type="number" id="saas-apps" value="1" min="1" oninput="onSaasChange()">
+          <div class="err" id="err-saas-apps">Enter ≥ 1 application.</div>
+        </div>
+      </div>
+      <div id="saas-bw-indicator" style="display:none;" class="callout info" style="margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add-ons -->
+<div class="card">
+  <div class="card-header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Add-on Services
+  </div>
+  <div class="card-body">
+    <div id="addon-list" class="addon-list">
+      <!-- populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="actions">
+  <button class="btn btn-primary" onclick="generateBOM()">Preview BOM</button>
+  <button class="btn btn-success" onclick="addToProjectBOM()">Add to Project BOM</button>
+  <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+  <span id="smsg"></span>
+</div>
+
+<!-- BOM Preview -->
+<div id="bom-section" class="card">
+  <div class="card-header" style="justify-content:space-between;">
+    <span>BOM Preview</span>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-secondary btn-sm" onclick="copyTSV()">Copy TSV</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0; overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:200px;">Part Number</th>
+          <th>Description</th>
+          <th style="width:50px;">Qty</th>
+          <th style="width:90px;">Type</th>
+          <th style="width:180px;">Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Comparison Table -->
+<div class="card">
+  <div class="card-header">Bundle Feature Comparison</div>
+  <div class="card-body" style="padding:0; overflow-x:auto;">
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th style="width:200px;">Feature</th>
+          <th>Standard</th>
+          <th>Advanced</th>
+          <th>Enterprise</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="cmp-section" colspan="4">Security Services</td></tr>
+        <tr><td>Web Security</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+        <tr><td>IP Reputation</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+        <tr><td>Antimalware</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+        <tr><td>FortiWeb Cloud Sandbox</td><td><span class="dash">—</span></td><td><span class="adv-label">Advanced</span></td><td><span class="adv-label">Advanced</span></td></tr>
+        <tr><td>Credential Stuffing Defense</td><td><span class="dash">—</span></td><td><span class="adv-label">Advanced</span></td><td><span class="adv-label">Advanced</span></td></tr>
+        <tr><td>Threat Analytics</td><td><span class="dash">—</span></td><td><span class="adv-label">Advanced</span></td><td><span class="adv-label">Advanced</span></td></tr>
+        <tr><td>Advanced Bot Protection</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="ent-label">Enterprise</span></td></tr>
+        <tr><td>Client-Side Security</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="ent-label">Enterprise</span></td></tr>
+        <tr><td>DLP</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="ent-label">Enterprise</span></td></tr>
+        <tr><td class="cmp-section" colspan="4">Additional Services</td></tr>
+        <tr><td>24×7 FortiCare Support</td><td><span class="check">✓</span> Included</td><td><span class="check">✓</span> Included</td><td><span class="check">✓</span> Included</td></tr>
+        <tr><td>FortiAI Subscription</td><td>Add-on</td><td>Add-on</td><td>Add-on</td></tr>
+        <tr><td>SOCaaS</td><td>Add-on</td><td>Add-on</td><td>Add-on</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ─── Data Model ──────────────────────────────────────────────────────────────
+
+const HW_MODELS = [
+  { id:'100F',  label:'FWB-100F',  http:'100 Mbps',  form:'Desktop', ml:6,   bundleCodes:{ std:'934', adv:'580', ent:'1266' }, renewCodes:{ std:'W01HF', adv:'W01HF', ent:'W01HF' } },
+  { id:'400F',  label:'FWB-400F',  http:'500 Mbps',  form:'1RU',     ml:6,   bundleCodes:{ std:'934', adv:'580', ent:'1266' }, renewCodes:{ std:'FV40F', adv:'FV40F', ent:'FV40F' } },
+  { id:'600F',  label:'FWB-600F',  http:'1 Gbps',    form:'1RU',     ml:16,  bundleCodes:{ std:'934', adv:'580', ent:'1266' }, renewCodes:{ std:'W06HF', adv:'W06HF', ent:'W06HF' } },
+  { id:'1000F', label:'FWB-1000F', http:'2.5 Gbps',  form:'2RU',     ml:32,  bundleCodes:{ std:'934', adv:'580', ent:'1266' }, renewCodes:{ std:'FW1KF', adv:'FW1KF', ent:'W01KF' } },
+  { id:'2000F', label:'FWB-2000F', http:'5 Gbps',    form:'2RU',     ml:96,  bundleCodes:{ std:'934', adv:'580', ent:'1266' }, renewCodes:{ std:'FW2KF', adv:'FW2KF', ent:'W02KF' } },
+  { id:'3000F', label:'FWB-3000F', http:'10 Gbps',   form:'2RU',     ml:96,  bundleCodes:{ std:'934', adv:'580', ent:'1266' }, renewCodes:{ std:'FW3KF', adv:'FW3KF', ent:'W03KF' } },
+  { id:'4000F', label:'FWB-4000F', http:'70 Gbps',   form:'2RU',     ml:192, bundleCodes:{ std:'934', adv:'580', ent:'1266' }, renewCodes:{ std:'FW4KF', adv:'FW4KF', ent:'W04KF' } },
+];
+
+// VM band code: FC1=VM01, FC2=VM02, FC3=VM04, FC4=VM08, FC5=VM16
+const VM_MODELS = [
+  { id:'VM01', label:'FWB-VM01', http:'25 Mbps',  https:'10 Mbps',  ml:4,  band:'FC1', botReqs:'200K' },
+  { id:'VM02', label:'FWB-VM02', http:'100 Mbps', https:'50 Mbps',  ml:8,  band:'FC2', botReqs:'400K' },
+  { id:'VM04', label:'FWB-VM04', http:'500 Mbps', https:'250 Mbps', ml:16, band:'FC3', botReqs:'900K' },
+  { id:'VM08', label:'FWB-VM08', http:'3 Gbps',   https:'1 Gbps',   ml:32, band:'FC4', botReqs:'1.7M' },
+  { id:'VM16', label:'FWB-VM16', http:'6 Gbps',   https:'3 Gbps',   ml:32, band:'FC5', botReqs:'2.8M' },
+];
+// VM bundle service codes
+const VM_BUNDLE_CODES = { std:'916', adv:'582', ent:'1267' };
+
+// SaaS bandwidth SKU codes per plan (FC1=25Mbps, FC2=50-99, FC3=100+)
+const SAAS_BW_CODES = {
+  std: { FC1:'1114', FC2:'1114', FC3:'1114' },
+  adv: { FC1:'1115', FC2:'1115', FC3:'1115' },
+  ent: { FC1:'1254', FC2:'1254', FC3:'1254' },
+};
+// SaaS app SKU codes per plan (FC1=1-4, FC2=5-24, FC3=25-74[std]/25+[adv/ent], FC4=74+[std only])
+const SAAS_APP_CODES = {
+  std: { FC1:'1116', FC2:'1116', FC3:'1116', FC4:'1116' },
+  adv: { FC1:'1257', FC2:'1257', FC3:'1257' },
+  ent: { FC1:'1256', FC2:'1256', FC3:'1256' },
+};
+
+// SOCaaS for SaaS (per app/seat)
+const SAAS_SOCAAS_CODES = { FC1:'464', FC2:'464' };
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let _activeTab = 'hw';
+let _selectedHwModel = null;
+let _selectedVmModel = null;
+let _lastRows = [];
+let _lastLabel = '';
+let _lastMeta = {};
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+(function init() {
+  // Build HW model cards
+  const hwGrid = document.getElementById('hw-model-grid');
+  HW_MODELS.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'model-card';
+    d.id = 'hwmc-' + m.id;
+    d.innerHTML = `<div class="mc-name">${m.label}</div><div class="mc-sub">${m.http} HTTP/HTTPS</div><div class="mc-perf">${m.form} · ${m.ml} ML Domains</div>`;
+    d.onclick = () => selectHwModel(m.id);
+    hwGrid.appendChild(d);
+  });
+
+  // Build VM model cards
+  const vmGrid = document.getElementById('vm-model-grid');
+  VM_MODELS.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'model-card';
+    d.id = 'vmmc-' + m.id;
+    d.innerHTML = `<div class="mc-name">${m.label}</div><div class="mc-sub">${m.http} HTTP / ${m.https} HTTPS</div><div class="mc-perf">${m.band} · ${m.ml} ML Domains · ${m.botReqs} Bot Req/mo</div>`;
+    d.onclick = () => selectVmModel(m.id);
+    vmGrid.appendChild(d);
+  });
+
+  buildAddonList();
+  onSaasChange();
+})();
+
+function selectHwModel(id) {
+  _selectedHwModel = id;
+  HW_MODELS.forEach(m => {
+    document.getElementById('hwmc-' + m.id).classList.toggle('selected', m.id === id);
+  });
+  document.getElementById('err-hw-model').style.display = 'none';
+  onHwChange();
+}
+
+function selectVmModel(id) {
+  _selectedVmModel = id;
+  VM_MODELS.forEach(m => {
+    document.getElementById('vmmc-' + m.id).classList.toggle('selected', m.id === id);
+  });
+  document.getElementById('err-vm-model').style.display = 'none';
+}
+
+function onHwChange() {
+  const bundle = document.getElementById('hw-bundle').value;
+  const bundleNames = { std:'Standard (BDL934) — Web Security + IP Rep + Antimalware', adv:'Advanced (BDL580) — Standard + Sandbox + Credential Stuffing + Threat Analytics', ent:'Enterprise (BDL1266) — Advanced + Bot Protection + Client-Side Security + DLP' };
+  const info = document.getElementById('hw-bundle-info');
+  info.innerHTML = `<div class="callout info"><span>ℹ</span><div>${bundleNames[bundle]}</div></div>`;
+}
+
+function onSaasChange() {
+  const bw = parseInt(document.getElementById('saas-bw').value) || 0;
+  const apps = parseInt(document.getElementById('saas-apps').value) || 0;
+  const plan = document.getElementById('saas-plan').value;
+  const ind = document.getElementById('saas-bw-indicator');
+  if (bw > 0) {
+    let bwBand, bwDesc;
+    if (bw <= 25) { bwBand = 'FC1'; bwDesc = '25 Mbps (seat 1)'; }
+    else if (bw < 100) { bwBand = 'FC2'; bwDesc = '50–99 Mbps (25 Mbps/seat)'; }
+    else { bwBand = 'FC3'; bwDesc = '100+ Mbps (25 Mbps/seat)'; }
+    const seats = Math.ceil(bw / 25);
+    ind.style.display = 'flex';
+    ind.innerHTML = `<span>ℹ</span><div>Bandwidth Band: <code>${bwBand}</code> · ${bwDesc} · <strong>${seats} seat(s)</strong> needed</div>`;
+  } else {
+    ind.style.display = 'none';
+  }
+  // Enable/disable SOCaaS addon based on plan
+  updateAddonAvailability();
+}
+
+// ─── Addons ───────────────────────────────────────────────────────────────────
+const ADDONS = [
+  {
+    id: 'fortiai',
+    label: 'FortiAI Subscription',
+    desc: 'AI-powered assistant for operational efficiency (Beta). Available as add-on for all appliance/VM tiers.',
+    sku: 'N/A — contact Fortinet for FortiAI SKU',
+    tabs: ['hw','vm','saas'],
+    alwaysOn: true,
+  },
+  {
+    id: 'socaas-hw',
+    label: 'SOCaaS — 24×7 Managed Log Monitoring & Triage',
+    desc: 'SOC as a Service for FortiWeb HW/VM deployments.',
+    sku: 'Contact Fortinet for HW/VM SOCaaS SKU',
+    tabs: ['hw','vm'],
+    alwaysOn: true,
+  },
+  {
+    id: 'socaas-saas-sm',
+    label: 'SOCaaS — 1–4 Applications',
+    desc: '24×7 cloud-based managed log monitoring for Cloud WAF. Price per application. Must purchase for ALL applications.',
+    sku: 'FC1-10-UCAPF-464-02-DD',
+    tabs: ['saas'],
+    alwaysOn: true,
+  },
+  {
+    id: 'socaas-saas-lg',
+    label: 'SOCaaS — 5+ Applications',
+    desc: '24×7 cloud-based managed log monitoring for Cloud WAF. Price per application. Must purchase for ALL applications.',
+    sku: 'FC2-10-UCAPF-464-02-DD',
+    tabs: ['saas'],
+    alwaysOn: true,
+  },
+  {
+    id: 'gslb-qps',
+    label: 'GSLB — Global Server Load Balancing, 100 QPS',
+    desc: 'FortiAppSec Cloud standalone GSLB service (100 queries/sec).',
+    sku: 'FC1-10-UCAPF-330-02-DD',
+    tabs: ['saas'],
+    alwaysOn: true,
+  },
+  {
+    id: 'gslb-hc',
+    label: 'GSLB — Health Checks (10)',
+    desc: 'FortiAppSec Cloud standalone GSLB health checks.',
+    sku: 'FC1-10-UCAPF-332-02-DD',
+    tabs: ['saas'],
+    alwaysOn: true,
+  },
+];
+
+function buildAddonList() {
+  const list = document.getElementById('addon-list');
+  list.innerHTML = '';
+  ADDONS.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'addon-item';
+    div.id = 'addon-' + a.id;
+    div.innerHTML = `
+      <input type="checkbox" id="chk-${a.id}">
+      <div>
+        <label for="chk-${a.id}">${a.label}</label>
+        <div class="ai-desc">${a.desc}</div>
+        <div class="ai-sku">${a.sku}</div>
+      </div>`;
+    list.appendChild(div);
+  });
+  updateAddonAvailability();
+}
+
+function updateAddonAvailability() {
+  ADDONS.forEach(a => {
+    const el = document.getElementById('addon-' + a.id);
+    if (el) {
+      const show = a.tabs.includes(_activeTab);
+      el.style.display = show ? 'flex' : 'none';
+    }
+  });
+}
+
+// ─── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  _activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['hw','vm','saas'][i] === tab);
+  });
+  ['hw','vm','saas'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  updateAddonAvailability();
+  hideBOM();
+}
+
+// ─── BOM Generation ───────────────────────────────────────────────────────────
+function generateBOM() {
+  clearErrors();
+  hideBOM();
+  let rows = [];
+  let label = '';
+  let meta = {};
+  let ok = true;
+
+  if (_activeTab === 'hw') {
+    ok = buildHwBOM(rows);
+    if (!ok) return false;
+    const m = HW_MODELS.find(x => x.id === _selectedHwModel);
+    const bundle = document.getElementById('hw-bundle').value;
+    const qty = parseInt(document.getElementById('hw-qty').value);
+    const bundleLabel = { std:'Standard', adv:'Advanced', ent:'Enterprise' }[bundle];
+    label = `${m.label} ×${qty} · ${bundleLabel} Bundle`;
+    meta = { model: m.label, qty, bundle: bundleLabel, http: m.http, formFactor: m.form };
+  } else if (_activeTab === 'vm') {
+    ok = buildVmBOM(rows);
+    if (!ok) return false;
+    const m = VM_MODELS.find(x => x.id === _selectedVmModel);
+    const bundle = document.getElementById('vm-bundle').value;
+    const qty = parseInt(document.getElementById('vm-qty').value);
+    const bundleLabel = { std:'Standard', adv:'Advanced', ent:'Enterprise' }[bundle];
+    label = `${m.label} ×${qty} · ${bundleLabel} Subscription`;
+    meta = { model: m.label, qty, bundle: bundleLabel, http: m.http, https: m.https };
+  } else {
+    ok = buildSaasBOM(rows);
+    if (!ok) return false;
+    const plan = document.getElementById('saas-plan').value;
+    const bw = parseInt(document.getElementById('saas-bw').value);
+    const apps = parseInt(document.getElementById('saas-apps').value);
+    const planLabel = { std:'Standard', adv:'Advanced', ent:'Enterprise' }[plan];
+    label = `FortiAppSec Cloud WAF · ${planLabel} · ${bw} Mbps · ${apps} Apps`;
+    meta = { plan: planLabel, bandwidth: bw + ' Mbps', applications: apps };
+  }
+
+  // Append selected add-ons
+  const addonRows = buildAddonRows();
+  if (addonRows.length) {
+    rows.push({ section:'Add-on Services' });
+    addonRows.forEach(r => rows.push(r));
+  }
+
+  _lastRows = rows;
+  _lastLabel = label;
+  _lastMeta = meta;
+  renderBOM(rows);
+  document.getElementById('smsg').textContent = '';
+  return true;
+}
+
+function buildHwBOM(rows) {
+  if (!_selectedHwModel) {
+    document.getElementById('err-hw-model').style.display = 'block';
+    return false;
+  }
+  const qty = parseInt(document.getElementById('hw-qty').value);
+  if (!qty || qty < 1) {
+    markInvalid('hw-qty','err-hw-qty'); return false;
+  }
+  const bundle = document.getElementById('hw-bundle').value;
+  const m = HW_MODELS.find(x => x.id === _selectedHwModel);
+  const bc = m.bundleCodes[bundle];
+  const rc = m.renewCodes[bundle];
+  const bundleLabel = { std:'Standard', adv:'Advanced', ent:'Enterprise' }[bundle];
+
+  rows.push({ section: 'Hardware Bundle' });
+  rows.push({
+    sku: `FWB-${m.id}-BDL${bc}-DD`,
+    desc: `FortiWeb ${m.label} ${bundleLabel} Bundle — Appliance + 1-yr FortiGuard (${bundleLabel}) + 24×7 FortiCare`,
+    qty,
+    kind: 'req',
+    note: `${m.http} HTTP/HTTPS · ${m.form} · ${m.ml} ML Domains`,
+  });
+
+  rows.push({ section: 'Renewal SKU (Year 2+)' });
+  rows.push({
+    sku: `FC-10-${rc}-${bc}-02-DD`,
+    desc: `FortiWeb ${m.label} — ${bundleLabel} Bundle Renewal`,
+    qty,
+    kind: 'opt',
+    note: 'Annual renewal — same bundle tier',
+  });
+
+  // Replacement disk (3000F and 4000F)
+  if (m.id === '3000F' || m.id === '4000F') {
+    rows.push({ section: 'Optional Accessories' });
+    rows.push({
+      sku: 'SP-DFWB2T',
+      desc: 'FortiWeb Replacement Disk (2TB)',
+      qty: null,
+      kind: 'opt',
+      note: 'Replacement disk for 3000F/4000F',
+    });
+  }
+  return true;
+}
+
+function buildVmBOM(rows) {
+  if (!_selectedVmModel) {
+    document.getElementById('err-vm-model').style.display = 'block';
+    return false;
+  }
+  const qty = parseInt(document.getElementById('vm-qty').value);
+  if (!qty || qty < 1) {
+    markInvalid('vm-qty','err-vm-qty'); return false;
+  }
+  const bundle = document.getElementById('vm-bundle').value;
+  const m = VM_MODELS.find(x => x.id === _selectedVmModel);
+  const sc = VM_BUNDLE_CODES[bundle];
+  const bundleLabel = { std:'Standard', adv:'Advanced', ent:'Enterprise' }[bundle];
+
+  rows.push({ section: 'VM Yearly Subscription' });
+  rows.push({
+    sku: `${m.band}-10-WBVMS-${sc}-02-DD`,
+    desc: `FortiWeb-VM ${m.id} ${bundleLabel} Subscription — ${m.http} HTTP / ${m.https} HTTPS (yearly)`,
+    qty,
+    kind: 'req',
+    note: `${m.band} · ${m.ml} ML Domains · ${m.botReqs} Bot Req/mo`,
+  });
+  return true;
+}
+
+function buildSaasBOM(rows) {
+  const bw = parseInt(document.getElementById('saas-bw').value);
+  const apps = parseInt(document.getElementById('saas-apps').value);
+  const plan = document.getElementById('saas-plan').value;
+  let ok = true;
+  if (!bw || bw < 1) { markInvalid('saas-bw','err-saas-bw'); ok = false; }
+  if (!apps || apps < 1) { markInvalid('saas-apps','err-saas-apps'); ok = false; }
+  if (!ok) return false;
+
+  const planLabel = { std:'Standard', adv:'Advanced', ent:'Enterprise' }[plan];
+
+  // Bandwidth band
+  let bwBand, bwDesc;
+  if (bw <= 25) { bwBand = 'FC1'; bwDesc = '25 Mbps (seat 1)'; }
+  else if (bw < 100) { bwBand = 'FC2'; bwDesc = '50–99 Mbps'; }
+  else { bwBand = 'FC3'; bwDesc = '100+ Mbps'; }
+  const bwSeats = Math.ceil(bw / 25);
+  const bwCode = SAAS_BW_CODES[plan][bwBand];
+
+  rows.push({ section: 'FortiAppSec Cloud WAF — Bandwidth' });
+  rows.push({
+    sku: `${bwBand}-10-UCAPF-${bwCode}-02-DD`,
+    desc: `FortiAppSec Cloud WAF — Bandwidth, ${bwDesc} ${planLabel} Plan. Includes FortiCare Premium.`,
+    qty: bwSeats,
+    kind: 'req',
+    note: `${bwSeats} seat(s) @ 25 Mbps/seat = ${bwSeats*25} Mbps`,
+  });
+
+  // Applications band
+  let appBand, appDesc;
+  if (apps <= 4) { appBand = 'FC1'; appDesc = '1–4 Applications'; }
+  else if (apps <= 24) { appBand = 'FC2'; appDesc = '5–24 Applications'; }
+  else if (apps <= 74 && plan === 'std') { appBand = 'FC3'; appDesc = '25–74 Applications'; }
+  else if (apps >= 74 && plan === 'std') { appBand = 'FC4'; appDesc = '74+ Applications'; }
+  else { appBand = 'FC3'; appDesc = '25+ Applications'; }
+
+  const appCode = SAAS_APP_CODES[plan][appBand];
+  rows.push({ section: 'FortiAppSec Cloud WAF — Applications' });
+  rows.push({
+    sku: `${appBand}-10-UCAPF-${appCode}-02-DD`,
+    desc: `FortiAppSec Cloud WAF — ${appDesc}, ${planLabel} Plan. Must be combined with ${planLabel} Bandwidth plan. Includes FortiCare Premium.`,
+    qty: 1,
+    kind: 'req',
+    note: `${apps} app(s) · must match Bandwidth plan tier`,
+  });
+
+  return true;
+}
+
+function buildAddonRows() {
+  const out = [];
+
+  // FortiAI
+  if (document.getElementById('chk-fortiai') && document.getElementById('chk-fortiai').checked
+      && document.getElementById('addon-fortiai').style.display !== 'none') {
+    out.push({
+      sku: '⚠',
+      desc: 'FortiAI Subscription — contact Fortinet for SKU. Available as add-on for all deployment types.',
+      qty: null,
+      kind: 'note',
+      note: 'Pricing varies by model/VM tier',
+    });
+  }
+
+  // SOCaaS HW/VM
+  if (_activeTab !== 'saas') {
+    if (document.getElementById('chk-socaas-hw') && document.getElementById('chk-socaas-hw').checked) {
+      out.push({
+        sku: '⚠',
+        desc: 'SOCaaS — 24×7 Managed Log Monitoring for HW/VM. Contact Fortinet for SKU.',
+        qty: null,
+        kind: 'note',
+        note: 'HW/VM SOCaaS — custom pricing',
+      });
+    }
+  }
+
+  // SOCaaS SaaS small (1-4 apps)
+  if (_activeTab === 'saas') {
+    const apps = parseInt(document.getElementById('saas-apps').value) || 0;
+    if (document.getElementById('chk-socaas-saas-sm') && document.getElementById('chk-socaas-saas-sm').checked) {
+      out.push({
+        sku: 'FC1-10-UCAPF-464-02-DD',
+        desc: 'SOCaaS — 24×7 Cloud Managed Log Monitoring & Triage for Cloud WAF. 1–4 Applications (per application).',
+        qty: Math.min(apps, 4) || 1,
+        kind: 'opt',
+        note: 'Must purchase for ALL applications in account',
+      });
+    }
+    if (document.getElementById('chk-socaas-saas-lg') && document.getElementById('chk-socaas-saas-lg').checked) {
+      out.push({
+        sku: 'FC2-10-UCAPF-464-02-DD',
+        desc: 'SOCaaS — 24×7 Cloud Managed Log Monitoring & Triage for Cloud WAF. 5+ Applications (per application).',
+        qty: apps > 4 ? apps : 1,
+        kind: 'opt',
+        note: 'Must purchase for ALL applications in account',
+      });
+    }
+    // GSLB
+    if (document.getElementById('chk-gslb-qps') && document.getElementById('chk-gslb-qps').checked) {
+      out.push({
+        sku: 'FC1-10-UCAPF-330-02-DD',
+        desc: 'FortiAppSec Cloud — Global Server Load Balancing, 100 QPS. Includes FortiCare Premium.',
+        qty: 1,
+        kind: 'opt',
+        note: 'Standalone GSLB service',
+      });
+    }
+    if (document.getElementById('chk-gslb-hc') && document.getElementById('chk-gslb-hc').checked) {
+      out.push({
+        sku: 'FC1-10-UCAPF-332-02-DD',
+        desc: 'FortiAppSec Cloud — Global Server Load Balancing, 10 Health Checks. Includes FortiCare Premium.',
+        qty: 1,
+        kind: 'opt',
+        note: 'Standalone GSLB health checks',
+      });
+    }
+  }
+
+  return out;
+}
+
+// ─── Render BOM ───────────────────────────────────────────────────────────────
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-body');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    if (r.section) {
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${r.section}</td>`;
+    } else {
+      const badge = r.kind ? `<span class="badge badge-${r.kind}">${r.kind === 'req' ? 'Required' : r.kind === 'opt' ? 'Optional' : r.kind === 'mand' ? 'Mandatory' : r.kind === 'inc' ? 'Included' : ''}</span>` : '';
+      tr.innerHTML = `
+        <td class="sku-cell">${escHtml(r.sku)}</td>
+        <td class="nc">${escHtml(r.desc)}</td>
+        <td style="text-align:center;">${r.qty != null ? r.qty : ''}</td>
+        <td>${badge}</td>
+        <td class="nc" style="font-size:11px;">${r.note ? escHtml(r.note) : ''}</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  document.getElementById('bom-section').style.display = 'block';
+  document.getElementById('bom-section').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  window.parent.postMessage({
+    type: 'FORTIBOM_ADD',
+    product: 'FortiWeb',
+    label: _lastLabel,
+    rows: _lastRows,
+    meta: _lastMeta,
+  }, '*');
+  const msg = document.getElementById('smsg');
+  msg.className = '';
+  msg.textContent = '✓ Added to Project BOM';
+  setTimeout(() => { msg.textContent = ''; }, 3000);
+}
+
+function resetForm() {
+  _selectedHwModel = null;
+  _selectedVmModel = null;
+  document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('hw-qty').value = 1;
+  document.getElementById('hw-bundle').value = 'std';
+  document.getElementById('vm-qty').value = 1;
+  document.getElementById('vm-bundle').value = 'std';
+  document.getElementById('saas-plan').value = 'std';
+  document.getElementById('saas-bw').value = 25;
+  document.getElementById('saas-apps').value = 1;
+  document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+  clearErrors();
+  hideBOM();
+  document.getElementById('smsg').textContent = '';
+  onHwChange();
+  onSaasChange();
+}
+
+function hideBOM() {
+  document.getElementById('bom-section').style.display = 'none';
+}
+
+function clearErrors() {
+  document.querySelectorAll('.err').forEach(e => e.style.display = 'none');
+  document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+}
+
+function markInvalid(fieldId, errId) {
+  const f = document.getElementById(fieldId);
+  const e = document.getElementById(errId);
+  if (f) f.classList.add('invalid');
+  if (e) e.style.display = 'block';
+}
+
+function copyTSV() {
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  _lastRows.forEach(r => {
+    if (r.section) { lines.push(`\t${r.section}\t\t\t`); }
+    else { lines.push(`${r.sku}\t${r.desc}\t${r.qty ?? ''}\t${r.kind ?? ''}\t${r.note ?? ''}`); }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const msg = document.getElementById('smsg');
+    msg.className = '';
+    msg.textContent = '✓ TSV copied';
+    setTimeout(() => { msg.textContent = ''; }, 2000);
+  });
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Init hw bundle info on load
+onHwChange();
+</script>
+</body>
+</html>

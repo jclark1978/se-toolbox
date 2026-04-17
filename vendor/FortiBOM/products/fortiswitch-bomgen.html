@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiSwitch – BOM Generator</title>
+<style>
+  :root {
+    --red:#EE3124; --border:#DDE1E9; --bg:#F2F4F7; --white:#FFFFFF;
+    --text:#2A2F3A; --text2:#6B7589; --textm:#9BA5BA;
+    --sh:#F7F9FC; --ib:#C8CDD9; --th:#EEF1F6; --ts:#F7F9FC;
+    --info-bg:#EEF3FF; --info-b:#B8CBF5; --info-t:#3557A5;
+    --warn-bg:#FFF8EE; --warn-b:#F5D9A0; --warn-t:#8A5800;
+    --ok-bg:#F0FAF0; --ok-b:#9FD8A0; --ok-t:#1E6B20;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;padding:20px;min-height:100vh;}
+
+  .ph{background:var(--white);border:1px solid var(--border);border-radius:4px;padding:14px 20px;margin-bottom:14px;display:flex;align-items:center;gap:14px;}
+  .ph-icon{width:36px;height:36px;background:var(--red);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ph-icon svg{width:20px;height:20px;}
+  .ph h1{font-size:16px;font-weight:600;}
+  .ph .sub{font-size:11px;color:var(--text2);margin-top:2px;}
+
+  .card{background:var(--white);border:1px solid var(--border);border-radius:4px;margin-bottom:14px;overflow:hidden;}
+  .ch{background:var(--sh);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .ch h2{font-size:11px;font-weight:700;color:var(--text);letter-spacing:.04em;text-transform:uppercase;}
+  .ch .badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--red);color:#fff;border-radius:2px;padding:1px 6px;margin-left:auto;}
+  .cb{padding:18px;}
+
+  /* SEGMENT FILTER BUTTONS */
+  .seg-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .seg-btn{padding:5px 12px;border-radius:3px;border:1px solid var(--ib);background:var(--white);color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;transition:all .12s;}
+  .seg-btn:hover{background:var(--sh);border-color:#9BA5BA;}
+  .seg-btn.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:500;}
+
+  /* MODEL CARDS */
+  .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:8px;}
+  .mc{border:1px solid var(--border);border-radius:3px;padding:10px 12px;cursor:pointer;background:var(--white);transition:all .12s;}
+  .mc:hover{border-color:#9BA5BA;background:#FAFBFC;}
+  .mc.selected{border-color:var(--red);border-width:2px;background:#FEF8F8;}
+  .mc .mn{font-size:13px;font-weight:600;color:var(--text);}
+  .mc .ms{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
+  .mc .mt{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+  .mc .tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:var(--th);color:var(--text2);border:1px solid var(--border);border-radius:2px;padding:1px 5px;}
+  .mc .tag.poe{background:#FEF0EE;color:#8A2020;border-color:#F5C6C2;}
+  .mc .tag.mgig{background:var(--info-bg);color:var(--info-t);border-color:var(--info-b);}
+  .mc .tag.l3{background:var(--ok-bg);color:var(--ok-t);border-color:var(--ok-b);}
+  .mc .tag.ot{background:var(--warn-bg);color:var(--warn-t);border-color:var(--warn-b);}
+  .mc.hidden{display:none;}
+
+  /* FORM */
+  .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+  .grp{display:flex;flex-direction:column;gap:4px;}
+  label.lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;}
+  label.lbl .r{color:var(--red);margin-left:2px;}
+  input[type=number],select{background:var(--white);border:1px solid var(--ib);border-radius:3px;padding:6px 9px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;width:100%;}
+  input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(238,49,36,.1);}
+  .invalid{border-color:var(--red)!important;}
+  .err{display:none;font-size:11px;color:#C0392B;margin-top:2px;}
+
+  .trow{display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:5px 8px;border-radius:3px;margin-bottom:2px;transition:background .1s;}
+  .trow:hover{background:var(--sh);}
+  .trow input[type=checkbox]{accent-color:var(--red);width:14px;height:14px;margin-top:1px;flex-shrink:0;}
+  .tl{font-size:13px;color:var(--text);}
+  .tn{font-size:11px;color:var(--textm);}
+
+  .callout{border-radius:3px;padding:9px 12px;font-size:12px;line-height:1.6;display:flex;gap:8px;align-items:flex-start;margin-bottom:14px;}
+  .callout svg{flex-shrink:0;margin-top:1px;}
+  .callout.info{background:var(--info-bg);border:1px solid var(--info-b);color:var(--info-t);}
+  .callout.warn{background:var(--warn-bg);border:1px solid var(--warn-b);color:var(--warn-t);}
+
+  .divider{height:1px;background:var(--border);margin:14px 0;}
+  .sec-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--textm);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+  /* TRANSCEIVER TABLE */
+  .tran-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;}
+  .tran-row{display:flex;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--border);border-radius:3px;background:var(--white);}
+  .tran-row input[type=checkbox]{accent-color:var(--red);flex-shrink:0;}
+  .tran-row .tr-info{flex:1;}
+  .tran-row .tr-desc{font-size:12px;color:var(--text);}
+  .tran-row .tr-sku{font-family:'Courier New',monospace;font-size:10px;color:var(--info-t);}
+  .tran-qty{width:52px;padding:4px 6px;font-size:12px;}
+
+  /* ACTIONS */
+  .actions{display:flex;gap:10px;align-items:center;padding:12px 18px;background:var(--sh);border-top:1px solid var(--border);}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:3px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:background .12s;}
+  .btn svg{width:13px;height:13px;flex-shrink:0;}
+  .btn-p{background:var(--red);color:#fff;border-color:var(--red);}
+  .btn-p:hover{background:#d42a1e;}
+  .btn-s{background:var(--white);color:var(--text);border-color:var(--ib);}
+  .btn-s:hover{background:var(--sh);}
+  #smsg{font-size:11px;margin-left:6px;}
+
+  /* BOM */
+  #bom-section{display:none;}
+  .bom-meta{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
+  .bom-meta-item .ml{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--textm);}
+  .bom-meta-item .mv{font-size:13px;font-weight:500;color:var(--text);}
+  table.bt{width:100%;border-collapse:collapse;font-size:12px;}
+  table.bt thead th{background:var(--th);border:1px solid var(--border);padding:7px 11px;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);white-space:nowrap;}
+  table.bt tbody td{border:1px solid var(--border);padding:7px 11px;vertical-align:top;}
+  table.bt tbody tr:nth-child(even) td{background:var(--ts);}
+  table.bt tbody tr:hover td{background:#EEF1F6;}
+  .rs td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);padding:5px 11px;border-top:2px solid #C5CAD9;}
+  .sk{font-family:'Courier New',monospace;font-size:11.5px;color:#1A4E82;font-weight:700;white-space:nowrap;}
+  .qc{text-align:center;font-weight:700;}
+  .nc{color:var(--textm);font-size:11px;}
+  .br{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 5px;}
+  .br-r{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2;}
+  .br-o{background:var(--info-bg);color:var(--info-t);border:1px solid var(--info-b);}
+  .bom-totals{margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;}
+  .tc{background:var(--sh);border:1px solid var(--border);border-radius:3px;padding:9px 14px;min-width:120px;}
+  .tc .tl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--textm);margin-bottom:3px;}
+  .tc .tv{font-size:18px;font-weight:600;color:var(--text);}
+  .tc.hi .tv{color:var(--red);}
+
+  @media print{body{background:#fff;padding:0;}#config-section,.actions{display:none!important;}#bom-section{display:block!important;}}
+</style>
+</head>
+<body>
+
+<div class="ph">
+  <div class="ph-icon">
+    <svg viewBox="0 0 20 20" fill="none"><rect x="1" y="6" width="18" height="8" rx="1.5" stroke="white" stroke-width="1.4"/><circle cx="5" cy="10" r="1.2" fill="white"/><circle cx="8.5" cy="10" r="1.2" fill="white"/><circle cx="12" cy="10" r="1.2" fill="white"/><path d="M15 8.5v3" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+  </div>
+  <div>
+    <h1>FortiSwitch – BOM Generator</h1>
+    <div class="sub">Secure Access / Campus / Data Center / Industrial OT · FortiGate-Managed · Based on FSW-OG-R18-20251017</div>
+  </div>
+</div>
+
+<div id="config-section">
+
+<!-- ══ MODEL SELECTION ═══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="3" width="11" height="7" rx="1" stroke="#6B7589" stroke-width="1.2"/><path d="M4 3V2M9 3V2" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Switch Model Selection</h2><span class="badge">Step 1 — Select one model</span>
+  </div>
+  <div class="cb">
+
+    <div class="callout info">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#3557A5" stroke-width="1.2"/><path d="M7 6.5v3.5M7 4.5v.5" stroke="#3557A5" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div>All FortiSwitch models are <strong>FortiGate-managed via FortiLink</strong>. FortiCare 24×7 support is available for every model. The Cloud Management License (<code>FC-10-FSW{tier}-628-02-DD</code>) adds FortiEdge Cloud management — it includes FortiCare only when FortiEdge Cloud manages the unit. The Advanced Switching License enables dynamic routing protocols in standalone mode (available on select models only).</div>
+    </div>
+
+    <!-- Segment filter -->
+    <div class="seg-bar">
+      <button class="seg-btn active" onclick="filterSeg(this,'all')">All Models</button>
+      <button class="seg-btn" onclick="filterSeg(this,'retail')">Retail / Branch</button>
+      <button class="seg-btn" onclick="filterSeg(this,'medium')">Medium Campus</button>
+      <button class="seg-btn" onclick="filterSeg(this,'large')">Large Campus / DC</button>
+      <button class="seg-btn" onclick="filterSeg(this,'ot')">Industrial / OT</button>
+    </div>
+
+    <div class="model-grid" id="model-grid"></div>
+    <span class="err" id="err-model" style="margin-top:6px;">Please select a switch model</span>
+  </div>
+</div>
+
+<!-- ══ CONFIGURATION ═════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#6B7589" stroke-width="1.2"/><path d="M4 6.5h5M6.5 4v5" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Configuration</h2><span class="badge">Step 2</span>
+  </div>
+  <div class="cb">
+    <div class="fg" style="margin-bottom:14px;">
+      <div class="grp">
+        <label class="lbl">Quantity <span class="r">*</span></label>
+        <input type="number" id="f-qty" min="1" max="9999" value="1">
+        <span class="err" id="err-qty">Enter at least 1</span>
+      </div>
+      <div class="grp">
+        <label class="lbl">PoE Variant</label>
+        <select id="f-poe" onchange="onPoeChange()">
+          <option value="none">Non-PoE (standard)</option>
+          <option value="poe">PoE (af/at)</option>
+          <option value="fpoe">FPoE / Full PoE (af/at + bt on supported)</option>
+        </select>
+        <div id="poe-avail-note" style="font-size:10px;color:var(--textm);margin-top:3px;"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">Add-on Licenses</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px;">
+      <label class="trow"><input type="checkbox" id="f-cloud"><div>
+        <div class="tl">Cloud Management License</div>
+        <div class="tn" id="cloud-sku-hint">FC-10-FSW{tier}-628-02-DD — FortiEdge Cloud management (FortiCare included when cloud-managed)</div>
+      </div></label>
+      <label class="trow" id="row-adv-lic"><input type="checkbox" id="f-adv"><div>
+        <div class="tl">Advanced Switching License</div>
+        <div class="tn" id="adv-sku-hint">Enables dynamic routing protocols in standalone mode</div>
+      </div></label>
+      <label class="trow"><input type="checkbox" id="f-psu"><div>
+        <div class="tl">Redundant / Spare Power Supply</div>
+        <div class="tn" id="psu-hint">Model-specific PSU — see below</div>
+      </div></label>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRANSCEIVERS ══════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M8 3.5l3 3-3 3" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h2>SFP / QSFP Transceivers (Optional)</h2>
+  </div>
+  <div class="cb">
+    <div class="callout warn" style="margin-bottom:10px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2L13 12H1L7 2Z" stroke="#8A5800" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 6v3M7 10.5v.5" stroke="#8A5800" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div>Transceiver availability varies by model. <strong>FN-TRAN-SFP-BD27 and FN-TRAN-SFP-BD33 must always be ordered as a pair</strong> — they only work connected to each other. Only transceivers supported by the selected model family are shown.</div>
+    </div>
+    <div class="tran-grid" id="tran-grid"></div>
+    <div id="tran-empty" style="font-size:12px;color:var(--textm);padding:8px;">Select a model to see available transceivers.</div>
+  </div>
+</div>
+
+<!-- ══ ACTIONS ═══════════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="actions">
+    <button class="btn btn-p" onclick="generateBOM()">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5h10M7 2l4.5 4.5L7 11" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Preview BOM
+    </button>
+    <button class="btn btn-p" onclick="addToProjectBOM()" style="background:#2E7D32;border-color:#2E7D32;">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6l3 3 3-3" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Add to Project BOM
+    </button>
+    <button class="btn btn-s" onclick="resetForm()">
+      <svg viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5a5 5 0 1 0 1.2-3.2L1.5 2v3h3" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Reset
+    </button>
+    <span id="smsg" style="color:#C0392B;"></span>
+  </div>
+</div>
+
+</div><!-- end config-section -->
+
+<!-- ══ BOM OUTPUT ════════════════════════════════════════════════════════ -->
+<div class="card" id="bom-section">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1.5" width="11" height="10" rx="1.5" stroke="#6B7589" stroke-width="1.2"/><path d="M3.5 5h6M3.5 7h6M3.5 9h3.5" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Bill of Materials — FortiSwitch</h2>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-s" onclick="copyTSV()" style="padding:4px 10px;font-size:11px;">
+        <svg viewBox="0 0 13 13" fill="none"><rect x="3.5" y="1" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/><rect x="1" y="3" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/></svg>Copy TSV
+      </button>
+      <button class="btn btn-s" onclick="window.print()" style="padding:4px 10px;font-size:11px;">
+        <svg viewBox="0 0 13 13" fill="none"><rect x="1.5" y="4" width="10" height="6" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M3.5 4V2h6v2M3.5 10h6" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Print
+      </button>
+    </div>
+  </div>
+  <div class="cb">
+    <div class="bom-meta" id="bom-meta"></div>
+    <table class="bt" id="bom-table">
+      <thead><tr>
+        <th style="width:215px;">Part Number</th>
+        <th>Description</th>
+        <th style="width:55px;text-align:center;">Qty</th>
+        <th style="width:75px;">Type</th>
+        <th>Notes</th>
+      </tr></thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+    <div class="bom-totals" id="bom-totals"></div>
+  </div>
+</div>
+
+<script>
+// ── MODEL DATABASE ────────────────────────────────────────────────────────────
+// Fields: id, seg, desc, ports, uplink, downlink, features[],
+//   hwSku, careSku, careSku_poe (if different), careSku_fpoe (if different),
+//   poeSku (PoE variant hw sku), fpoeSku (FPoE variant hw sku),
+//   advLicSku (Advanced Switching License), cloudTier (FSW tier code for cloud sku),
+//   psu (PSU sku or null), psuLabel, tranProfile (transceiver set key)
+const MODELS = [
+  // ── RETAIL / BRANCH ────────────────────────────────────────────────────────
+  {
+    id:'FS-108F', seg:'retail', desc:'8-port 1G RJ45, 2x GE SFP uplink — Retail/Branch', ports:'8', uplink:'1G SFP',
+    features:['FortiLink','Access Security'],
+    hwSku:'FS-108F', careSku:'FC-10-F108N-247-02-DD',
+    poeSku:'FS-108F-POE', carePoe:'FC-10-F108P-247-02-DD',
+    fpoeSku:'FS-108F-FPOE', careFpoe:'FC-10-F108F-247-02-DD',
+    advLicSku:null, cloudTier:'00', psu:null,
+    tranProfile:'1g',
+  },
+  {
+    id:'FS-110G-FPOE', seg:'retail', desc:'8-port 1G RJ45 + 2-port 2.5G/5G + 2x 10G SFP+ uplink — MultiGig Branch', ports:'10', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','MultiGig','Netflow'],
+    hwSku:null, careSku:null,
+    fpoeSku:'FS-110G-FPOE', careFpoe:'FC-10-M10GF-247-02-DD',
+    poeSku:null, carePoe:null,
+    advLicSku:null, cloudTier:'00',
+    psuLabel:'External RPS (FRPS-740-FS compatible)', psu:'FRPS-740-FS',
+    tranProfile:'10g',
+  },
+  {
+    id:'FS-224E', seg:'retail', desc:'24-port 1G RJ45, 4x GE SFP uplink — Branch', ports:'24', uplink:'1G SFP',
+    features:['FortiLink','Access Security','Netflow'],
+    hwSku:'FS-224E', careSku:'FC-10-W0300-247-02-DD',
+    poeSku:null, carePoe:null,
+    fpoeSku:'FS-224D-FPOE', careFpoe:'FC-10-W0226-247-02-DD',
+    advLicSku:null, cloudTier:'00',
+    psuLabel:'FRPS-740-FS — Redundant AC PSU for FS-224D-FPOE / 248E-POE / 248E-FPOE', psu:'FRPS-740-FS',
+    tranProfile:'1g',
+  },
+  {
+    id:'FS-248D', seg:'retail', desc:'48-port 1G RJ45, 4x GE SFP uplink — Branch', ports:'48', uplink:'1G SFP',
+    features:['FortiLink','Access Security','Netflow'],
+    hwSku:'FS-248D', careSku:'FC-10-W248D-247-02-DD',
+    poeSku:'FS-248E-POE', carePoe:'FC-10-WP248-247-02-DD',
+    fpoeSku:'FS-248E-FPOE', careFpoe:'FC-10-W248E-247-02-DD',
+    advLicSku:null, cloudTier:'00',
+    psuLabel:'FRPS-740-FS — Redundant AC PSU for FS-248E-POE / FS-248E-FPOE', psu:'FRPS-740-FS',
+    tranProfile:'1g',
+  },
+  // ── MEDIUM CAMPUS ─────────────────────────────────────────────────────────
+  {
+    id:'FS-124F', seg:'medium', desc:'24-port 1G RJ45, 4x 10G SFP+ uplink — Medium Campus', ports:'24', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','Multitier'],
+    hwSku:'FS-124F', careSku:'FC-10-S124N-247-02-DD',
+    poeSku:'FS-124F-POE', carePoe:'FC-10-S124P-247-02-DD',
+    fpoeSku:'FS-124F-FPOE', careFpoe:'FC-10-S124F-247-02-DD',
+    advLicSku:null, cloudTier:'00',
+    psu:null, tranProfile:'10g',
+  },
+  {
+    id:'FS-148F', seg:'medium', desc:'48-port 1G RJ45, 4x 10G SFP+ uplink — Medium Campus', ports:'48', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','Multitier'],
+    hwSku:'FS-148F', careSku:'FC-10-148FN-247-02-DD',
+    poeSku:'FS-148F-POE', carePoe:'FC-10-148FP-247-02-DD',
+    fpoeSku:null, careFpoe:null,
+    advLicSku:null, cloudTier:'00',
+    psu:null, tranProfile:'10g',
+  },
+  {
+    id:'FS-124G', seg:'medium', desc:'24-port 1G/2.5G copper, 4x 10G SFP+ uplink — Medium Campus MultiGig', ports:'24', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','MultiGig','Multitier'],
+    hwSku:'FS-124G', careSku:'FC-10-S24GN-247-02-DD',
+    poeSku:null, carePoe:null,
+    fpoeSku:'FS-124G-FPOE', careFpoe:'FC-10-S24GF-247-02-DD',
+    advLicSku:null, cloudTier:'00',
+    psu:null, tranProfile:'10g',
+  },
+  {
+    id:'FS-424E', seg:'medium', desc:'24-port 1G RJ45, 4x 10G SFP+ uplink — Medium Campus', ports:'24', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','Multitier'],
+    hwSku:'FS-424E', careSku:'FC-10-S424E-247-02-DD',
+    poeSku:'FS-424E-POE', carePoe:'FC-10-S424P-247-02-DD',
+    fpoeSku:'FS-424E-FPOE', careFpoe:'FC-10-S424F-247-02-DD',
+    advLicSku:'FS-SW-LIC-400', cloudTier:'10',
+    psu:null, tranProfile:'10g',
+  },
+  {
+    id:'FS-424E-FIBER', seg:'medium', desc:'24-port 1G SFP fiber, 4x 10G SFP+ uplink — Medium Campus Fiber', ports:'24', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','Multitier'],
+    hwSku:'FS-424E-FIBER', careSku:'FC-10-S424I-247-02-DD',
+    poeSku:null, carePoe:null, fpoeSku:null, careFpoe:null,
+    advLicSku:'FS-SW-LIC-400', cloudTier:'10',
+    psu:null, tranProfile:'10g',
+  },
+  {
+    id:'FS-448E', seg:'medium', desc:'48-port 1G RJ45, 4x 10G SFP+ uplink — Medium Campus', ports:'48', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','Multitier'],
+    hwSku:'FS-448E', careSku:'FC-10-S448N-247-02-DD',
+    poeSku:'FS-448E-POE', carePoe:'FC-10-S448P-247-02-DD',
+    fpoeSku:'FS-448E-FPOE', careFpoe:'FC-10-S448F-247-02-DD',
+    advLicSku:'FS-SW-LIC-400', cloudTier:'10',
+    psu:null, tranProfile:'10g',
+  },
+  {
+    id:'FS-M426E-FPOE', seg:'medium', desc:'24-port 1G RJ45 FPoE + 2x 10G SFP+ uplink — Medium Campus FPoE', ports:'24', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','MultiGig'],
+    hwSku:null, careSku:null,
+    poeSku:null, carePoe:null,
+    fpoeSku:'FS-M426E-FPOE', careFpoe:'FC-10-M426E-247-02-DD',
+    advLicSku:null, cloudTier:'10',
+    psu:null, tranProfile:'10g',
+  },
+  {
+    id:'FS-1024E', seg:'medium', desc:'24-port 1G RJ45, 4x 10G SFP+ uplink — Medium Campus High-port', ports:'24', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','Multitier'],
+    hwSku:'FS-1024E', careSku:'FC-10-S1E24-247-02-DD',
+    poeSku:null, carePoe:null, fpoeSku:null, careFpoe:null,
+    advLicSku:'FS-SW-LIC-1000', cloudTier:'30',
+    psuLabel:'FS-PSU-460 — AC spare PSU for FS-1024E/1048E', psu:'FS-PSU-460',
+    tranProfile:'10g_100g',
+  },
+  {
+    id:'FS-1048E', seg:'medium', desc:'48-port 1G RJ45, 4x 10G SFP+ uplink — Medium Campus High-port', ports:'48', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','Multitier'],
+    hwSku:'FS-1048E', careSku:'FC-10-1E48F-247-02-DD',
+    poeSku:null, carePoe:null, fpoeSku:null, careFpoe:null,
+    advLicSku:'FS-SW-LIC-1000', cloudTier:'30',
+    psuLabel:'FS-PSU-460 — AC spare PSU for FS-1024E/1048E', psu:'FS-PSU-460',
+    tranProfile:'10g_100g',
+  },
+  {
+    id:'FS-1048G', seg:'medium', desc:'48-port 1G RJ45, 4x 100G QSFP28 uplink — Medium Campus 100G uplink', ports:'48', uplink:'100G QSFP28',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','Multitier'],
+    hwSku:'FS-1048G', careSku:'FC-10-FSG48-247-02-DD',
+    poeSku:null, carePoe:null, fpoeSku:null, careFpoe:null,
+    advLicSku:'FS-SW-LIC-1000', cloudTier:'30',
+    psu:null, tranProfile:'10g_100g',
+  },
+  {
+    id:'FS-T1024E', seg:'medium', desc:'24-port 1G/2.5G/5G/10G copper MultiGig, 4x 100G QSFP28 uplink', ports:'24', uplink:'100G QSFP28',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','MultiGig','Multitier'],
+    hwSku:'FS-T1024E', careSku:'FC-10-T1E24-247-02-DD',
+    poeSku:null, carePoe:null,
+    fpoeSku:'FS-T1024F-FPOE', careFpoe:'FC-10-TF124-247-02-DD',
+    advLicSku:'FS-SW-LIC-1000', cloudTier:'30',
+    psuLabel:'FS-PSU-300 — AC redundant PSU for FS-1024E/T1024E', psu:'FS-PSU-300',
+    tranProfile:'10g_100g',
+  },
+  // ── LARGE CAMPUS / DATA CENTER ────────────────────────────────────────────
+  {
+    id:'FS-548D', seg:'large', desc:'48-port 1G RJ45, 4x 10G SFP+ + 2x 40G QSFP uplink', ports:'48', uplink:'10G SFP+ / 40G QSFP',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','Multitier'],
+    hwSku:'FS-548D', careSku:'FC-10-W0548-247-02-DD',
+    poeSku:null, carePoe:null,
+    fpoeSku:'FS-548D-FPOE', careFpoe:'FC-10-W0501-247-02-DD',
+    advLicSku:'FS-SW-LIC-500', cloudTier:'20',
+    psuLabel:'FS-PSU-150 — AC redundant PSU for FS-548D / FS-524D; FS-PSU-920 — POE PSU for FS-548D-FPOE', psu:'FS-PSU-150',
+    tranProfile:'40g',
+  },
+  {
+    id:'FS-624F', seg:'large', desc:'24-port 1G/2.5G/5G MultiGig RJ45, 4x 25G SFP28 uplink', ports:'24', uplink:'25G SFP28',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','MultiGig','Multitier'],
+    hwSku:'FS-624F', careSku:'FC-10-624FN-247-02-DD',
+    poeSku:null, carePoe:null,
+    fpoeSku:'FS-624F-FPOE', careFpoe:'FC-10-624FF-247-02-DD',
+    advLicSku:'FS-SW-LIC-600', cloudTier:'20',
+    psuLabel:'FS-PSU-350 — AC redundant PSU for FS-624F/648F; FS-PSU-1200 — for FS-624F-FPOE/648F-FPOE', psu:'FS-PSU-350',
+    tranProfile:'25g_100g',
+  },
+  {
+    id:'FS-648F', seg:'large', desc:'32-port 1G/2.5G + 16-port 1G/2.5G/5G MultiGig RJ45, 4x 25G SFP28 uplink', ports:'48', uplink:'25G SFP28',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','MultiGig','Multitier'],
+    hwSku:'FS-648F', careSku:'FC-10-648FN-247-02-DD',
+    poeSku:null, carePoe:null,
+    fpoeSku:'FS-648F-FPOE', careFpoe:'FC-10-648FF-247-02-DD',
+    advLicSku:'FS-SW-LIC-600', cloudTier:'20',
+    psuLabel:'FS-PSU-350 — AC redundant PSU for FS-624F/648F; FS-PSU-1200 — for FS-624F-FPOE/648F-FPOE', psu:'FS-PSU-350',
+    tranProfile:'25g_100g',
+  },
+  {
+    id:'FS-2048F', seg:'large', desc:'48-port 25G SFP28 + 8x 100G QSFP28 uplink — Data Center', ports:'48x25G', uplink:'100G QSFP28',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','Multitier'],
+    hwSku:'FS-2048F', careSku:'FC-10-S2F48-247-02-DD',
+    poeSku:null, carePoe:null, fpoeSku:null, careFpoe:null,
+    advLicSku:'FS-SW-LIC-2000', cloudTier:'30',
+    psuLabel:'FS-2048-PSU-650 — AC redundant PSU for FS-2048F', psu:'FS-2048-PSU-650',
+    tranProfile:'25g_100g',
+  },
+  {
+    id:'FS-3032G', seg:'large', desc:'32-port 100G QSFP28 — Data Center Core', ports:'32x100G', uplink:'100G QSFP28',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','Multitier'],
+    hwSku:'FS-3032G', careSku:'FC-10-FS3G2-314-02-DD',
+    poeSku:null, carePoe:null, fpoeSku:null, careFpoe:null,
+    advLicSku:'FS-SW-LIC-3000', cloudTier:'30',
+    psu:null, tranProfile:'100g',
+  },
+  // ── INDUSTRIAL / OT ───────────────────────────────────────────────────────
+  {
+    id:'FSR-108F', seg:'ot', desc:'8-port 1G RJ45, 2x GE SFP — Industrial DIN-rail (Rugged)', ports:'8', uplink:'1G SFP',
+    features:['FortiLink','Access Security','Redundant DC Input'],
+    hwSku:'FSR-108F', careSku:'FC-10-S08FN-247-02-DD',
+    poeSku:null, carePoe:null, fpoeSku:null, careFpoe:null,
+    advLicSku:null, cloudTier:'10',
+    psu:null, tranProfile:'1g_ot',
+  },
+  {
+    id:'FSR-112F-POE', seg:'ot', desc:'8-port 1G RJ45 PoE (af/at) + 2x GE SFP — Industrial DIN-rail (Rugged)', ports:'8+2', uplink:'1G SFP',
+    features:['FortiLink','Access Security','PoE (af/at)','Redundant DC Input'],
+    hwSku:null, careSku:null,
+    poeSku:'FSR-112F-POE', carePoe:'FC-10-SR2FP-247-02-DD',
+    fpoeSku:null, careFpoe:null,
+    advLicSku:null, cloudTier:'10',
+    psu:null, tranProfile:'1g_ot',
+  },
+  {
+    id:'FSR-216F-POE', seg:'ot', desc:'16-port 1G RJ45 FPoE (af/at/bt) + 2x 1G SFP — Industrial DIN-rail (Rugged)', ports:'16+2', uplink:'1G SFP',
+    features:['FortiLink','Access Security','FPoE (af/at/bt)','Redundant DC Input'],
+    hwSku:null, careSku:null,
+    poeSku:null, carePoe:null,
+    fpoeSku:'FSR-216F-POE', careFpoe:'FC-10-SR16F-247-02-DD',
+    advLicSku:null, cloudTier:'10',
+    psu:null, tranProfile:'1g_ot',
+  },
+  {
+    id:'FSR-424F-POE', seg:'ot', desc:'24-port 1G RJ45 PoE (af/at) + 4x 10G SFP+ — Industrial Rackmount (Rugged)', ports:'24+4', uplink:'10G SFP+',
+    features:['FortiLink','Access Security','Netflow','MCLAG','L3','PoE (af/at)','MultiGig','Redundant DC Input'],
+    hwSku:null, careSku:null,
+    poeSku:'FSR-424F-POE', carePoe:'FC-10-R24FP-247-02-12',
+    fpoeSku:null, careFpoe:null,
+    advLicSku:'FS-SW-LIC-400', cloudTier:'10',
+    psu:null, tranProfile:'10g_ot',
+  },
+];
+
+// ── TRANSCEIVER PROFILES ──────────────────────────────────────────────────────
+const TRAN_PROFILES = {
+  '1g': [
+    { sku:'FN-TRAN-SX',     desc:'1Gbps SFP, 220m (multimode)' },
+    { sku:'FN-TRAN-LX',     desc:'1Gbps SFP, 10km (single-mode)' },
+    { sku:'FN-TRAN-GC',     desc:'1000Base-T RJ45 SFP, 100m' },
+    { sku:'FN-TRAN-SFP2-SX',desc:'2.5Gbps SFP, 300m' },
+    { sku:'FN-TRAN-SFP2-LX',desc:'2.5Gbps SFP, 20km' },
+  ],
+  '10g': [
+    { sku:'FN-TRAN-SX',      desc:'1Gbps SFP, 220m' },
+    { sku:'FN-TRAN-LX',      desc:'1Gbps SFP, 10km' },
+    { sku:'FN-TRAN-GC',      desc:'1000Base-T RJ45 SFP, 100m' },
+    { sku:'FN-TRAN-SFP2-SX', desc:'2.5Gbps SFP, 300m' },
+    { sku:'FN-TRAN-SFP2-LX', desc:'2.5Gbps SFP, 20km' },
+    { sku:'FN-TRAN-SFP+SR',  desc:'10Gbps SFP+, 300m (OM3/OM4)' },
+    { sku:'FN-TRAN-SFP+LR',  desc:'10Gbps SFP+, 10km' },
+    { sku:'FN-TRAN-SFP-BD27',desc:'10Gbps SFP BiDi TX1270, 30km ⚠ must pair with BD33' },
+    { sku:'FN-TRAN-SFP-BD33',desc:'10Gbps SFP BiDi TX1330, 30km ⚠ must pair with BD27' },
+    { sku:'FN-TRAN-SFP+ZR',  desc:'10Gbps SFP+, 80km' },
+  ],
+  '10g_100g': [
+    { sku:'FN-TRAN-SX',       desc:'1Gbps SFP, 220m' },
+    { sku:'FN-TRAN-LX',       desc:'1Gbps SFP, 10km' },
+    { sku:'FN-TRAN-GC',       desc:'1000Base-T RJ45 SFP, 100m' },
+    { sku:'FN-TRAN-SFP2-SX',  desc:'2.5Gbps SFP, 300m' },
+    { sku:'FN-TRAN-SFP2-LX',  desc:'2.5Gbps SFP, 20km' },
+    { sku:'FN-TRAN-SFP+SR',   desc:'10Gbps SFP+, 300m' },
+    { sku:'FN-TRAN-SFP+LR',   desc:'10Gbps SFP+, 10km' },
+    { sku:'FN-TRAN-SFP-BD27', desc:'10Gbps SFP BiDi TX1270, 30km ⚠ must pair with BD33' },
+    { sku:'FN-TRAN-SFP-BD33', desc:'10Gbps SFP BiDi TX1330, 30km ⚠ must pair with BD27' },
+    { sku:'FN-TRAN-SFP+ZR',   desc:'10Gbps SFP+, 80km' },
+    { sku:'FN-TRAN-QSFP+SR',  desc:'40Gbps QSFP+, 150m (OM4)' },
+    { sku:'FN-TRAN-QSFP+LR',  desc:'40Gbps QSFP+, 10km' },
+    { sku:'FN-TRAN-QSFP+ER',  desc:'40Gbps QSFP+, 40km' },
+    { sku:'FN-TRAN-QSFP28-SR',  desc:'100Gbps QSFP28, 100m' },
+    { sku:'FN-TRAN-QSFP28-BIDI',desc:'100Gbps QSFP28 BiDi, 100m' },
+    { sku:'FN-TRAN-QSFP28-DR',  desc:'100Gbps QSFP28, 500m' },
+    { sku:'FN-TRAN-QSFP28-LR',  desc:'100Gbps QSFP28, 10km' },
+    { sku:'FN-TRAN-QSFP28-ER',  desc:'100Gbps QSFP28, 20km' },
+  ],
+  '25g_100g': [
+    { sku:'FN-TRAN-SX',        desc:'1Gbps SFP, 220m' },
+    { sku:'FN-TRAN-LX',        desc:'1Gbps SFP, 10km' },
+    { sku:'FN-TRAN-GC',        desc:'1000Base-T RJ45 SFP, 100m' },
+    { sku:'FN-TRAN-SFP2-SX',   desc:'2.5Gbps SFP, 300m' },
+    { sku:'FN-TRAN-SFP2-LX',   desc:'2.5Gbps SFP, 20km' },
+    { sku:'FN-TRAN-SFP+SR',    desc:'10Gbps SFP+, 300m' },
+    { sku:'FN-TRAN-SFP+LR',    desc:'10Gbps SFP+, 10km' },
+    { sku:'FN-TRAN-SFP-BD27',  desc:'10Gbps SFP BiDi TX1270, 30km ⚠ must pair with BD33' },
+    { sku:'FN-TRAN-SFP-BD33',  desc:'10Gbps SFP BiDi TX1330, 30km ⚠ must pair with BD27' },
+    { sku:'FN-TRAN-SFP+ZR',    desc:'10Gbps SFP+, 80km' },
+    { sku:'FN-TRAN-SFP28-SR',  desc:'25Gbps SFP28, 100m' },
+    { sku:'FN-TRAN-SFP28-LR',  desc:'25Gbps SFP28, 10km' },
+    { sku:'FN-TRAN-QSFP+SR',   desc:'40Gbps QSFP+, 150m (OM4)' },
+    { sku:'FN-TRAN-QSFP+LR',   desc:'40Gbps QSFP+, 10km' },
+    { sku:'FN-TRAN-QSFP+ER',   desc:'40Gbps QSFP+, 40km' },
+    { sku:'FN-TRAN-QSFP28-SR',   desc:'100Gbps QSFP28, 100m' },
+    { sku:'FN-TRAN-QSFP28-BIDI', desc:'100Gbps QSFP28 BiDi, 100m' },
+    { sku:'FN-TRAN-QSFP28-DR',   desc:'100Gbps QSFP28, 500m' },
+    { sku:'FN-TRAN-QSFP28-LR',   desc:'100Gbps QSFP28, 10km' },
+    { sku:'FN-TRAN-QSFP28-ER',   desc:'100Gbps QSFP28, 20km' },
+  ],
+  '40g': [
+    { sku:'FN-TRAN-SX',       desc:'1Gbps SFP, 220m' },
+    { sku:'FN-TRAN-LX',       desc:'1Gbps SFP, 10km' },
+    { sku:'FN-TRAN-GC',       desc:'1000Base-T RJ45 SFP, 100m' },
+    { sku:'FN-TRAN-SFP2-SX',  desc:'2.5Gbps SFP, 300m' },
+    { sku:'FN-TRAN-SFP2-LX',  desc:'2.5Gbps SFP, 20km' },
+    { sku:'FN-TRAN-SFP+SR',   desc:'10Gbps SFP+, 300m' },
+    { sku:'FN-TRAN-SFP+LR',   desc:'10Gbps SFP+, 10km' },
+    { sku:'FN-TRAN-SFP-BD27', desc:'10Gbps SFP BiDi TX1270, 30km ⚠ must pair with BD33' },
+    { sku:'FN-TRAN-SFP-BD33', desc:'10Gbps SFP BiDi TX1330, 30km ⚠ must pair with BD27' },
+    { sku:'FN-TRAN-SFP+ZR',   desc:'10Gbps SFP+, 80km' },
+    { sku:'FN-TRAN-QSFP+SR',  desc:'40Gbps QSFP+, 150m (OM4)' },
+    { sku:'FN-TRAN-QSFP+LR',  desc:'40Gbps QSFP+, 10km' },
+    { sku:'FN-TRAN-QSFP+ER',  desc:'40Gbps QSFP+, 40km' },
+  ],
+  '100g': [
+    { sku:'FN-TRAN-SFP+SR',     desc:'10Gbps SFP+, 300m' },
+    { sku:'FN-TRAN-SFP+LR',     desc:'10Gbps SFP+, 10km' },
+    { sku:'FN-TRAN-SFP-BD27',   desc:'10Gbps SFP BiDi TX1270, 30km ⚠ must pair with BD33' },
+    { sku:'FN-TRAN-SFP-BD33',   desc:'10Gbps SFP BiDi TX1330, 30km ⚠ must pair with BD27' },
+    { sku:'FN-TRAN-SFP+ZR',     desc:'10Gbps SFP+, 80km' },
+    { sku:'FN-TRAN-QSFP+SR',    desc:'40Gbps QSFP+, 150m (OM4)' },
+    { sku:'FN-TRAN-QSFP+LR',    desc:'40Gbps QSFP+, 10km' },
+    { sku:'FN-TRAN-QSFP+ER',    desc:'40Gbps QSFP+, 40km' },
+    { sku:'FN-TRAN-QSFP28-SR',  desc:'100Gbps QSFP28, 100m' },
+    { sku:'FN-TRAN-QSFP28-BIDI',desc:'100Gbps QSFP28 BiDi, 100m' },
+    { sku:'FN-TRAN-QSFP28-DR',  desc:'100Gbps QSFP28, 500m' },
+    { sku:'FN-TRAN-QSFP28-LR',  desc:'100Gbps QSFP28, 10km' },
+    { sku:'FN-TRAN-QSFP28-ER',  desc:'100Gbps QSFP28, 20km' },
+  ],
+  '1g_ot': [
+    { sku:'FN-TRAN-SFX',    desc:'100Mbps SFP FX, 2km' },
+    { sku:'FN-TRAN-SX',     desc:'1Gbps SFP, 220m' },
+    { sku:'FN-TRAN-LX',     desc:'1Gbps SFP, 10km' },
+    { sku:'FN-TRAN-GC',     desc:'1000Base-T RJ45 SFP, 100m' },
+    { sku:'FN-TRAN-SFP2-SX',desc:'2.5Gbps SFP, 300m' },
+    { sku:'FN-TRAN-SFP2-LX',desc:'2.5Gbps SFP, 20km' },
+  ],
+  '10g_ot': [
+    { sku:'FN-TRAN-SFX',     desc:'100Mbps SFP FX, 2km' },
+    { sku:'FN-TRAN-SX',      desc:'1Gbps SFP, 220m' },
+    { sku:'FN-TRAN-LX',      desc:'1Gbps SFP, 10km' },
+    { sku:'FN-TRAN-GC',      desc:'1000Base-T RJ45 SFP, 100m' },
+    { sku:'FN-TRAN-SFP2-SX', desc:'2.5Gbps SFP, 300m' },
+    { sku:'FN-TRAN-SFP2-LX', desc:'2.5Gbps SFP, 20km' },
+    { sku:'FN-TRAN-SFP+SR',  desc:'10Gbps SFP+, 300m' },
+    { sku:'FN-TRAN-SFP+LR',  desc:'10Gbps SFP+, 10km' },
+    { sku:'FN-TRAN-SFP-BD27',desc:'10Gbps SFP BiDi TX1270, 30km ⚠ must pair with BD33' },
+    { sku:'FN-TRAN-SFP-BD33',desc:'10Gbps SFP BiDi TX1330, 30km ⚠ must pair with BD27' },
+    { sku:'FN-TRAN-SFP+ZR',  desc:'10Gbps SFP+, 80km' },
+    { sku:'FN-TRAN-QSFP+SR', desc:'40Gbps QSFP+, 150m (OM4)' },
+    { sku:'FN-TRAN-QSFP+LR', desc:'40Gbps QSFP+, 10km' },
+    { sku:'FN-TRAN-QSFP+ER', desc:'40Gbps QSFP+, 40km' },
+  ],
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let selectedModel = null;
+let _lastRows = [], _lastLabel = '', _lastMeta = {};
+
+// ── BUILD MODEL GRID ─────────────────────────────────────────────────────────
+function buildModelGrid() {
+  const grid = document.getElementById('model-grid');
+  const SEG_LABEL = { retail:'Retail / Branch', medium:'Medium Campus', large:'Large Campus / DC', ot:'Industrial OT' };
+  grid.innerHTML = MODELS.map(m => {
+    const tags = [];
+    if (m.fpoeSku || m.id.includes('FPOE')) tags.push('<span class="tag poe">FPoE</span>');
+    else if (m.poeSku || m.id.includes('POE')) tags.push('<span class="tag poe">PoE</span>');
+    if (m.features.includes('MultiGig')) tags.push('<span class="tag mgig">MultiGig</span>');
+    if (m.features.includes('L3')) tags.push('<span class="tag l3">L3</span>');
+    if (m.seg === 'ot') tags.push('<span class="tag ot">Rugged</span>');
+    return `<div class="mc" id="mc-${m.id.replace(/[^a-zA-Z0-9]/g,'-')}" data-seg="${m.seg}" onclick="selectModel('${m.id}')">
+      <div class="mn">${m.id}</div>
+      <div class="ms">${m.desc.split(' — ')[0]}</div>
+      <div class="ms" style="margin-top:2px;">↑ ${m.uplink}</div>
+      <div class="mt">${tags.join('')}<span class="tag">${SEG_LABEL[m.seg]}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function selectModel(id) {
+  selectedModel = MODELS.find(m => m.id === id);
+  document.querySelectorAll('.mc').forEach(c => c.classList.remove('selected'));
+  document.getElementById('mc-' + id.replace(/[^a-zA-Z0-9]/g,'-')).classList.add('selected');
+  document.getElementById('err-model').style.display = 'none';
+  updatePoEOptions();
+  updateAddonsForModel();
+  buildTransceiverGrid();
+}
+
+function filterSeg(btn, seg) {
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.mc').forEach(c => {
+    const show = seg === 'all' || c.dataset.seg === seg;
+    c.classList.toggle('hidden', !show);
+  });
+}
+
+function updatePoEOptions() {
+  if (!selectedModel) return;
+  const m = selectedModel;
+  const sel = document.getElementById('f-poe');
+  const note = document.getElementById('poe-avail-note');
+  // Reset
+  sel.options[0].disabled = false;
+  sel.options[1].disabled = false;
+  sel.options[2].disabled = false;
+  // Determine what's available
+  const hasNonPoe = !!(m.hwSku);
+  const hasPoe = !!(m.poeSku);
+  const hasFpoe = !!(m.fpoeSku);
+  if (!hasNonPoe) { sel.options[0].disabled = true; if (sel.value === 'none') sel.value = hasPoe ? 'poe' : 'fpoe'; }
+  if (!hasPoe) sel.options[1].disabled = true;
+  if (!hasFpoe) sel.options[2].disabled = true;
+  // First enabled option
+  if (sel.value === 'none' && !hasNonPoe) sel.value = hasPoe ? 'poe' : 'fpoe';
+  if (sel.value === 'poe' && !hasPoe) sel.value = hasNonPoe ? 'none' : 'fpoe';
+  if (sel.value === 'fpoe' && !hasFpoe) sel.value = hasNonPoe ? 'none' : 'poe';
+  const notes = [];
+  if (!hasNonPoe) notes.push('No non-PoE variant for this model');
+  if (!hasPoe) notes.push('No POE variant');
+  if (!hasFpoe) notes.push('No FPOE variant');
+  note.textContent = notes.join(' · ');
+}
+
+function onPoeChange() { /* nothing needed — generated at BOM time */ }
+
+function updateAddonsForModel() {
+  if (!selectedModel) return;
+  const m = selectedModel;
+  // Advanced Switching License
+  const rowAdv = document.getElementById('row-adv-lic');
+  const advHint = document.getElementById('adv-sku-hint');
+  rowAdv.style.opacity = m.advLicSku ? '1' : '0.4';
+  rowAdv.style.pointerEvents = m.advLicSku ? '' : 'none';
+  advHint.textContent = m.advLicSku
+    ? `${m.advLicSku} — enables dynamic routing protocols in standalone mode`
+    : 'No Advanced Switching License available for this model';
+  if (!m.advLicSku) document.getElementById('f-adv').checked = false;
+  // Cloud Management
+  document.getElementById('cloud-sku-hint').textContent =
+    `FC-10-FSW${m.cloudTier}-628-02-DD — FortiEdge Cloud management (FortiCare included when cloud-managed)`;
+  // PSU hint
+  const psuHint = document.getElementById('psu-hint');
+  const psuRow = document.querySelector('label[for="f-psu"]');
+  if (m.psu || m.psuLabel) {
+    psuHint.textContent = m.psuLabel || m.psu;
+    document.querySelector('.trow:last-child').style.opacity = '1';
+    document.querySelector('.trow:last-child').style.pointerEvents = '';
+  } else {
+    psuHint.textContent = 'No optional PSU available for this model';
+    document.getElementById('f-psu').checked = false;
+    document.querySelectorAll('.trow').forEach(r => {
+      if (r.querySelector('#f-psu')) { r.style.opacity='0.4'; r.style.pointerEvents='none'; }
+    });
+  }
+}
+
+function buildTransceiverGrid() {
+  const grid = document.getElementById('tran-grid');
+  const empty = document.getElementById('tran-empty');
+  if (!selectedModel) { grid.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display = 'none';
+  const trans = TRAN_PROFILES[selectedModel.tranProfile] || [];
+  grid.innerHTML = trans.map(t => `
+    <div class="tran-row">
+      <input type="checkbox" class="tran-cb" data-sku="${t.sku}">
+      <div class="tr-info">
+        <div class="tr-desc">${t.desc}</div>
+        <div class="tr-sku">${t.sku}</div>
+      </div>
+      <input type="number" class="tran-qty" min="1" value="1" data-sku="${t.sku}">
+    </div>`).join('');
+}
+
+// ── SHARED STATE ──────────────────────────────────────────────────────────────
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'FORTIBOM_ADD', product:'FortiSwitch', label:_lastLabel, rows:_lastRows, meta:_lastMeta }, '*');
+    document.getElementById('smsg').textContent = '✓ Added to Project BOM.';
+    document.getElementById('smsg').style.color = '#2E7D32';
+  }
+}
+
+// ── GENERATE ──────────────────────────────────────────────────────────────────
+function generateBOM() {
+  if (!selectedModel) {
+    document.getElementById('err-model').style.display = 'block';
+    document.getElementById('smsg').textContent = '⚠ Please select a switch model.';
+    document.getElementById('smsg').style.color = '#C0392B';
+    return false;
+  }
+  const qty = parseInt(document.getElementById('f-qty').value, 10) || 0;
+  if (qty < 1) {
+    document.getElementById('f-qty').classList.add('invalid');
+    document.getElementById('err-qty').style.display = 'block';
+    document.getElementById('smsg').textContent = '⚠ Enter a valid quantity.';
+    document.getElementById('smsg').style.color = '#C0392B';
+    return false;
+  }
+  document.getElementById('f-qty').classList.remove('invalid');
+  document.getElementById('err-qty').style.display = 'none';
+  document.getElementById('smsg').textContent = '';
+
+  const m = selectedModel;
+  const poeChoice = document.getElementById('f-poe').value;
+  const incCloud = document.getElementById('f-cloud').checked;
+  const incAdv = document.getElementById('f-adv').checked && !!m.advLicSku;
+  const incPsu = document.getElementById('f-psu').checked && (m.psu || m.psuLabel);
+
+  // Determine actual SKUs based on PoE choice
+  let hwSku, careSku, poeLabel;
+  if (poeChoice === 'fpoe' && m.fpoeSku) {
+    hwSku = m.fpoeSku; careSku = m.careFpoe; poeLabel = 'FPoE';
+  } else if (poeChoice === 'poe' && m.poeSku) {
+    hwSku = m.poeSku; careSku = m.carePoe; poeLabel = 'PoE';
+  } else {
+    hwSku = m.hwSku; careSku = m.careSku; poeLabel = 'Non-PoE';
+  }
+
+  // Guard — if chosen variant not available
+  if (!hwSku) {
+    document.getElementById('smsg').textContent = '⚠ Selected PoE variant not available for this model — please choose a different option.';
+    document.getElementById('smsg').style.color = '#C0392B';
+    return false;
+  }
+
+  const rows = [];
+  const SEG_LABEL = { retail:'Secure Access — Retail/Branch', medium:'Secure Campus — Medium Campus', large:'Campus Core / Data Center', ot:'Industrial / OT' };
+
+  rows.push({ section: `${SEG_LABEL[m.seg]} · ${hwSku}${qty > 1 ? ` ×${qty}` : ''}` });
+
+  // Hardware
+  rows.push({
+    sku: hwSku, qty, kind:'req',
+    desc: `${hwSku} — ${m.desc}. ${m.features.join(', ')}.`,
+    note: `${poeLabel} · ${m.ports} ports · ↑ ${m.uplink}`,
+  });
+
+  // FortiCare 24×7 — always recommended
+  rows.push({
+    sku: careSku || '—',
+    qty, kind:'req',
+    desc: `24×7 FortiCare Support for ${hwSku} — co-term date-driven (-DD suffix)`,
+    note: `Required for firmware updates, support tickets · co-term -DD`,
+  });
+
+  // Cloud Management License
+  if (incCloud) {
+    rows.push({
+      sku: `FC-10-FSW${m.cloudTier}-628-02-DD`,
+      qty, kind:'opt',
+      desc: `Cloud Management License for ${hwSku} — FortiEdge Cloud management. Note: includes FortiCare only when FortiEdge Cloud is the managing entity.`,
+      note: `FSW${m.cloudTier} tier · co-term -DD`,
+    });
+  }
+
+  // Advanced Switching License
+  if (incAdv) {
+    rows.push({
+      sku: m.advLicSku, qty, kind:'opt',
+      desc: `Advanced Switching License for ${hwSku} — enables dynamic routing protocols (OSPF, BGP, etc.) in standalone mode`,
+      note: 'Per switch unit',
+    });
+  }
+
+  // PSU
+  if (incPsu) {
+    const psuSku = m.psu || 'See note';
+    rows.push({
+      sku: psuSku, qty, kind:'opt',
+      desc: `Redundant/Spare Power Supply for ${hwSku}`,
+      note: m.psuLabel || psuSku,
+    });
+  }
+
+  // Transceivers
+  const tranChecked = [...document.querySelectorAll('.tran-cb:checked')];
+  if (tranChecked.length > 0) {
+    rows.push({ section: 'SFP / QSFP Transceivers' });
+    for (const cb of tranChecked) {
+      const tSku = cb.dataset.sku;
+      const tQtyEl = document.querySelector(`.tran-qty[data-sku="${tSku}"]`);
+      const tQty = parseInt(tQtyEl?.value, 10) || 1;
+      const tInfo = TRAN_PROFILES[m.tranProfile]?.find(t => t.sku === tSku);
+      rows.push({
+        sku: tSku, qty: tQty, kind:'opt',
+        desc: tInfo ? `${tInfo.desc}` : tSku,
+        note: tSku.includes('BD27') || tSku.includes('BD33') ? '⚠ Must be ordered and connected as BD27+BD33 pair' : '',
+      });
+    }
+  }
+
+  _lastLabel = `${hwSku} ×${qty} — ${poeLabel}${incCloud ? ' + Cloud' : ''}`;
+  _lastRows  = rows;
+  _lastMeta  = { model: m.id, hwSku, qty, poe: poeLabel };
+  renderBOM(rows, _lastMeta);
+  return true;
+}
+
+function renderBOM(rows, meta) {
+  document.getElementById('bom-meta').innerHTML = [
+    { label:'Model',   value: meta.hwSku },
+    { label:'Qty',     value: meta.qty },
+    { label:'PoE',     value: meta.poe },
+    { label:'SKU Suffix', value:'-DD (co-term)' },
+  ].map(m=>`<div class="bom-meta-item"><div class="ml">${m.label}</div><div class="mv">${m.value}</div></div>`).join('');
+
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+  let lines=0, totalQty=0;
+  for (const row of rows) {
+    const tr = document.createElement('tr');
+    if (row.section !== undefined) {
+      tr.className = 'rs';
+      tr.innerHTML = `<td colspan="5">${row.section}</td>`;
+    } else {
+      lines++;
+      if (typeof row.qty === 'number') totalQty += row.qty;
+      const bm={req:'<span class="br br-r">Required</span>',opt:'<span class="br br-o">Optional</span>'};
+      tr.innerHTML = `<td><span class="sk">${row.sku}</span></td><td>${row.desc}</td><td class="qc">${row.qty??''}</td><td>${bm[row.kind]||''}</td><td class="nc">${row.note||''}</td>`;
+    }
+    tbody.appendChild(tr);
+  }
+  document.getElementById('bom-totals').innerHTML = `
+    <div class="tc"><div class="tl">Line Items</div><div class="tv">${lines}</div></div>
+    <div class="tc hi"><div class="tl">Total Units</div><div class="tv">${totalQty}</div></div>
+  `;
+  document.getElementById('bom-section').style.display='block';
+  document.getElementById('bom-section').scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('smsg').textContent='✓ BOM generated.';
+  document.getElementById('smsg').style.color='#2E7D32';
+}
+
+function resetForm() {
+  selectedModel = null;
+  document.querySelectorAll('.mc').forEach(c => c.classList.remove('selected'));
+  document.getElementById('f-qty').value = '1';
+  document.getElementById('f-poe').value = 'none';
+  document.getElementById('f-cloud').checked = false;
+  document.getElementById('f-adv').checked = false;
+  document.getElementById('f-psu').checked = false;
+  document.getElementById('tran-grid').innerHTML = '';
+  document.getElementById('tran-empty').style.display = '';
+  document.getElementById('poe-avail-note').textContent = '';
+  document.getElementById('cloud-sku-hint').textContent = 'FC-10-FSW{tier}-628-02-DD — FortiEdge Cloud management';
+  document.getElementById('adv-sku-hint').textContent = 'Enables dynamic routing protocols in standalone mode';
+  document.getElementById('psu-hint').textContent = 'Model-specific PSU — see below';
+  document.getElementById('bom-section').style.display = 'none';
+  document.getElementById('smsg').textContent = '';
+  document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+  document.querySelectorAll('.err').forEach(e => e.style.display = 'none');
+}
+
+function copyTSV() {
+  const rows = document.querySelectorAll('#bom-table tbody tr');
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  rows.forEach(r => {
+    if (r.classList.contains('rs')) { lines.push(`\t${r.querySelector('td').textContent.trim()}\t\t\t`); }
+    else {
+      const c = r.querySelectorAll('td');
+      if (c.length >= 5) lines.push([c[0].textContent.trim(),c[1].textContent.trim(),c[2].textContent.trim(),c[3].textContent.trim(),c[4].textContent.trim()].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => { document.getElementById('smsg').textContent='✓ Copied.'; document.getElementById('smsg').style.color='#2E7D32'; });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+buildModelGrid();
+</script>
+</body>
+</html>

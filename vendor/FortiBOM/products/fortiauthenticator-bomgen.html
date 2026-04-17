@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FortiAuthenticator – BOM Generator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.5;background:var(--forti-bg);color:var(--forti-text);padding:20px}
+:root{
+  --forti-red:#EE3124;--forti-border:#DDE1E9;--forti-bg:#F2F4F7;--forti-white:#FFFFFF;
+  --forti-text:#2A2F3A;--forti-text-secondary:#6B7589;--forti-text-muted:#9BA5BA;
+  --forti-section-header:#F7F9FC;--forti-input-border:#C8CDD9;
+  --forti-table-head:#EEF1F6;--forti-table-stripe:#F7F9FC;
+  --forti-info-bg:#EEF3FF;--forti-info-border:#B8CBF5;--forti-info-text:#3557A5;
+  --forti-warn-bg:#FFF8EE;--forti-warn-border:#F5D9A0;--forti-warn-text:#8A5800;
+}
+h1{font-size:17px;font-weight:700}
+h2{font-size:13px;font-weight:700;color:var(--forti-text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+h3{font-size:12px;font-weight:600;color:var(--forti-text);margin-bottom:8px}
+.page-header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.header-icon{width:42px;height:42px;background:var(--forti-red);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.header-icon svg{fill:white}
+.header-sub{font-size:11px;color:var(--forti-text-muted);margin-top:2px}
+.card{background:var(--forti-white);border:1px solid var(--forti-border);border-radius:4px;margin-bottom:14px;overflow:hidden}
+.card-head{background:var(--forti-section-header);border-bottom:1px solid var(--forti-border);padding:9px 18px;display:flex;align-items:center;gap:8px}
+.card-body{padding:14px 18px}
+label{display:block;font-size:12px;font-weight:600;color:var(--forti-text-secondary);margin-bottom:4px}
+label span.req{color:var(--forti-red)}
+input[type=number],select{background:white;border:1px solid var(--forti-input-border);border-radius:3px;padding:6px 9px;font-size:13px;width:100%;outline:none}
+input[type=number]:focus,select:focus{border-color:var(--forti-red);box-shadow:0 0 0 2px rgba(238,49,36,.1)}
+input.invalid,select.invalid{border-color:var(--forti-red)!important}
+.err{color:var(--forti-red);font-size:11px;margin-top:3px;display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr));gap:14px}
+.model-card{border:1px solid var(--forti-border);border-radius:4px;padding:10px 12px;cursor:pointer;background:white;transition:border .15s,background .15s}
+.model-card:hover{border-color:#aab0c0;background:#FAFBFD}
+.model-card.selected{border:2px solid var(--forti-red);background:#FEF8F8}
+.model-card .mc-sku{font-family:'Courier New',monospace;font-size:11px;color:#1A4E82;font-weight:700}
+.model-card .mc-name{font-size:12px;font-weight:600;margin-bottom:2px}
+.model-card .mc-desc{font-size:11px;color:var(--forti-text-secondary);margin-top:3px}
+.callout{border-radius:3px;padding:9px 12px;font-size:12px;line-height:1.6;display:flex;gap:8px;margin-bottom:10px}
+.info{background:var(--forti-info-bg);border:1px solid var(--forti-info-border);color:var(--forti-info-text)}
+.warn{background:var(--forti-warn-bg);border:1px solid var(--forti-warn-border);color:var(--forti-warn-text)}
+.callout-icon{font-size:14px;flex-shrink:0;line-height:1.5}
+.band-ind{display:none;background:var(--forti-info-bg);border:1px solid var(--forti-info-border);border-radius:3px;padding:4px 10px;font-size:12px;color:var(--forti-info-text);margin-top:4px}
+.band-ind code{font-family:'Courier New',monospace;font-weight:700;font-size:11px}
+.addon-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;padding:8px 10px;border:1px solid var(--forti-border);border-radius:3px;background:white}
+.addon-row.disabled{opacity:.4;pointer-events:none}
+.addon-row input[type=checkbox]{margin-top:2px;accent-color:var(--forti-red);flex-shrink:0}
+.addon-label{flex:1}
+.addon-label strong{display:block;font-size:12px}
+.addon-label span{font-size:11px;color:var(--forti-text-muted)}
+.addon-qty-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.addon-qty-wrap label{font-size:11px;white-space:nowrap;margin:0;color:var(--forti-text-secondary)}
+.addon-qty-wrap input{width:70px}
+.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+button{padding:7px 16px;border:none;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.btn-primary{background:var(--forti-red);color:white}
+.btn-primary:hover{opacity:.88}
+.btn-green{background:#2E7D32;color:white}
+.btn-green:hover{opacity:.88}
+.btn-ghost{background:white;color:var(--forti-text);border:1px solid var(--forti-border)}
+.btn-ghost:hover{background:#f0f2f6}
+#smsg{font-size:12px;color:#2E7D32;font-weight:600}
+#bom-section{display:none;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--forti-table-head);border:1px solid var(--forti-border);padding:7px 11px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--forti-text-secondary);text-align:left}
+tbody td{border:1px solid var(--forti-border);padding:7px 11px;vertical-align:top}
+tbody tr:nth-child(even) td{background:var(--forti-table-stripe)}
+.section-row td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--forti-text-secondary);padding:5px 11px;border-top:2px solid #C5CAD9}
+.badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 4px;display:inline-block;white-space:nowrap}
+.badge-req{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2}
+.badge-opt{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5}
+.badge-mand{background:#FFF8EE;color:#8A5800;border:1px solid #F5D9A0}
+.badge-inc{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5}
+.sku-cell{font-family:'Courier New',monospace;font-size:11px;color:#1A4E82;white-space:nowrap}
+.nc{color:var(--forti-text-muted);font-size:11px}
+.bom-actions{display:flex;gap:8px;margin-bottom:10px}
+.comp-table{font-size:11px}
+.comp-table th{background:var(--forti-table-head);border:1px solid var(--forti-border);padding:6px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--forti-text-secondary);text-align:left}
+.comp-table td{border:1px solid var(--forti-border);padding:6px 10px;vertical-align:top}
+.comp-table tr:nth-child(even) td{background:var(--forti-table-stripe)}
+.comp-table td.feat-area{font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--forti-text-secondary);background:#EAECF3}
+.chk{color:#2E7D32;font-weight:700}
+.na{color:var(--forti-text-muted)}
+.add-on-wrap{border:1px solid #E5E9F0;border-radius:3px;margin-bottom:6px;overflow:hidden}
+.add-on-wrap .ao-head{background:#F5F7FB;padding:6px 10px;font-size:11px;font-weight:700;color:var(--forti-text-secondary);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #E5E9F0}
+.add-on-wrap .ao-body{padding:8px 10px}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ PAGE HEADER ═══════════════════════════════ -->
+<div class="page-header">
+  <div class="header-icon">
+    <svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 1C8.68 1 6 3.68 6 7v1H4v14h16V8h-2V7c0-3.32-2.68-6-6-6zm0 2c2.21 0 4 1.79 4 4v1H8V7c0-2.21 1.79-4 4-4zm0 9a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>
+  </div>
+  <div>
+    <h1>FortiAuthenticator</h1>
+    <div class="header-sub">BOM Generator · Ordering Guide FAC-OG-R19-20260410</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ FEATURE COMPARISON ═══════════════════════════════ -->
+<div class="card">
+  <div class="card-head"><h2 style="margin:0">Deployment Type Comparison</h2></div>
+  <div class="card-body" style="overflow-x:auto">
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th>Functional Area</th>
+          <th>Feature</th>
+          <th>Appliance &amp; VM</th>
+          <th>FAC Cloud</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="feat-area" colspan="4">RADIUS</td></tr>
+        <tr><td></td><td>VPN / Admin / 802.1X / Dynamic VLAN / CoA</td><td class="chk">✔</td><td class="chk">✔</td></tr>
+        <tr><td class="feat-area" colspan="4">TACACS+</td></tr>
+        <tr><td></td><td>Admin Authentication &amp; Command Authorization</td><td class="chk">✔</td><td class="na">N/A</td></tr>
+        <tr><td class="feat-area" colspan="4">FSSO</td></tr>
+        <tr><td></td><td>FortiGate Polling, Collector Agent, Syslog, RSSO, WSSO, SSO Mobility Agent</td><td class="chk">✔</td><td class="chk">✔</td></tr>
+        <tr><td class="feat-area" colspan="4">Single Sign-On</td></tr>
+        <tr><td></td><td>SAML IdP/Proxy, SSLVPN, Google/AWS/Azure/O365, OAuth2/OIDC, SCIM</td><td class="chk">✔</td><td class="chk">✔</td></tr>
+        <tr><td class="feat-area" colspan="4">MFA</td></tr>
+        <tr><td></td><td>FortiToken Mobile (FTM)</td><td class="chk">✔ (incl.)</td><td>Add-on</td></tr>
+        <tr><td></td><td>FortiToken Hardware (FTK)</td><td class="chk">✔ (incl.)</td><td>Add-on</td></tr>
+        <tr><td></td><td>SMS OTP, Email OTP, FIDO Passwordless, Adaptive Auth, Windows/OWA Agent</td><td class="chk">✔</td><td class="chk">✔</td></tr>
+        <tr><td class="feat-area" colspan="4">Portals &amp; PKI</td></tr>
+        <tr><td></td><td>Captive Portal, Self-Registration, Guest, Social Login</td><td class="chk">✔</td><td class="chk">✔</td></tr>
+        <tr><td></td><td>Server/User Certificates, VPNs, SCEP, ZTNA, CMPv2</td><td class="chk">✔</td><td class="chk">✔</td></tr>
+        <tr><td class="feat-area" colspan="4">HA &amp; Load Balancing</td></tr>
+        <tr><td></td><td>Active-Passive HA / Load Balancing</td><td class="chk">✔ (sep. license per node)</td><td class="na">N/A (built-in)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ STEP 1: DEPLOYMENT TYPE ═══════════════════════════════ -->
+<div class="card">
+  <div class="card-head"><h2 style="margin:0">Step 1 · Deployment Type <span style="color:var(--forti-red)">*</span></h2></div>
+  <div class="card-body">
+    <div class="grid" id="deploy-grid">
+      <div class="model-card selected" onclick="selectDeploy('hw')" id="dc-hw">
+        <div class="mc-name">Hardware Appliance</div>
+        <div class="mc-sku">FAC-300F / 800F / 3000F</div>
+        <div class="mc-desc">Physical F-series appliance. Perpetual. HA via 2nd appliance.</div>
+      </div>
+      <div class="model-card" onclick="selectDeploy('vm-perp')" id="dc-vm-perp">
+        <div class="mc-name">VM – Perpetual</div>
+        <div class="mc-sku">FAC-VM-Base + upgrades</div>
+        <div class="mc-desc">One-time VM license. Separate support contract required.</div>
+      </div>
+      <div class="model-card" onclick="selectDeploy('vm-sub')" id="dc-vm-sub">
+        <div class="mc-name">VM – Subscription</div>
+        <div class="mc-sku">FC1/FC2/FC3-10-ACVMS-…</div>
+        <div class="mc-desc">Per-user subscription with FortiCare Elite included. v8.0+.</div>
+      </div>
+      <div class="model-card" onclick="selectDeploy('cloud')" id="dc-cloud">
+        <div class="mc-name">FAC Cloud</div>
+        <div class="mc-sku">FC2–FC5-10-ACCLD-…</div>
+        <div class="mc-desc">SaaS. HA &amp; FortiCare Premium included. No on-prem infra.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ STEP 2: HARDWARE CONFIG ═══════════════════════════════ -->
+<div class="card" id="sec-hw">
+  <div class="card-head"><h2 style="margin:0">Step 2 · Hardware Model</h2></div>
+  <div class="card-body">
+    <div class="grid" id="hw-model-grid">
+      <div class="model-card selected" onclick="selectHWModel('300F')" id="hm-300F">
+        <div class="mc-name">FAC-300F</div>
+        <div class="mc-sku">FAC-300F</div>
+        <div class="mc-desc">4× GE RJ45 · 2× 1TB HDD<br>1,500 users base → 3,500 max</div>
+      </div>
+      <div class="model-card" onclick="selectHWModel('800F')" id="hm-800F">
+        <div class="mc-name">FAC-800F</div>
+        <div class="mc-sku">FAC-800F</div>
+        <div class="mc-desc">4× GE RJ45 · 2× GE SFP · 2× 2TB HDD<br>8,000 users base → 18,000 max</div>
+      </div>
+      <div class="model-card" onclick="selectHWModel('3000F')" id="hm-3000F">
+        <div class="mc-name">FAC-3000F</div>
+        <div class="mc-sku">FAC-3000F</div>
+        <div class="mc-desc">4× GE RJ45 · 2× 10GE SFP · 2× 2TB SAS<br>40,000 users base → 240,000 max</div>
+      </div>
+    </div>
+    <div style="margin-top:14px" class="grid">
+      <div>
+        <label>User Upgrade (optional) <span class="nc">– stackable, target total users</span></label>
+        <input type="number" id="hw-users" min="0" value="0" oninput="updateHWUpgrade()">
+        <div class="err" id="err-hw-users">Enter a valid user count.</div>
+        <div class="band-ind" id="hw-upgrade-info"></div>
+      </div>
+      <div>
+        <label>HA (Active-Passive)?</label>
+        <select id="hw-ha" onchange="renderForm()">
+          <option value="0">No HA</option>
+          <option value="1">Yes – add 2nd appliance</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="callout info"><span class="callout-icon">ℹ</span>
+        <span>FortiCare support is required per appliance. HA nodes require separate licensing for FortiCare and FortiClient SSO Mobility. FTM license is replicated across HA nodes (no extra FTM license needed).</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ STEP 2: VM PERPETUAL ═══════════════════════════════ -->
+<div class="card" id="sec-vm-perp" style="display:none">
+  <div class="card-head"><h2 style="margin:0">Step 2 · VM Perpetual Configuration</h2></div>
+  <div class="card-body">
+    <div class="grid">
+      <div>
+        <label>Total Users Required <span class="req">*</span></label>
+        <input type="number" id="vmp-users" min="100" value="500" oninput="updateVMPUpgrade()">
+        <div class="err" id="err-vmp-users">Enter a valid user count (min 100).</div>
+        <div class="band-ind" id="vmp-upgrade-info" style="display:block"></div>
+      </div>
+      <div>
+        <label>HA (Active-Passive)?</label>
+        <select id="vmp-ha" onchange="renderForm()">
+          <option value="0">No HA</option>
+          <option value="1">Yes – add 2nd VM (separate license)</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="callout info"><span class="callout-icon">ℹ</span>
+        <span>VM base license supports 100 users. Expand with upgrade packs (100, 1000, 10,000 user increments) up to 1M+ users. Support contracts are separate and are not stackable. HA nodes require separate licensing.</span>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label>Support Contract Tier <span class="req">*</span></label>
+      <select id="vmp-support">
+        <option value="FC1">FC1 – 1–500 users</option>
+        <option value="FC2">FC2 – 1–1,100 users</option>
+        <option value="FC3">FC3 – 1–5,100 users</option>
+        <option value="FC4">FC4 – 1–10,100 users</option>
+        <option value="FC8">FC8 – 1–25,100 users</option>
+        <option value="FC5">FC5 – 1–50,100 users</option>
+        <option value="FC6">FC6 – 1–100,100 users</option>
+        <option value="FC9">FC9 – 1–500,100 users</option>
+        <option value="FC7">FC7 – 1–1M users</option>
+        <option value="FCA">FCA – 1M+ users</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ STEP 2: VM SUBSCRIPTION ═══════════════════════════════ -->
+<div class="card" id="sec-vm-sub" style="display:none">
+  <div class="card-head"><h2 style="margin:0">Step 2 · VM Subscription Configuration</h2></div>
+  <div class="card-body">
+    <div class="grid">
+      <div>
+        <label>Total Users Required <span class="req">*</span></label>
+        <input type="number" id="vms-users" min="100" value="500" oninput="updateVMSBand()">
+        <div class="err" id="err-vms-users">Enter a valid user count (min 100).</div>
+        <div class="band-ind" id="vms-band-ind" style="display:block"></div>
+      </div>
+      <div>
+        <label>HA (Active-Passive)?</label>
+        <select id="vms-ha">
+          <option value="0">No HA</option>
+          <option value="1">Yes – add 2nd VM subscription</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="callout info"><span class="callout-icon">ℹ</span>
+        <span>VM Subscription includes FortiCare Elite Support. Available in FortiAuthenticator v8.0+. HA node requires a second matching subscription license.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ STEP 2: CLOUD ═══════════════════════════════ -->
+<div class="card" id="sec-cloud" style="display:none">
+  <div class="card-head"><h2 style="margin:0">Step 2 · FAC Cloud Configuration</h2></div>
+  <div class="card-body">
+    <div class="grid">
+      <div>
+        <label>Total Users Required <span class="req">*</span></label>
+        <input type="number" id="cld-users" min="100" value="500" oninput="updateCloudBand()">
+        <div class="err" id="err-cld-users">Enter a valid user count (min 100).</div>
+        <div class="band-ind" id="cld-band-ind" style="display:block"></div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="callout info"><span class="callout-icon">ℹ</span>
+        <span>FAC Cloud includes built-in HA/redundancy and FortiCare Premium Support. No secondary node required. TACACS+ and on-premises HA/LB are N/A for cloud deployments.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ STEP 3: MFA TOKENS ═══════════════════════════════ -->
+<div class="card">
+  <div class="card-head"><h2 style="margin:0">Step 3 · MFA Token Add-Ons</h2></div>
+  <div class="card-body">
+    <div class="callout warn" style="margin-bottom:12px"><span class="callout-icon">⚠</span>
+      <span>Software and hardware tokens are purchased separately for all deployment types. For FAC Cloud, FortiToken Mobile and hardware tokens are add-on purchases.</span>
+    </div>
+
+    <div class="add-on-wrap">
+      <div class="ao-head">FortiToken Mobile (Software) – FTM-ELIC tiers</div>
+      <div class="ao-body">
+        <label>Total FortiToken Mobile licenses needed</label>
+        <input type="number" id="ftm-total" min="0" value="0" style="width:160px" oninput="updateFTMInfo()">
+        <div class="band-ind" id="ftm-info" style="display:block;margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div class="add-on-wrap" style="margin-top:8px">
+      <div class="ao-head">FortiToken Hardware (FTK) – FortiToken-200B</div>
+      <div class="ao-body">
+        <div class="grid">
+          <div>
+            <label>500-packs (FortiToken-200B)</label>
+            <input type="number" id="ftk-500" min="0" value="0" style="width:100px">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="add-on-wrap" style="margin-top:8px">
+      <div class="ao-head">FIDO Passwordless – FTK400 tokens (separate purchase)</div>
+      <div class="ao-body">
+        <label>Qty of FIDO FTK400 tokens</label>
+        <input type="number" id="fido-qty" min="0" value="0" style="width:100px">
+      </div>
+    </div>
+
+    <div class="add-on-wrap" style="margin-top:8px">
+      <div class="ao-head">FortiGuard SMS Credits – SMS-ELIC-100</div>
+      <div class="ao-body">
+        <label>Packs of 100 SMS credits</label>
+        <input type="number" id="sms-packs" min="0" value="0" style="width:100px">
+        <div class="nc" style="margin-top:4px;font-size:11px">FortiGuard SMS license required, or use 3rd-party gateway. If purchasing FTM tokens, include 2× No. of tokens as SMS credits (must be used within 1 year). SMS SKUs for FortiIdentity Cloud cannot be applied to FAC SMS.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ STEP 4: ADD-ONS ═══════════════════════════════ -->
+<div class="card">
+  <div class="card-head"><h2 style="margin:0">Step 4 · Other Add-Ons</h2></div>
+  <div class="card-body">
+    <div class="add-on-wrap">
+      <div class="ao-head">FortiClient SSO Mobility Agent License</div>
+      <div class="ao-body">
+        <div class="callout info" style="margin-bottom:10px"><span class="callout-icon">ℹ</span>
+          <span>Enables transparent SSO and user-to-IP mapping for FortiGate identity-based policy. Stackable. HA nodes require separate licensing. Does not include FortiClient Endpoint Control License.</span>
+        </div>
+        <div class="grid">
+          <div>
+            <label>SSO Mobility Tier</label>
+            <select id="sso-tier">
+              <option value="none">Not required</option>
+              <option value="2K">FCC-FAC2K-LIC – 2,000 connections</option>
+              <option value="10K">FCC-FAC10K-LIC – 10,000 connections</option>
+              <option value="UNL">FCC-FACUNL-LIC – Unlimited connections</option>
+            </select>
+          </div>
+          <div id="sso-qty-wrap">
+            <label>Qty</label>
+            <input type="number" id="sso-qty" min="1" value="1" style="width:80px">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ ACTIONS ═══════════════════════════════ -->
+<div class="actions">
+  <button class="btn-primary" onclick="generateBOM()">Preview BOM</button>
+  <button class="btn-green" onclick="addToProjectBOM()">Add to Project BOM</button>
+  <button class="btn-ghost" onclick="resetForm()">Reset</button>
+  <span id="smsg"></span>
+</div>
+
+<!-- ═══════════════════════════════ BOM PREVIEW ═══════════════════════════════ -->
+<div id="bom-section" class="card">
+  <div class="card-head" style="justify-content:space-between">
+    <h2 style="margin:0">BOM Preview</h2>
+    <div class="bom-actions" style="margin:0">
+      <button class="btn-ghost" style="padding:4px 10px;font-size:11px" onclick="copyTSV()">Copy TSV</button>
+      <button class="btn-ghost" style="padding:4px 10px;font-size:11px" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0;overflow-x:auto">
+    <table id="bom-table">
+      <thead>
+        <tr>
+          <th>Part Number</th>
+          <th>Description</th>
+          <th>Qty</th>
+          <th>Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+/* ═══════════════ STATE ═══════════════ */
+let _deploy = 'hw';
+let _hwModel = '300F';
+let _lastRows = [];
+let _lastLabel = '';
+let _lastMeta = {};
+
+/* ═══════════════ DATA ═══════════════ */
+const HW_MODELS = {
+  '300F': { sku:'FAC-300F', base:1500, max:3500,
+    care:'FC1-10-AC8HF-247-02-DD' },
+  '800F': { sku:'FAC-800F', base:8000, max:18000,
+    care:'FC1-10-AC8HF-247-02-DD' /* placeholder – use same code */ },
+  '3000F':{ sku:'FAC-3000F', base:40000, max:240000,
+    care:'FC1-10-A3KHF-247-02-DD' }
+};
+
+// Hardware upgrade packs – applicable by model
+const HW_UG_TIERS = [
+  { sku:'FAC-HW-100KUG', units:100000, desc:'100,000 user upgrade (3000F only)',    models:['3000F'] },
+  { sku:'FAC-HW-10KUG',  units:10000,  desc:'10,000 user upgrade (800F / 3000F)',   models:['800F','3000F'] },
+  { sku:'FAC-HW-1000UG', units:1000,   desc:'1,000 user upgrade',                   models:['300F','800F','3000F'] },
+  { sku:'FAC-HW-100UG',  units:100,    desc:'100 user upgrade',                      models:['300F','800F','3000F'] },
+];
+
+// VM Perpetual upgrade tiers
+const VMP_UG_TIERS = [
+  { sku:'FAC-VM-10000-UG', units:10000, desc:'VM 10,000 user upgrade' },
+  { sku:'FAC-VM-1000-UG',  units:1000,  desc:'VM 1,000 user upgrade' },
+  { sku:'FAC-VM-100-UG',   units:100,   desc:'VM 100 user upgrade' },
+];
+
+// VM Sub bands
+const VMS_BANDS = [
+  { band:'FC1', min:100,   max:999,   sku:'FC1-10-ACVMS-1268-02-DD', desc:'VM Subscription 100–999 users, FortiCare Elite' },
+  { band:'FC2', min:1000,  max:99999, sku:'FC2-10-ACVMS-1268-02-DD', desc:'VM Subscription 1,000–99,999 users, FortiCare Elite' },
+  { band:'FC3', min:100000,max:Infinity,sku:'FC3-10-ACVMS-1268-02-DD',desc:'VM Subscription 100,000+ users, FortiCare Elite' },
+];
+
+// Cloud bands
+const CLD_BANDS = [
+  { band:'FC2', min:100,   max:499,   sku:'FC2-10-ACCLD-511-02-DD', desc:'FAC Cloud 100–499 users, FortiCare Premium' },
+  { band:'FC3', min:500,   max:1999,  sku:'FC3-10-ACCLD-511-02-DD', desc:'FAC Cloud 500–1,999 users, FortiCare Premium' },
+  { band:'FC4', min:2000,  max:9999,  sku:'FC4-10-ACCLD-511-02-DD', desc:'FAC Cloud 2,000–9,999 users, FortiCare Premium' },
+  { band:'FC5', min:10000, max:Infinity,sku:'FC5-10-ACCLD-511-02-DD',desc:'FAC Cloud 10,000+ users, FortiCare Premium' },
+];
+
+// VM Perp support map
+const VMP_SUPPORT_MAP = {
+  'FC1':'FC1-10-0ACVM-248-02-DD',
+  'FC2':'FC2-10-0ACVM-248-02-DD',
+  'FC3':'FC3-10-0ACVM-248-02-DD',
+  'FC4':'FC4-10-0ACVM-248-02-DD',
+  'FC8':'FC8-10-0ACVM-248-02-DD',
+  'FC5':'FC5-10-0ACVM-248-02-DD',
+  'FC6':'FC6-10-0ACVM-248-02-DD',
+  'FC9':'FC9-10-0ACVM-248-02-DD',
+  'FC7':'FC7-10-0ACVM-248-02-DD',
+  'FCA':'FCA-10-0ACVM-248-02-DD',
+};
+const VMP_SUPPORT_DESCS = {
+  'FC1':'1 Year 24×7 FortiCare (1–500 users)',
+  'FC2':'1 Year 24×7 FortiCare (1–1,100 users)',
+  'FC3':'1 Year 24×7 FortiCare (1–5,100 users)',
+  'FC4':'1 Year 24×7 FortiCare (1–10,100 users)',
+  'FC8':'1 Year 24×7 FortiCare (1–25,100 users)',
+  'FC5':'1 Year 24×7 FortiCare (1–50,100 users)',
+  'FC6':'1 Year 24×7 FortiCare (1–100,100 users)',
+  'FC9':'1 Year 24×7 FortiCare (1–500,100 users)',
+  'FC7':'1 Year 24×7 FortiCare (1–1M users)',
+  'FCA':'FortiCare Premium (1M+ users)',
+};
+
+// FTM tiers (packing)
+const FTM_TIERS = [
+  { sku:'FTM-ELIC-5000', units:5000, desc:'5,000 FortiToken Mobile licenses' },
+  { sku:'FTM-ELIC-2000', units:2000, desc:'2,000 FortiToken Mobile licenses' },
+  { sku:'FTM-ELIC-1000', units:1000, desc:'1,000 FortiToken Mobile licenses' },
+  { sku:'FTM-ELIC-200',  units:200,  desc:'200 FortiToken Mobile licenses' },
+  { sku:'FTM-ELIC-100',  units:100,  desc:'100 FortiToken Mobile licenses' },
+];
+
+const SSO_SKUS = {
+  '2K':  { sku:'FCC-FAC2K-LIC',   desc:'FortiClient SSO Mobility – 2,000 connections' },
+  '10K': { sku:'FCC-FAC10K-LIC',  desc:'FortiClient SSO Mobility – 10,000 connections' },
+  'UNL': { sku:'FCC-FACUNL-LIC',  desc:'FortiClient SSO Mobility – Unlimited connections' },
+};
+
+/* ═══════════════ UI HELPERS ═══════════════ */
+function selectDeploy(d) {
+  _deploy = d;
+  ['hw','vm-perp','vm-sub','cloud'].forEach(x => {
+    document.getElementById('dc-'+x).classList.toggle('selected', x===d);
+    const sec = document.getElementById('sec-'+x);
+    if(sec) sec.style.display = x===d ? '' : 'none';
+  });
+}
+
+function selectHWModel(m) {
+  _hwModel = m;
+  ['300F','800F','3000F'].forEach(x => {
+    document.getElementById('hm-'+x).classList.toggle('selected', x===m);
+  });
+  updateHWUpgrade();
+}
+
+function renderForm() {} // placeholder for onchange hooks
+
+function iv(id){ return parseInt(document.getElementById(id).value)||0; }
+function sv(id){ return document.getElementById(id).value; }
+
+function packTiers(total, tiers, filter) {
+  let remaining = total;
+  const result = [];
+  const availTiers = filter ? tiers.filter(t => !t.models || t.models.includes(filter)) : tiers;
+  for(const t of availTiers) {
+    const qty = Math.floor(remaining / t.units);
+    if(qty>0){ result.push({...t, qty}); remaining -= qty*t.units; }
+  }
+  if(remaining>0) {
+    const smallest = availTiers[availTiers.length-1];
+    result.push({...smallest, qty:1});
+  }
+  return result;
+}
+
+function updateHWUpgrade() {
+  const users = iv('hw-users');
+  const model = HW_MODELS[_hwModel];
+  const el = document.getElementById('hw-upgrade-info');
+  if(users <= 0){ el.style.display='none'; return; }
+  if(users > model.max - model.base) {
+    el.style.display='block';
+    el.innerHTML = `⚠ Max upgradeable users for ${_hwModel}: ${model.max.toLocaleString()}`;
+    return;
+  }
+  el.style.display='block';
+  el.innerHTML = `Base: ${model.base.toLocaleString()} → Target: ${(model.base+users).toLocaleString()} / Max: ${model.max.toLocaleString()}`;
+}
+
+function updateVMPUpgrade() {
+  const users = iv('vmp-users');
+  const el = document.getElementById('vmp-upgrade-info');
+  const upgrades = users > 100 ? users - 100 : 0;
+  const packed = upgrades > 0 ? packTiers(upgrades, VMP_UG_TIERS) : [];
+  if(users < 100){ el.style.display='block'; el.textContent='Minimum 100 users (base license).'; return; }
+  el.style.display='block';
+  el.innerHTML = `Base: 100 users. Upgrades needed: ${upgrades.toLocaleString()} → ${packed.map(p=>p.qty+'× '+p.sku).join(', ') || 'none'}`;
+}
+
+function updateVMSBand() {
+  const users = iv('vms-users');
+  const el = document.getElementById('vms-band-ind');
+  const band = VMS_BANDS.find(b => users >= b.min && users <= b.max);
+  el.style.display='block';
+  el.innerHTML = band
+    ? `Band: <code>${band.band}</code> · ${band.min.toLocaleString()}–${band.max===Infinity?'unlimited':band.max.toLocaleString()} users`
+    : '⚠ Enter valid user count (min 100)';
+}
+
+function updateCloudBand() {
+  const users = iv('cld-users');
+  const el = document.getElementById('cld-band-ind');
+  const band = CLD_BANDS.find(b => users >= b.min && users <= b.max);
+  el.style.display='block';
+  el.innerHTML = band
+    ? `Band: <code>${band.band}</code> · ${band.min.toLocaleString()}–${band.max===Infinity?'unlimited':band.max.toLocaleString()} users`
+    : '⚠ Enter valid user count (min 100)';
+}
+
+function updateFTMInfo() {
+  const total = iv('ftm-total');
+  const el = document.getElementById('ftm-info');
+  if(total<=0){ el.style.display='none'; return; }
+  const packed = packTiers(total, FTM_TIERS);
+  el.style.display='block';
+  el.innerHTML = `Packing: ${packed.map(p=>p.qty+'× '+p.sku).join(' + ')}`;
+}
+
+/* ═══════════════ GENERATE BOM ═══════════════ */
+function generateBOM() {
+  clearErrors();
+  const rows = [];
+  let valid = true;
+
+  // ── HARDWARE ──
+  if(_deploy === 'hw') {
+    const m = HW_MODELS[_hwModel];
+    const haQty = iv('hw-ha');
+    const ugUsers = iv('hw-users');
+
+    rows.push({section:'Hardware Appliance'});
+    rows.push({sku:m.sku, desc:`FortiAuthenticator ${_hwModel} Appliance`, qty:1, kind:'req', note:'Primary unit'});
+
+    // User upgrades
+    if(ugUsers > 0) {
+      const upgPacked = packTiers(ugUsers, HW_UG_TIERS, _hwModel);
+      rows.push({section:'Hardware User Upgrades'});
+      upgPacked.forEach(p => rows.push({sku:p.sku, desc:p.desc, qty:p.qty, kind:'req', note:'Stackable'}));
+    }
+
+    // FortiCare per appliance
+    rows.push({section:'FortiCare Support'});
+    rows.push({sku:m.care, desc:`FortiCare Support for FAC-${_hwModel}`, qty:1, kind:'req', note:'Per appliance · -DD term'});
+
+    // HA
+    if(haQty >= 1) {
+      rows.push({section:'High Availability (2nd Node)'});
+      rows.push({sku:m.sku, desc:`FortiAuthenticator ${_hwModel} – HA Secondary`, qty:1, kind:'req', note:'Active-Passive HA'});
+      rows.push({sku:m.care, desc:`FortiCare Support for FAC-${_hwModel} (HA node)`, qty:1, kind:'req', note:'Separate per node'});
+    }
+
+    _lastLabel = `FAC-${_hwModel}${haQty?'+HA':''} · HW`;
+    _lastMeta = {deploy:'Hardware',model:'FAC-'+_hwModel, ha:haQty?'Yes':'No'};
+  }
+
+  // ── VM PERPETUAL ──
+  else if(_deploy === 'vm-perp') {
+    const users = iv('vmp-users');
+    const ha = iv('vmp-ha');
+    const support = sv('vmp-support');
+    if(!users || users < 100) { showErr('err-vmp-users'); valid=false; }
+    if(!valid) return false;
+
+    const upgrades = users - 100;
+    const packed = upgrades > 0 ? packTiers(upgrades, VMP_UG_TIERS) : [];
+
+    rows.push({section:'VM Perpetual License'});
+    rows.push({sku:'FAC-VM-Base', desc:'FortiAuthenticator VM Base License (100 users)', qty:1, kind:'req', note:'Base'});
+    if(packed.length > 0) {
+      rows.push({section:'VM User Upgrades'});
+      packed.forEach(p => rows.push({sku:p.sku, desc:p.desc, qty:p.qty, kind:'req', note:'Stackable'}));
+    }
+
+    rows.push({section:'Support Contract'});
+    rows.push({sku:VMP_SUPPORT_MAP[support], desc:VMP_SUPPORT_DESCS[support], qty:1, kind:'req', note:`${support} band · -DD term`});
+
+    if(ha >= 1) {
+      rows.push({section:'HA Node (2nd VM)'});
+      rows.push({sku:'FAC-VM-Base', desc:'FortiAuthenticator VM Base – HA Node', qty:1, kind:'req', note:'Separate license per node'});
+      if(packed.length > 0) packed.forEach(p => rows.push({sku:p.sku, desc:p.desc+' (HA node)', qty:p.qty, kind:'req', note:'HA node upgrades'}));
+      rows.push({sku:VMP_SUPPORT_MAP[support], desc:VMP_SUPPORT_DESCS[support]+' (HA node)', qty:1, kind:'req', note:'HA node support'});
+    }
+
+    _lastLabel = `FAC-VM Perpetual ${users.toLocaleString()} users${ha?' +HA':''}`;
+    _lastMeta = {deploy:'VM Perpetual', users, ha:ha?'Yes':'No'};
+  }
+
+  // ── VM SUBSCRIPTION ──
+  else if(_deploy === 'vm-sub') {
+    const users = iv('vms-users');
+    const ha = iv('vms-ha');
+    if(!users || users < 100) { showErr('err-vms-users'); valid=false; }
+    if(!valid) return false;
+
+    const band = VMS_BANDS.find(b => users >= b.min && users <= b.max);
+    if(!band) { showErr('err-vms-users'); return false; }
+
+    rows.push({section:'VM Subscription'});
+    rows.push({sku:band.sku, desc:band.desc, qty:users, kind:'req', note:`${band.band} band · -DD term`});
+
+    if(ha >= 1) {
+      rows.push({section:'HA Node (2nd VM Subscription)'});
+      rows.push({sku:band.sku, desc:band.desc+' (HA node)', qty:users, kind:'req', note:'Matching subscription required for HA node'});
+    }
+
+    _lastLabel = `FAC VM Sub ${users.toLocaleString()} users (${band.band})${ha?' +HA':''}`;
+    _lastMeta = {deploy:'VM Subscription', users, band:band.band, ha:ha?'Yes':'No'};
+  }
+
+  // ── CLOUD ──
+  else if(_deploy === 'cloud') {
+    const users = iv('cld-users');
+    if(!users || users < 100) { showErr('err-cld-users'); valid=false; }
+    if(!valid) return false;
+
+    const band = CLD_BANDS.find(b => users >= b.min && users <= b.max);
+    if(!band) { showErr('err-cld-users'); return false; }
+
+    rows.push({section:'FAC Cloud Subscription'});
+    rows.push({sku:band.sku, desc:band.desc, qty:users, kind:'req', note:`${band.band} band · HA & FortiCare Premium included · -DD term`});
+    rows.push({sku:'INCLUDED', desc:'FAC Cloud HA / Service Redundancy', qty:1, kind:'inc', note:'Built-in Fortinet cloud HA'});
+
+    _lastLabel = `FAC Cloud ${users.toLocaleString()} users (${band.band})`;
+    _lastMeta = {deploy:'FAC Cloud', users, band:band.band, ha:'Included'};
+  }
+
+  // ── MFA TOKENS ──
+  const ftmTotal = iv('ftm-total');
+  const ftk500 = iv('ftk-500');
+  const fidoQty = iv('fido-qty');
+  const smsPacks = iv('sms-packs');
+
+  if(ftmTotal > 0 || ftk500 > 0 || fidoQty > 0 || smsPacks > 0) {
+    rows.push({section:'MFA Tokens & SMS'});
+  }
+  if(ftmTotal > 0) {
+    const packed = packTiers(ftmTotal, FTM_TIERS);
+    packed.forEach(p => rows.push({sku:p.sku, desc:p.desc, qty:p.qty, kind:'opt', note:'FTM license replicated across HA nodes (no extra needed for HA)'}));
+  }
+  if(ftk500 > 0) {
+    rows.push({sku:'FortiToken-200B', desc:'FortiToken 200B – Hardware OTP Token (500-pack)', qty:ftk500, kind:'opt', note:'Physical TOTP tokens'});
+  }
+  if(fidoQty > 0) {
+    rows.push({sku:'FTK400', desc:'FIDO FTK400 Passwordless Token', qty:fidoQty, kind:'opt', note:'FIDO2 passwordless auth'});
+  }
+  if(smsPacks > 0) {
+    rows.push({sku:'SMS-ELIC-100', desc:'FortiGuard SMS – 100 SMS credit pack', qty:smsPacks, kind:'opt', note:'Stackable · use within 1 year · 3rd-party gateway also supported'});
+  }
+
+  // ── SSO MOBILITY ──
+  const ssoTier = sv('sso-tier');
+  const ssoQty = iv('sso-qty');
+  const hasHA = (_deploy==='hw'&&iv('hw-ha')>=1)||(_deploy==='vm-perp'&&iv('vmp-ha')>=1)||(_deploy==='vm-sub'&&iv('vms-ha')>=1);
+  if(ssoTier !== 'none' && ssoQty > 0) {
+    rows.push({section:'FortiClient SSO Mobility'});
+    const s = SSO_SKUS[ssoTier];
+    rows.push({sku:s.sku, desc:s.desc, qty:ssoQty, kind:'opt', note:'Stackable · HA nodes need separate license'});
+    if(hasHA) {
+      rows.push({sku:s.sku, desc:s.desc+' (HA node)', qty:ssoQty, kind:'opt', note:'Required per HA node'});
+    }
+    if(ssoTier==='2K'&&ssoQty===1) {
+      rows.push({sku:'⚠', desc:'Note: Does not include FortiClient Endpoint Control License for FortiGate', qty:null, kind:'note', note:''});
+    }
+  }
+
+  _lastRows = rows;
+  renderBOM(rows);
+  return true;
+}
+
+/* ═══════════════ RENDER BOM ═══════════════ */
+function renderBOM(rows) {
+  const body = document.getElementById('bom-body');
+  body.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    if(r.section !== undefined) {
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${r.section}</td>`;
+    } else {
+      const badgeMap = {req:'req',opt:'opt',mand:'mand',inc:'inc',note:''};
+      const badgeLbl = {req:'Required',opt:'Optional',mand:'Mandatory',inc:'Included'};
+      const bk = badgeMap[r.kind]||'';
+      const badge = bk ? `<span class="badge badge-${bk}">${badgeLbl[r.kind]||r.kind}</span>` : '';
+      const skuClass = r.sku==='⚠'||r.sku==='INCLUDED' ? 'nc' : 'sku-cell';
+      tr.innerHTML = `
+        <td class="${skuClass}">${r.sku}</td>
+        <td>${r.desc}</td>
+        <td>${r.qty !== null && r.qty !== undefined ? r.qty.toLocaleString() : ''}</td>
+        <td>${badge}</td>
+        <td class="nc">${r.note||''}</td>`;
+    }
+    body.appendChild(tr);
+  });
+  const sec = document.getElementById('bom-section');
+  sec.style.display = '';
+  sec.scrollIntoView({behavior:'smooth', block:'start'});
+  document.getElementById('smsg').textContent = '';
+}
+
+/* ═══════════════ ADD TO PROJECT BOM ═══════════════ */
+function addToProjectBOM() {
+  if(!generateBOM()) return;
+  window.parent.postMessage({
+    type: 'FORTIBOM_ADD',
+    product: 'FortiAuthenticator',
+    label: _lastLabel,
+    rows: _lastRows,
+    meta: _lastMeta
+  }, '*');
+  const msg = document.getElementById('smsg');
+  msg.textContent = '✔ Added to Project BOM';
+  setTimeout(()=>msg.textContent='', 3000);
+}
+
+/* ═══════════════ RESET ═══════════════ */
+function resetForm() {
+  selectDeploy('hw');
+  selectHWModel('300F');
+  document.getElementById('hw-users').value=0;
+  document.getElementById('hw-ha').value=0;
+  document.getElementById('vmp-users').value=500;
+  document.getElementById('vmp-ha').value=0;
+  document.getElementById('vmp-support').value='FC1';
+  document.getElementById('vms-users').value=500;
+  document.getElementById('vms-ha').value=0;
+  document.getElementById('cld-users').value=500;
+  document.getElementById('ftm-total').value=0;
+  document.getElementById('ftk-500').value=0;
+  document.getElementById('fido-qty').value=0;
+  document.getElementById('sms-packs').value=0;
+  document.getElementById('sso-tier').value='none';
+  document.getElementById('sso-qty').value=1;
+  document.getElementById('bom-section').style.display='none';
+  document.getElementById('smsg').textContent='';
+  clearErrors();
+  updateHWUpgrade();
+  updateVMPUpgrade();
+  updateVMSBand();
+  updateCloudBand();
+}
+
+function clearErrors() {
+  document.querySelectorAll('.err').forEach(e=>e.style.display='none');
+  document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
+}
+
+function showErr(id) {
+  const el = document.getElementById(id);
+  if(el) el.style.display='block';
+}
+
+/* ═══════════════ COPY TSV ═══════════════ */
+function copyTSV() {
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  _lastRows.forEach(r => {
+    if(r.section) lines.push(`\t[${r.section}]\t\t\t`);
+    else lines.push(`${r.sku}\t${r.desc}\t${r.qty??''}\t${r.kind||''}\t${r.note||''}`);
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    const msg = document.getElementById('smsg');
+    msg.textContent='✔ Copied to clipboard';
+    setTimeout(()=>msg.textContent='',2000);
+  });
+}
+
+/* ═══════════════ INIT ═══════════════ */
+updateHWUpgrade();
+updateVMPUpgrade();
+updateVMSBand();
+updateCloudBand();
+updateFTMInfo();
+</script>
+</body>
+</html>

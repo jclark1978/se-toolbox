@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom SKU — FortiBOM</title>
+<style>
+:root {
+  --forti-red:              #EE3124;
+  --forti-border:           #DDE1E9;
+  --forti-bg:               #F2F4F7;
+  --forti-white:            #FFFFFF;
+  --forti-text:             #2A2F3A;
+  --forti-text-secondary:   #6B7589;
+  --forti-text-muted:       #9BA5BA;
+  --forti-section-header:   #F7F9FC;
+  --forti-input-border:     #C8CDD9;
+  --forti-table-head:       #EEF1F6;
+  --forti-table-stripe:     #F7F9FC;
+  --forti-info-bg:          #EEF3FF;
+  --forti-info-border:      #B8CBF5;
+  --forti-info-text:        #3557A5;
+  --forti-warn-bg:          #FFF8EE;
+  --forti-warn-border:      #F5D9A0;
+  --forti-warn-text:        #8A5800;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--forti-text);
+  background: var(--forti-bg);
+  padding: 20px;
+  margin: 0;
+}
+
+/* ── Page Header ── */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.page-icon {
+  width: 42px; height: 42px;
+  background: var(--forti-red);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.page-icon svg { width: 24px; height: 24px; fill: white; }
+.page-title { font-size: 18px; font-weight: 700; color: var(--forti-text); line-height: 1.2; }
+.page-subtitle { font-size: 11px; color: var(--forti-text-muted); margin-top: 1px; }
+
+/* ── Cards ── */
+.card {
+  background: var(--forti-white);
+  border: 1px solid var(--forti-border);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.card-header {
+  background: var(--forti-section-header);
+  border-bottom: 1px solid var(--forti-border);
+  padding: 9px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-header-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+}
+.card-body { padding: 16px 18px; }
+
+/* ── Form grid ── */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(210px,100%), 1fr));
+  gap: 14px;
+}
+.form-grid-wide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 600px) {
+  .form-grid-wide { grid-template-columns: 1fr; }
+}
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field.full { grid-column: 1 / -1; }
+label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--forti-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+label .req { color: var(--forti-red); margin-left: 2px; }
+input[type=text], input[type=number], select, textarea {
+  background: white;
+  border: 1px solid var(--forti-input-border);
+  border-radius: 3px;
+  padding: 6px 9px;
+  font-size: 13px;
+  font-family: inherit;
+  width: 100%;
+  color: var(--forti-text);
+  transition: border-color .15s, box-shadow .15s;
+}
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--forti-red);
+  box-shadow: 0 0 0 2px rgba(238,49,36,.1);
+}
+input.invalid, select.invalid, textarea.invalid {
+  border-color: var(--forti-red);
+  background: #fff8f8;
+}
+.field-err {
+  display: none;
+  font-size: 11px;
+  color: var(--forti-red);
+}
+textarea { resize: vertical; min-height: 62px; }
+
+/* SKU monospace */
+input.sku-input {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #1A4E82;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+/* ── Type selector buttons ── */
+.type-btn {
+  display: block;
+  width: 100%;
+  padding: 4px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--forti-border);
+  background: white;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  cursor: pointer;
+  transition: all .12s;
+  color: var(--forti-text-secondary);
+  text-align: center;
+  margin-bottom: 3px;
+}
+.type-btn:last-child { margin-bottom: 0; }
+.type-btn:hover { border-color: #aaa; }
+.type-btn.selected-req  { background:#FEF0EE; color:#C0392B; border-color:#F5C6C2; }
+.type-btn.selected-mand { background:#FFF8EE; color:#8A5800; border-color:#F5D9A0; }
+.type-btn.selected-opt  { background:#EEF3FF; color:#3557A5; border-color:#B8CBF5; }
+.type-btn.selected-inc  { background:#EEF3FF; color:#3557A5; border-color:#B8CBF5; }
+.type-btn.selected-note { background:var(--forti-bg); color:var(--forti-text-secondary); border-color:#C8CDD9; }
+
+/* ── SKU entry table ── */
+.sku-entry-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.sku-entry-table colgroup col.col-drag  { width: 28px; }
+.sku-entry-table colgroup col.col-num   { width: 28px; }
+.sku-entry-table colgroup col.col-sku   { width: 175px; }
+.sku-entry-table colgroup col.col-desc  { width: auto; }
+.sku-entry-table colgroup col.col-qty   { width: 62px; }
+.sku-entry-table colgroup col.col-type  { width: 110px; }
+.sku-entry-table colgroup col.col-notes { width: 170px; }
+.sku-entry-table colgroup col.col-del   { width: 36px; }
+
+/* header row */
+.sku-entry-table thead th {
+  background: var(--forti-table-head);
+  border: 1px solid var(--forti-border);
+  padding: 6px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+  text-align: left;
+  white-space: nowrap;
+}
+.sku-entry-table thead th.th-center { text-align: center; }
+
+/* body cells */
+.sku-entry-table tbody td {
+  border: 1px solid var(--forti-border);
+  padding: 8px 9px;
+  vertical-align: top;
+  background: white;
+}
+.sku-entry-table tbody tr:nth-child(even) td { background: var(--forti-table-stripe); }
+.sku-entry-table tbody tr:nth-child(even) td.td-drag,
+.sku-entry-table tbody tr:nth-child(even) td.td-num  { background: var(--forti-table-stripe); }
+
+/* section-header rows span full width */
+.sku-entry-table tbody tr.section-entry-row td {
+  background: #EAECF3 !important;
+  border-top: 2px solid #C5CAD9;
+  padding: 7px 10px;
+}
+
+.td-drag {
+  text-align: center;
+  padding: 8px 4px !important;
+  border-right: none !important;
+}
+.td-num {
+  text-align: center;
+  padding: 8px 4px !important;
+  border-left: none !important;
+}
+.td-qty { text-align: center; }
+.td-type { vertical-align: top; }
+.td-del  { text-align: center; padding: 8px 4px !important; }
+
+/* row number pill */
+.sku-row-number {
+  display: inline-block;
+  background: var(--forti-red);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 10px;
+  letter-spacing: .04em;
+}
+
+.remove-btn {
+  background: none;
+  border: 1px solid #F5C6C2;
+  border-radius: 3px;
+  color: #C0392B;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 6px;
+  transition: background .12s;
+}
+.remove-btn:hover { background: #FEF0EE; }
+
+/* drag handle — now lives in its own td */
+.sku-rows { display: block; }
+/* ── Add row buttons ── */
+.add-row-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 3px;
+  border: 1px dashed var(--forti-input-border);
+  background: white;
+  font-size: 12px;
+  color: var(--forti-text-secondary);
+  cursor: pointer;
+  transition: all .12s;
+}
+.add-row-btn:hover {
+  border-color: var(--forti-red);
+  color: var(--forti-red);
+  background: #FEF8F8;
+}
+
+/* ── Section header builder ── */
+.section-label-input {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--forti-text-secondary);
+}
+
+/* ── Group name ── */
+.group-name-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.group-name-bar input {
+  font-weight: 600;
+  font-size: 13px;
+  max-width: 340px;
+}
+
+/* ── Callout boxes ── */
+.callout { border-radius:3px; padding:9px 12px; font-size:12px; line-height:1.6; display:flex; gap:8px; }
+.info { background:var(--forti-info-bg); border:1px solid var(--forti-info-border); color:var(--forti-info-text); }
+.warn { background:var(--forti-warn-bg); border:1px solid var(--forti-warn-border); color:var(--forti-warn-text); }
+
+/* ── Action buttons ── */
+.action-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.btn {
+  padding: 7px 16px;
+  border-radius: 3px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .12s, opacity .12s;
+}
+.btn:hover { filter: brightness(.92); }
+.btn-primary { background: var(--forti-red); color: white; }
+.btn-success { background: #2E7D32; color: white; }
+.btn-secondary {
+  background: white;
+  color: var(--forti-text-secondary);
+  border: 1px solid var(--forti-border);
+}
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+#smsg {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2E7D32;
+  display: none;
+}
+#smsg.error { color: var(--forti-red); }
+
+/* ── BOM Preview table ── */
+#bom-section { display: none; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th {
+  background: var(--forti-table-head);
+  border: 1px solid var(--forti-border);
+  padding: 7px 11px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+  text-align: left;
+  white-space: nowrap;
+}
+tbody td {
+  border: 1px solid var(--forti-border);
+  padding: 7px 11px;
+  vertical-align: top;
+}
+tbody tr:nth-child(even) td { background: var(--forti-table-stripe); }
+.section-row td {
+  background: #EAECF3 !important;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--forti-text-secondary);
+  padding: 5px 11px;
+  border-top: 2px solid #C5CAD9;
+}
+.sku-cell {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #1A4E82;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.desc-cell { color: var(--forti-text-muted); max-width: 400px; }
+.notes-cell { color: var(--forti-text-muted); font-size: 11px; white-space: nowrap; }
+.badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-radius: 2px;
+  padding: 1px 4px;
+  display: inline-block;
+  white-space: nowrap;
+}
+.badge-req  { background:#FEF0EE; color:#C0392B; border:1px solid #F5C6C2; }
+.badge-mand { background:#FFF8EE; color:#8A5800; border:1px solid #F5D9A0; }
+.badge-opt  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.badge-inc  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.qty-cell { text-align: center; font-weight: 600; white-space: nowrap; }
+
+.sku-entry-table tbody tr.dragging { opacity: .45; }
+
+/* drag handle */
+.drag-handle {
+  cursor: grab;
+  color: var(--forti-text-muted);
+  font-size: 16px;
+  line-height: 1;
+  user-select: none;
+  display: block;
+  text-align: center;
+}
+.drag-handle:active { cursor: grabbing; }
+
+/* section counter badge */
+.row-count-badge {
+  font-size: 10px;
+  background: var(--forti-red);
+  color: white;
+  border-radius: 10px;
+  padding: 1px 6px;
+  margin-left: 6px;
+}
+</style>
+</head>
+<body>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>
+    </svg>
+  </div>
+  <div>
+    <div class="page-title">Custom SKU Entry</div>
+    <div class="page-subtitle">Manually add any Fortinet (or custom) part numbers to the Project BOM · FortiBOM Custom SKU Module</div>
+  </div>
+</div>
+
+<!-- Info callout -->
+<div class="callout info" style="margin-bottom:14px;">
+  <span>ℹ</span>
+  <div>
+    Use this page to add <strong>any SKU</strong> that isn't covered by an existing product page — hardware line items, third-party accessories, custom bundles, or manually entered Fortinet part numbers.
+    All SKUs ending in a term suffix should use <code>-DD</code>; <code>index.html</code> will substitute the correct term at export time.
+  </div>
+</div>
+
+<!-- ── Group Settings ── -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-header-title">Group / Bundle Label</div>
+  </div>
+  <div class="card-body">
+    <div class="form-grid-wide">
+      <div class="field">
+        <label>Group Name <span class="req">*</span></label>
+        <input type="text" id="f-group-name" placeholder="e.g. FortiGate 91G — ENT Bundle" oninput="clearErr('f-group-name','err-group-name')">
+        <span class="field-err" id="err-group-name">Group name is required</span>
+      </div>
+      <div class="field">
+        <label>Section Header Label <small style="font-weight:400;text-transform:none;letter-spacing:0;">(shown as dark divider row in BOM)</small></label>
+        <input type="text" id="f-section-label" placeholder="e.g. Hardware + Enterprise (ENT) Bundle — FortiGate 91G">
+        <span style="font-size:11px;color:var(--forti-text-muted);margin-top:2px;">Leave blank to omit the section header row.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SKU Rows ── -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-header-title">
+      SKU Line Items
+      <span class="row-count-badge" id="row-count-badge">0</span>
+    </div>
+  </div>
+  <div class="card-body">
+
+    <div style="overflow-x:auto;">
+      <table class="sku-entry-table">
+        <colgroup>
+          <col class="col-drag">
+          <col class="col-num">
+          <col class="col-sku">
+          <col class="col-desc">
+          <col class="col-qty">
+          <col class="col-type">
+          <col class="col-notes">
+          <col class="col-del">
+        </colgroup>
+        <thead>
+          <tr>
+            <th colspan="2"></th>
+            <th>Part Number</th>
+            <th>Description</th>
+            <th class="th-center">Qty</th>
+            <th class="th-center">Type</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="sku-rows"></tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+      <button class="add-row-btn" onclick="addSkuRow()">
+        <strong>＋</strong> Add SKU Row
+      </button>
+      <button class="add-row-btn" onclick="addSectionRow()">
+        <strong>≡</strong> Add Section Header
+      </button>
+    </div>
+
+    <div id="err-no-rows" style="display:none;font-size:11px;color:var(--forti-red);margin-top:8px;">
+      ⚠ Add at least one SKU row before generating a BOM.
+    </div>
+  </div>
+</div>
+
+<!-- ── Actions ── -->
+<div class="action-row">
+  <button class="btn btn-primary" onclick="generateBOM()">Preview BOM</button>
+  <button class="btn btn-success" onclick="addToProjectBOM()">Add to Project BOM</button>
+  <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+  <span id="smsg"></span>
+</div>
+
+<!-- ── BOM Preview ── -->
+<div id="bom-section" class="card">
+  <div class="card-header" style="justify-content:space-between;">
+    <div class="card-header-title">BOM Preview</div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-secondary btn-sm" onclick="copyTSV()">Copy TSV</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0;">
+    <table>
+      <thead>
+        <tr>
+          <th>Part Number</th>
+          <th>Description</th>
+          <th>Qty</th>
+          <th>Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  State
+// ─────────────────────────────────────────────
+let _rowIdCounter = 0;
+let _lastRows  = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+const KIND_OPTIONS = [
+  { value: 'req',  label: 'REQUIRED',  cls: 'selected-req'  },
+  { value: 'mand', label: 'MANDATORY', cls: 'selected-mand' },
+  { value: 'opt',  label: 'OPTIONAL',  cls: 'selected-opt'  },
+  { value: 'inc',  label: 'INCLUDED',  cls: 'selected-inc'  },
+  { value: 'note', label: 'NOTE',      cls: 'selected-note' },
+];
+
+// ─────────────────────────────────────────────
+//  Row builders
+// ─────────────────────────────────────────────
+function newId() { return ++_rowIdCounter; }
+
+function addSkuRow(data) {
+  const id = newId();
+  data = data || {};
+  const tbody = document.getElementById('sku-rows');
+
+  const tr = document.createElement('tr');
+  tr.dataset.rowId = id;
+  tr.dataset.rowType = 'sku';
+  tr.draggable = true;
+  tr.innerHTML = `
+    <td class="td-drag">
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+    </td>
+    <td class="td-num">
+      <span class="sku-row-number">#${countSkuRows() + 1}</span>
+    </td>
+    <td>
+      <input type="text" class="sku-input" id="sku-${id}" placeholder="FG-91G-BDL-809-DD"
+             value="${escHtml(data.sku||'')}"
+             oninput="this.value=this.value.toUpperCase();clearRowErr(${id})">
+      <div class="field-err" id="err-sku-${id}">Part number required</div>
+    </td>
+    <td>
+      <textarea id="desc-${id}" rows="3" placeholder="Full description of the SKU…"
+                style="min-height:0;resize:vertical;"
+                oninput="clearRowErr(${id})">${escHtml(data.desc||'')}</textarea>
+      <div class="field-err" id="err-desc-${id}">Description required</div>
+    </td>
+    <td class="td-qty">
+      <input type="number" id="qty-${id}" min="1" value="${data.qty||1}"
+             style="text-align:center;"
+             oninput="clearRowErr(${id})">
+      <div class="field-err" id="err-qty-${id}">≥ 1</div>
+    </td>
+    <td class="td-type">
+      <div id="type-btns-${id}">
+        ${KIND_OPTIONS.map(k => `<button type="button" class="type-btn${(data.kind||'req')===k.value?' '+k.cls:''}"
+          data-kind="${k.value}" onclick="selectKind(${id},'${k.value}')">${k.label}</button>`).join('')}
+      </div>
+    </td>
+    <td>
+      <textarea id="notes-${id}" rows="3" placeholder="e.g. Hardware + FortiCare included"
+                style="min-height:0;resize:vertical;">${escHtml(data.note||'')}</textarea>
+    </td>
+    <td class="td-del">
+      <button class="remove-btn" onclick="removeRow(this)" title="Remove row">✕</button>
+    </td>
+  `;
+
+  // wire drag events
+  tr.addEventListener('dragstart', onDragStart);
+  tr.addEventListener('dragover',  onDragOver);
+  tr.addEventListener('dragleave', onDragLeave);
+  tr.addEventListener('drop',      onDrop);
+  tr.addEventListener('dragend',   onDragEnd);
+
+  tbody.appendChild(tr);
+  updateRowNumbers();
+  updateRowCountBadge();
+}
+
+function addSectionRow(data) {
+  const id = newId();
+  data = data || {};
+  const tbody = document.getElementById('sku-rows');
+
+  const tr = document.createElement('tr');
+  tr.className = 'section-entry-row';
+  tr.dataset.rowId = id;
+  tr.dataset.rowType = 'section';
+  tr.draggable = true;
+  tr.innerHTML = `
+    <td colspan="7" style="padding:6px 10px!important;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="drag-handle" title="Drag to reorder">⠿</span>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--forti-text-muted);white-space:nowrap;flex-shrink:0;">§ Section:</span>
+        <input type="text" class="section-label-input" id="sec-${id}"
+               placeholder="e.g. Hardware + Enterprise Bundle"
+               value="${escHtml(data.label||'')}"
+               style="flex:1;background:#EAECF3;border-color:#C5CAD9;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">
+      </div>
+    </td>
+    <td style="text-align:center;padding:6px 4px!important;background:#EAECF3!important;border-top:2px solid #C5CAD9;">
+      <button class="remove-btn" onclick="removeRow(this)" title="Remove row">✕</button>
+    </td>
+  `;
+
+  tr.addEventListener('dragstart', onDragStart);
+  tr.addEventListener('dragover',  onDragOver);
+  tr.addEventListener('dragleave', onDragLeave);
+  tr.addEventListener('drop',      onDrop);
+  tr.addEventListener('dragend',   onDragEnd);
+
+  tbody.appendChild(tr);
+  updateRowNumbers();
+  updateRowCountBadge();
+}
+
+function removeRow(btn) {
+  btn.closest('tr').remove();
+  updateRowNumbers();
+  updateRowCountBadge();
+}
+
+function selectKind(id, kind) {
+  const container = document.getElementById(`type-btns-${id}`);
+  container.querySelectorAll('.type-btn').forEach(btn => {
+    const match = btn.dataset.kind === kind;
+    // remove all selected-* classes then add if match
+    KIND_OPTIONS.forEach(k => btn.classList.remove(k.cls));
+    if (match) {
+      const opt = KIND_OPTIONS.find(k => k.value === kind);
+      if (opt) btn.classList.add(opt.cls);
+    }
+  });
+}
+
+function countSkuRows() {
+  return document.querySelectorAll('#sku-rows tr[data-row-type="sku"]').length;
+}
+
+function updateRowNumbers() {
+  let n = 0;
+  document.querySelectorAll('#sku-rows tr[data-row-type="sku"]').forEach(tr => {
+    n++;
+    const badge = tr.querySelector('.sku-row-number');
+    if (badge) badge.textContent = '#' + n;
+  });
+}
+
+function updateRowCountBadge() {
+  const total = document.querySelectorAll('#sku-rows tr').length;
+  document.getElementById('row-count-badge').textContent = total;
+}
+
+// ─────────────────────────────────────────────
+//  Drag-and-drop reordering
+// ─────────────────────────────────────────────
+let _dragSrc = null;
+
+function onDragStart(e) {
+  _dragSrc = this;
+  this.style.opacity = '.45';
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (this !== _dragSrc) this.style.outline = '2px solid var(--forti-red)';
+}
+function onDragLeave() { this.style.outline = ''; }
+function onDrop(e) {
+  e.stopPropagation();
+  if (_dragSrc && _dragSrc !== this) {
+    const tbody = document.getElementById('sku-rows');
+    const allRows = [...tbody.querySelectorAll('tr')];
+    const srcIdx  = allRows.indexOf(_dragSrc);
+    const tgtIdx  = allRows.indexOf(this);
+    if (srcIdx < tgtIdx) {
+      this.after(_dragSrc);
+    } else {
+      this.before(_dragSrc);
+    }
+  }
+  this.style.outline = '';
+}
+function onDragEnd() {
+  this.style.opacity = '';
+  document.querySelectorAll('#sku-rows tr').forEach(r => r.style.outline = '');
+  updateRowNumbers();
+}
+
+// ─────────────────────────────────────────────
+//  Validation helpers
+// ─────────────────────────────────────────────
+function clearErr(fieldId, errId) {
+  document.getElementById(fieldId)?.classList.remove('invalid');
+  const e = document.getElementById(errId);
+  if (e) e.style.display = 'none';
+}
+function showErr(fieldId, errId) {
+  document.getElementById(fieldId)?.classList.add('invalid');
+  const e = document.getElementById(errId);
+  if (e) e.style.display = 'block';
+}
+function clearRowErr(id) {
+  [`sku-${id}`,`desc-${id}`,`qty-${id}`].forEach(fid => {
+    document.getElementById(fid)?.classList.remove('invalid');
+  });
+  [`err-sku-${id}`,`err-desc-${id}`,`err-qty-${id}`].forEach(eid => {
+    const e = document.getElementById(eid);
+    if (e) e.style.display = 'none';
+  });
+}
+
+// ─────────────────────────────────────────────
+//  generateBOM
+// ─────────────────────────────────────────────
+function generateBOM() {
+  let valid = true;
+  const rows = [];
+
+  // Validate group name
+  const groupName = document.getElementById('f-group-name').value.trim();
+  if (!groupName) {
+    showErr('f-group-name','err-group-name');
+    valid = false;
+  } else {
+    clearErr('f-group-name','err-group-name');
+  }
+
+  // Check we have at least one SKU row
+  const skuRowEls = document.querySelectorAll('#sku-rows tr[data-row-type="sku"]');
+  if (skuRowEls.length === 0) {
+    document.getElementById('err-no-rows').style.display = 'block';
+    valid = false;
+  } else {
+    document.getElementById('err-no-rows').style.display = 'none';
+  }
+
+  if (!valid) return false;
+
+  // Optional section header row at top
+  const sectionLabel = document.getElementById('f-section-label').value.trim();
+  if (sectionLabel) {
+    rows.push({ section: sectionLabel });
+  }
+
+  // Walk all rows in DOM order
+  document.querySelectorAll('#sku-rows tr').forEach(row => {
+    const id = row.dataset.rowId;
+    const type = row.dataset.rowType;
+
+    if (type === 'section') {
+      const label = document.getElementById(`sec-${id}`)?.value.trim();
+      if (label) rows.push({ section: label });
+
+    } else {
+      // SKU row
+      const skuEl  = document.getElementById(`sku-${id}`);
+      const descEl = document.getElementById(`desc-${id}`);
+      const qtyEl  = document.getElementById(`qty-${id}`);
+      const sku    = skuEl?.value.trim() || '';
+      const desc   = descEl?.value.trim() || '';
+      const qty    = parseInt(qtyEl?.value, 10);
+      const note   = document.getElementById(`notes-${id}`)?.value.trim() || '';
+
+      // Get selected kind
+      const activeBtnEl = document.querySelector(`#type-btns-${id} .type-btn[class*="selected"]`);
+      const kind = activeBtnEl?.dataset.kind || 'req';
+
+      let rowValid = true;
+      if (!sku) { showErr(`sku-${id}`, `err-sku-${id}`); rowValid = false; valid = false; }
+      if (!desc) { showErr(`desc-${id}`, `err-desc-${id}`); rowValid = false; valid = false; }
+      if (!qty || qty < 1) { showErr(`qty-${id}`, `err-qty-${id}`); rowValid = false; valid = false; }
+
+      if (rowValid) {
+        rows.push({ sku, desc, qty, kind, note });
+      }
+    }
+  });
+
+  if (!valid) return false;
+
+  _lastRows  = rows;
+  _lastLabel = groupName;
+  _lastMeta  = {
+    group: groupName,
+    totalSkus: rows.filter(r => !r.section).length,
+    totalQty:  rows.filter(r => !r.section && r.qty).reduce((s,r) => s + r.qty, 0),
+  };
+
+  renderBOM(rows);
+  return true;
+}
+
+// ─────────────────────────────────────────────
+//  renderBOM
+// ─────────────────────────────────────────────
+const BADGE_MAP = {
+  req:  '<span class="badge badge-req">REQUIRED</span>',
+  mand: '<span class="badge badge-mand">MANDATORY</span>',
+  opt:  '<span class="badge badge-opt">OPTIONAL</span>',
+  inc:  '<span class="badge badge-inc">INCLUDED</span>',
+  note: '',
+};
+
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.section) {
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${escHtml(row.section)}</td>`;
+    } else {
+      tr.innerHTML = `
+        <td class="sku-cell">${escHtml(row.sku)}</td>
+        <td class="desc-cell">${escHtml(row.desc)}</td>
+        <td class="qty-cell">${row.qty ?? ''}</td>
+        <td>${BADGE_MAP[row.kind] || ''}</td>
+        <td class="notes-cell">${escHtml(row.note||'')}</td>
+      `;
+    }
+    tbody.appendChild(tr);
+  });
+
+  const sec = document.getElementById('bom-section');
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─────────────────────────────────────────────
+//  addToProjectBOM
+// ─────────────────────────────────────────────
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+
+  window.parent.postMessage({
+    type:    'FORTIBOM_ADD',
+    product: 'Custom SKU',
+    label:   _lastLabel,
+    rows:    _lastRows,
+    meta:    _lastMeta,
+  }, '*');
+
+  const msg = document.getElementById('smsg');
+  msg.textContent = `✓ "${_lastLabel}" added to Project BOM`;
+  msg.className = '';
+  msg.style.display = 'inline';
+  setTimeout(() => { msg.style.display = 'none'; }, 4000);
+}
+
+// ─────────────────────────────────────────────
+//  resetForm
+// ─────────────────────────────────────────────
+function resetForm() {
+  document.getElementById('f-group-name').value = '';
+  document.getElementById('f-section-label').value = '';
+  document.getElementById('sku-rows').innerHTML = '';
+  document.getElementById('bom-section').style.display = 'none';
+  document.getElementById('smsg').style.display = 'none';
+  document.getElementById('err-no-rows').style.display = 'none';
+  clearErr('f-group-name','err-group-name');
+  _rowIdCounter = 0;
+  _lastRows = [];
+  updateRowCountBadge();
+}
+
+// ─────────────────────────────────────────────
+//  Copy TSV
+// ─────────────────────────────────────────────
+function copyTSV() {
+  if (!_lastRows.length) return;
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  _lastRows.forEach(r => {
+    if (r.section) {
+      lines.push(`[${r.section}]\t\t\t\t`);
+    } else {
+      lines.push([r.sku, r.desc, r.qty, r.kind, r.note||''].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const msg = document.getElementById('smsg');
+    msg.textContent = '✓ TSV copied to clipboard';
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  Utility
+// ─────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────
+//  Init — start with one blank SKU row
+// ─────────────────────────────────────────────
+addSkuRow();
+</script>
+</body>
+</html>

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiGate NGFW – BOM Generator</title>
+<style>
+  :root {
+    --red:#EE3124; --border:#DDE1E9; --bg:#F2F4F7; --white:#FFFFFF;
+    --text:#2A2F3A; --text2:#6B7589; --textm:#9BA5BA;
+    --sh:#F7F9FC; --ib:#C8CDD9; --th:#EEF1F6; --ts:#F7F9FC;
+    --info-bg:#EEF3FF; --info-b:#B8CBF5; --info-t:#3557A5;
+    --warn-bg:#FFF8EE; --warn-b:#F5D9A0; --warn-t:#8A5800;
+    --ok-bg:#F0FAF0; --ok-b:#9FD8A0; --ok-t:#1E6B20;
+    --ent-bg:#FEF0EE; --ent-b:#F5C6C2; --ent-t:#8A2020;
+    --utp-bg:#EEF3FF; --utp-b:#B8CBF5; --utp-t:#2A4A8A;
+    --atp-bg:#F5F0FF; --atp-b:#C8B8F5; --atp-t:#4A2A8A;
+    --sdw-bg:#F0FAF4; --sdw-b:#9FD8B8; --sdw-t:#1A5A38;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;padding:20px;min-height:100vh;}
+
+  /* PAGE HEADER */
+  .ph{background:var(--white);border:1px solid var(--border);border-radius:4px;padding:14px 20px;margin-bottom:14px;display:flex;align-items:center;gap:14px;}
+  .ph-icon{width:36px;height:36px;background:var(--red);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ph-icon svg{width:20px;height:20px;}
+  .ph h1{font-size:16px;font-weight:600;}
+  .ph .sub{font-size:11px;color:var(--text2);margin-top:2px;}
+
+  /* CARD */
+  .card{background:var(--white);border:1px solid var(--border);border-radius:4px;margin-bottom:14px;overflow:hidden;}
+  .ch{background:var(--sh);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:8px;}
+  .ch h2{font-size:11px;font-weight:700;color:var(--text);letter-spacing:.04em;text-transform:uppercase;}
+  .ch .badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--red);color:#fff;border-radius:2px;padding:1px 6px;margin-left:auto;}
+  .cb{padding:18px;}
+
+  /* FORM */
+  .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+  .fg.wide{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}
+  .grp{display:flex;flex-direction:column;gap:4px;}
+  .grp.full{grid-column:1/-1;}
+  label.lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;}
+  label.lbl .r{color:var(--red);margin-left:2px;}
+  input[type=text],input[type=number],select,textarea{background:var(--white);border:1px solid var(--ib);border-radius:3px;padding:6px 9px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;}
+  input:focus,select:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(238,49,36,.1);}
+  .invalid{border-color:var(--red)!important;}
+  .err{display:none;font-size:11px;color:#C0392B;margin-top:2px;}
+  select{cursor:pointer;}
+  textarea{resize:vertical;min-height:52px;}
+
+  /* TOGGLES */
+  .trow{display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:5px 8px;border-radius:3px;margin-bottom:2px;transition:background .1s;}
+  .trow:hover{background:var(--sh);}
+  .trow input[type=checkbox]{accent-color:var(--red);width:14px;height:14px;margin-top:1px;flex-shrink:0;}
+  .tl{font-size:13px;color:var(--text);}
+  .tn{font-size:11px;color:var(--textm);}
+
+  /* CALLOUT */
+  .callout{border-radius:3px;padding:9px 12px;font-size:12px;line-height:1.6;display:flex;gap:8px;align-items:flex-start;margin-bottom:14px;}
+  .callout svg{flex-shrink:0;margin-top:1px;}
+  .callout.info{background:var(--info-bg);border:1px solid var(--info-b);color:var(--info-t);}
+  .callout.warn{background:var(--warn-bg);border:1px solid var(--warn-b);color:var(--warn-t);}
+
+  /* DIVIDER / SECTION LABEL */
+  .divider{height:1px;background:var(--border);margin:14px 0;}
+  .sec-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--textm);margin-bottom:10px;margin-top:4px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+  /* BUNDLE COMPARISON PANEL */
+  .bundle-panel{margin:0 0 14px;border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+  .bp-header{display:grid;grid-template-columns:1fr 110px 110px 110px 110px;background:var(--sh);border-bottom:1px solid var(--border);}
+  .bp-header .bph-cell{padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;text-align:center;color:var(--text2);border-left:1px solid var(--border);}
+  .bp-header .bph-cell:first-child{text-align:left;border-left:none;}
+  .bp-header .bph-cell.ent{background:var(--ent-bg);color:var(--ent-t);}
+  .bp-header .bph-cell.utp{background:var(--utp-bg);color:var(--utp-t);}
+  .bp-header .bph-cell.atp{background:var(--atp-bg);color:var(--atp-t);}
+  .bp-header .bph-cell.sdw{background:var(--sdw-bg);color:var(--sdw-t);}
+  .bp-row{display:grid;grid-template-columns:1fr 110px 110px 110px 110px;border-top:1px solid var(--border);}
+  .bp-row:nth-child(even) .bp-cell{background:#FAFBFC;}
+  .bp-row .bp-cat{background:#EAECF3;padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);grid-column:1/-1;border-top:2px solid #C5CAD9;}
+  .bp-cell{padding:6px 10px;font-size:12px;color:var(--text);border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
+  .bp-cell:first-child{justify-content:flex-start;border-left:none;font-size:12px;color:var(--text2);}
+  .bp-cell .chk{color:#2E7D32;font-size:14px;font-weight:700;}
+  .bp-cell .dash{color:var(--textm);}
+  .bp-cell .add{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#E8F4E8;color:#2E7D32;border:1px solid #9FD8A0;border-radius:2px;padding:1px 5px;}
+
+  /* MODEL SELECTOR TABLE */
+  .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:14px;}
+  .model-card{border:1px solid var(--border);border-radius:3px;padding:10px 12px;cursor:pointer;transition:all .12s;background:var(--white);}
+  .model-card:hover{border-color:#9BA5BA;background:#FAFBFC;}
+  .model-card.selected{border-color:var(--red);background:var(--ent-bg);border-width:2px;}
+  .model-card .mn{font-size:13px;font-weight:600;color:var(--text);}
+  .model-card .ms{font-size:10px;color:var(--text2);margin-top:2px;}
+  .model-card .mt{font-size:11px;color:var(--textm);margin-top:4px;}
+  .model-card .seg-badge{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--th);color:var(--text2);border:1px solid var(--border);border-radius:2px;padding:1px 5px;margin-top:4px;}
+
+  /* ACTIONS */
+  .actions{display:flex;gap:10px;align-items:center;padding:12px 18px;background:var(--sh);border-top:1px solid var(--border);}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:3px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:background .12s;}
+  .btn svg{width:13px;height:13px;flex-shrink:0;}
+  .btn-p{background:var(--red);color:#fff;border-color:var(--red);}
+  .btn-p:hover{background:#d42a1e;}
+  .btn-s{background:var(--white);color:var(--text);border-color:var(--ib);}
+  .btn-s:hover{background:var(--sh);}
+  #smsg{font-size:11px;margin-left:6px;}
+
+  /* BOM */
+  #bom-section{display:none;}
+  .bom-meta{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
+  .bom-meta-item .ml{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--textm);}
+  .bom-meta-item .mv{font-size:13px;font-weight:500;color:var(--text);}
+  table.bt{width:100%;border-collapse:collapse;font-size:12px;}
+  table.bt thead th{background:var(--th);border:1px solid var(--border);padding:7px 11px;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);white-space:nowrap;}
+  table.bt tbody td{border:1px solid var(--border);padding:7px 11px;vertical-align:top;}
+  table.bt tbody tr:nth-child(even) td{background:var(--ts);}
+  table.bt tbody tr:hover td{background:#EEF1F6;}
+  .rs td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);padding:5px 11px;border-top:2px solid #C5CAD9;}
+  .sku{font-family:'Courier New',monospace;font-size:11.5px;color:#1A4E82;font-weight:700;white-space:nowrap;}
+  td.qc{text-align:center;font-weight:700;}
+  .nc{color:var(--textm);font-size:11px;}
+  .br{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 5px;}
+  .br-req{background:#FEF0EE;color:#C0392B;border:1px solid #F5C6C2;}
+  .br-opt{background:var(--info-bg);color:var(--info-t);border:1px solid var(--info-b);}
+  .br-inc{background:var(--ok-bg);color:var(--ok-t);border:1px solid var(--ok-b);}
+  .bom-totals{margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;}
+  .tc{background:var(--sh);border:1px solid var(--border);border-radius:3px;padding:9px 14px;min-width:120px;}
+  .tc .tl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--textm);margin-bottom:3px;}
+  .tc .tv{font-size:18px;font-weight:600;color:var(--text);}
+  .tc.hi .tv{color:var(--red);}
+
+  @media print{body{background:#fff;padding:0;}#config-section,.actions{display:none!important;}#bom-section{display:block!important;}}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="ph">
+  <div class="ph-icon">
+    <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="white" stroke-width="1.4"/><path d="M5 8h10M5 11h6" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+  </div>
+  <div>
+    <h1>FortiGate NGFW – BOM Generator</h1>
+    <div class="sub">Next Generation Firewalls · Branch / Mid-Range / High-End · Based on NGFW Ordering Guide PFW-OG-R26-20260112 &amp; FortiGate Product Matrix April 2026</div>
+  </div>
+</div>
+
+<div id="config-section">
+
+<!-- ══ MODEL SELECTION ═══════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="3" width="11" height="7" rx="1" stroke="#6B7589" stroke-width="1.2"/><path d="M4 3V2M9 3V2" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg><h2>Appliance Selection</h2><span class="badge">Step 1</span></div>
+  <div class="cb">
+
+    <div class="callout info">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#3557A5" stroke-width="1.2"/><path d="M7 6.5v3.5M7 4.5v.5" stroke="#3557A5" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div>FortiGate appliances are sold as <strong>Hardware + Bundle SKUs</strong> (hardware + FortiCare + FortiGuard services in one part number) or as <strong>hardware-only</strong> with services added à la carte. The recommended approach for new deployments is a hardware bundle. <strong>All HA cluster members require identical licensing</strong> — the BOM will automatically multiply quantities.</div>
+    </div>
+    <div class="callout warn" style="margin-top:8px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2L13 12H1L7 2Z" stroke="#8A5800" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 6v3M7 10.5v.5" stroke="#8A5800" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div>Models marked <strong style="background:#FFF8EE;color:#8A5800;border:1px solid #F5D9A0;border-radius:2px;padding:0 4px;font-size:10px;">Matrix</strong> are from the April 2026 Product Matrix but do not appear in the NGFW Ordering Guide bundle tables. Bundle SKU codes are derived from standard Fortinet naming patterns — <strong>verify final SKUs with Fortinet or your distributor before quoting.</strong></div>
+    </div>
+
+    <!-- Filter buttons -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <button class="btn btn-s seg-btn active" data-seg="all" onclick="filterSeg(this,'all')">All Models</button>
+      <button class="btn btn-s seg-btn" data-seg="branch" onclick="filterSeg(this,'branch')">Branch</button>
+      <button class="btn btn-s seg-btn" data-seg="midrange" onclick="filterSeg(this,'midrange')">Mid Range</button>
+      <button class="btn btn-s seg-btn" data-seg="highend" onclick="filterSeg(this,'highend')">High End</button>
+    </div>
+
+    <div class="model-grid" id="model-grid"></div>
+    <span class="err" id="err-model" style="display:none;margin-bottom:8px;">Please select a model</span>
+
+    <div class="fg" style="margin-top:8px;">
+      <div class="grp">
+        <label class="lbl">Quantity <span class="r">*</span></label>
+        <input type="number" id="f-qty" min="1" max="9999" value="1" placeholder="1">
+        <span class="err" id="err-qty">Enter at least 1</span>
+      </div>
+      <div class="grp">
+        <label class="lbl">High Availability (HA)</label>
+        <select id="f-ha" onchange="onHAChange()">
+          <option value="no">No – standalone</option>
+          <option value="aa">Active-Active cluster</option>
+          <option value="ap">Active-Passive cluster</option>
+        </select>
+      </div>
+      <div class="grp" id="grp-ha-nodes" style="display:none;">
+        <label class="lbl">Cluster Size</label>
+        <select id="f-ha-nodes">
+          <option value="2">2 nodes (standard HA pair)</option>
+          <option value="3">3 nodes</option>
+          <option value="4">4 nodes</option>
+        </select>
+      </div>
+      <div class="grp">
+        <label class="lbl">Hardware Variant</label>
+        <select id="f-variant">
+          <option value="std">Standard</option>
+          <option value="storage">With Storage (+1 to model number)</option>
+          <option value="lte">LTE/5G variant</option>
+          <option value="poe">PoE variant</option>
+        </select>
+      </div>
+      <div class="grp">
+        <label class="lbl">FortiWiFi (WiFi built-in)?</label>
+        <select id="f-wifi">
+          <option value="no">No – FortiGate</option>
+          <option value="yes">Yes – FortiWiFi</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BUNDLE / SERVICE SELECTION ════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#6B7589" stroke-width="1.2"/><path d="M4 6.5h5M6.5 4v5" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg><h2>FortiGuard Bundle &amp; Services</h2><span class="badge">Step 2</span></div>
+  <div class="cb">
+
+    <div class="sec-label">Bundle Comparison — What's included in each FortiGuard bundle</div>
+
+    <!-- BUNDLE COMPARISON TABLE -->
+    <div class="bundle-panel">
+      <div class="bp-header">
+        <div class="bph-cell">Service / Feature</div>
+        <div class="bph-cell ent">Enterprise<br><span style="font-size:9px;font-weight:400;opacity:.8;">-809-</span></div>
+        <div class="bph-cell utp">UTP<br><span style="font-size:9px;font-weight:400;opacity:.8;">-950-</span></div>
+        <div class="bph-cell atp">ATP<br><span style="font-size:9px;font-weight:400;opacity:.8;">-928-</span></div>
+        <div class="bph-cell sdw">SD-WAN<br><span style="font-size:9px;font-weight:400;opacity:.8;">-1337-</span></div>
+      </div>
+      <!-- FortiCare -->
+      <div class="bp-row"><div class="bp-cat">FortiCare Support</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">FortiCare Premium (24×7×365)</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div>
+      </div>
+      <!-- Network Security -->
+      <div class="bp-row"><div class="bp-cat">Network Security</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">IPS (Intrusion Prevention)</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="dash">–</span></div>
+      </div>
+      <!-- File Content -->
+      <div class="bp-row"><div class="bp-cat">File Content Security (Advanced Malware Protection)</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">Antivirus (AV), Botnet Domains, Mobile Malware, Virus Outbreak Protection</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="dash">–</span></div>
+      </div>
+      <div class="bp-row">
+        <div class="bp-cell">Content Disarm &amp; Reconstruct, AI Heuristic AV, Cloud Sandbox</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="dash">–</span></div>
+      </div>
+      <!-- Zero Day -->
+      <div class="bp-row"><div class="bp-cat">Zero-Day Threat Protection</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">AI-based Inline Malware Prevention (ILMPS) <span style="font-size:10px;color:var(--warn-t);">†not on 30G/50G</span></div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div>
+      </div>
+      <!-- Web & DNS -->
+      <div class="bp-row"><div class="bp-cat">Web &amp; DNS Security</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">URL Filtering, DNS Filtering, Video Filtering, Anti-Botnet &amp; C2</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div>
+      </div>
+      <div class="bp-row">
+        <div class="bp-cell">Anti-Spam</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div>
+      </div>
+      <!-- Data & SaaS -->
+      <div class="bp-row"><div class="bp-cat">Data &amp; SaaS Posture</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">DLP (Data Loss Prevention)</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div>
+      </div>
+      <!-- Attack Surface -->
+      <div class="bp-row"><div class="bp-cat">Attack Surface &amp; Visibility</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">IoT Detection, IoT Vulnerability Correlation, Security Rating, Outbreak Check</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="chk">✓</span></div>
+      </div>
+      <!-- NOC/SOC -->
+      <div class="bp-row"><div class="bp-cat">NOC / SOC Services</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">FortiConverter Migration Service</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div>
+      </div>
+      <!-- SD-WAN -->
+      <div class="bp-row"><div class="bp-cat">SD-WAN / SASE Services</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">SD-WAN Underlay Monitoring, Overlay Orchestration, FortiSASE Connector, FortiGate Cloud (1yr log), FortiTelemetry Cloud</div>
+        <div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="dash">–</span></div><div class="bp-cell"><span class="chk">✓</span></div>
+      </div>
+      <!-- Base services -->
+      <div class="bp-row"><div class="bp-cat">Base Updates (Included with ALL FortiCare contracts — no extra cost)</div></div>
+      <div class="bp-row">
+        <div class="bp-cell">App Control, Inline CASB, Device/OS Detection, GeoIPs, Trusted CAs, Internet Services &amp; Botnet IPs, DDNS, Local Protection, PSIRT Check, Anti-Phishing, Timezone</div>
+        <div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div><div class="bp-cell"><span class="chk">✓</span></div>
+      </div>
+    </div>
+
+    <div class="sec-label">Bundle Selection</div>
+    <div class="fg" style="margin-bottom:14px;">
+      <div class="grp">
+        <label class="lbl">FortiGuard Bundle <span class="r">*</span></label>
+        <select id="f-bundle">
+          <option value="">— Select a bundle —</option>
+          <option value="809">Enterprise Protection (ENT) — Recommended · Full attack surface coverage</option>
+          <option value="950">Unified Threat Protection (UTP) — Essential web/network + IPS + AV</option>
+          <option value="928">Advanced Threat Protection (ATP) — IPS + AV + Sandbox, no web filtering</option>
+          <option value="1337">SD-WAN — SD-WAN services + FortiCare, no security bundle</option>
+          <option value="hw">Hardware Only (À La Carte) — add services separately below</option>
+        </select>
+        <span class="err" id="err-bundle">Please select a bundle</span>
+      </div>
+      <div class="grp">
+        <label class="lbl">License Term</label>
+        <input type="hidden" id="f-term" value="DD">
+        <div style="font-size:11px;color:var(--c-text2);padding:6px 9px;background:var(--c-sh,#F7F9FC);border:1px solid var(--c-ib,#C8CDD9);border-radius:3px;">Term is set on the <strong>Project BOM</strong> (1 yr / 3 yr / 5 yr). SKUs emit <code>-DD</code> co-term by default.</div>
+      </div>
+      <div class="grp">
+        <label class="lbl">Order Type</label>
+        <select id="f-ordertype">
+          <option value="new">New — Hardware + Bundle</option>
+          <option value="renewal">Renewal — Service Only (no hardware)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- À LA CARTE SERVICES (shown only when HW Only selected) -->
+    <div id="alacarte-section" style="display:none;">
+      <div class="sec-label">À La Carte FortiGuard Security Services</div>
+      <div class="callout warn">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2L13 12H1L7 2Z" stroke="#8A5800" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 6v3M7 10.5v.5" stroke="#8A5800" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <div>SKUs below are shown using the <strong>FG-60F as the template model</strong> (code <code>0060F</code>). The actual SKU for your selected model will be generated automatically with the correct model code when you click Generate BOM.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:4px;">
+        <label class="trow"><input type="checkbox" class="alc" data-code="247" data-desc="24×7 FortiCare Premium Support"><div><div class="tl">24×7 FortiCare Premium Support</div><div class="tn">FC-10-{model}-247-02-DD — Mandatory with HW only</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="108" data-desc="IPS (Intrusion Prevention System)"><div><div class="tl">IPS</div><div class="tn">FC-10-{model}-108-02-DD</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="100" data-desc="Advanced Malware Protection (AMP) — AV, Botnet, Mobile Malware, Sandbox"><div><div class="tl">Advanced Malware Protection (AMP)</div><div class="tn">FC-10-{model}-100-02-DD — AV, Botnet, Sandbox</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="112" data-desc="Web Security — URL, DNS, Video Filtering, Anti-Botnet &amp; C2"><div><div class="tl">Web Security</div><div class="tn">FC-10-{model}-112-02-DD — URL, DNS, Video filtering</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="577" data-desc="AI-based Inline Malware Prevention (ILMPS) — Zero-day inline protection"><div><div class="tl">AI-based Inline Malware Prevention</div><div class="tn">FC-10-{model}-577-02-DD — Zero-day inline (not on 30G/50G)</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="159" data-desc="OT Security — OT device detection, vulnerability correlation, virtual patching"><div><div class="tl">OT Security</div><div class="tn">FC-10-{model}-159-02-DD — Industrial/OT environments</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="131" data-desc="FortiGate Cloud — Management, Analysis, 1-Year Log Retention"><div><div class="tl">FortiGate Cloud</div><div class="tn">FC-10-{model}-131-02-DD — Management + 1yr logs</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="585" data-desc="FortiAnalyzer Cloud — Centralized log analytics"><div><div class="tl">FortiAnalyzer Cloud</div><div class="tn">FC-10-{model}-585-02-DD</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="660" data-desc="Managed FortiGate Service (NOC) — 24×7 NOC experts"><div><div class="tl">Managed FortiGate (NOC)</div><div class="tn">FC-10-{model}-660-02-DD — 24×7 NOC management</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="464" data-desc="SOC-as-a-Service (includes FortiAnalyzer Cloud) — 24×7 cloud-based SOC"><div><div class="tl">SOC-as-a-Service</div><div class="tn">FC-10-{model}-464-02-DD — incl. FortiAnalyzer Cloud</div></div></label>
+        <label class="trow"><input type="checkbox" class="alc" data-code="189" data-desc="FortiConverter Migration Service — one-time configuration conversion"><div><div class="tl">FortiConverter Migration Service</div><div class="tn">FC-10-{model}-189-02-DD — one-time migration</div></div></label>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ ADD-ONS ════════════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="ch"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 4h9M2 7h6M2 10h4" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg><h2>Optional Add-ons &amp; Services</h2><span class="badge">Step 3</span></div>
+  <div class="cb">
+
+    <div class="sec-label">Zero Touch Provisioning</div>
+    <label class="trow">
+      <input type="checkbox" id="f-fortideploy">
+      <div>
+        <div class="tl">FortiDeploy (Zero Touch Provisioning)</div>
+        <div class="tn">FDP-SINGLE-USE — one SKU per purchase order required to link all devices to FortiDeploy ZTP portal</div>
+      </div>
+    </label>
+
+    <div class="divider"></div>
+    <div class="sec-label">FortiGSLB Cloud — Global Service Load Balancing (ZTNA / VPN)</div>
+    <div class="callout info" style="margin-bottom:10px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#3557A5" stroke-width="1.2"/><path d="M7 6.5v3.5M7 4.5v.5" stroke="#3557A5" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div>FortiGSLB is a DNS-based cloud service for HA and geo-load balancing across data centers. <strong>No license is required on the FortiGate itself</strong>, but the FortiGSLB subscription must be registered under the same FortiCare account.</div>
+    </div>
+    <div class="fg" style="margin-bottom:4px;">
+      <div class="grp">
+        <label class="lbl">GSLB DNS Queries/Second</label>
+        <select id="f-gslb-dns">
+          <option value="">None</option>
+          <option value="FC2-10-CGSLB-330-02">100 QPS — FC2-10-CGSLB-330-02-DD</option>
+          <option value="FC3-10-CGSLB-330-02">500 QPS — FC3-10-CGSLB-330-02-DD</option>
+          <option value="FC4-10-CGSLB-330-02">1000 QPS — FC4-10-CGSLB-330-02-DD</option>
+        </select>
+      </div>
+      <div class="grp">
+        <label class="lbl">GSLB Advanced Health Checks</label>
+        <select id="f-gslb-hc">
+          <option value="">None</option>
+          <option value="FC1-10-CGSLB-332-02">2 health checks — FC1-10-CGSLB-332-02-DD</option>
+          <option value="FC2-10-CGSLB-332-02">10 health checks — FC2-10-CGSLB-332-02-DD</option>
+          <option value="FC4-10-CGSLB-332-02">100 health checks — FC4-10-CGSLB-332-02-DD</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-label">Professional Services</div>
+    <label class="trow">
+      <input type="checkbox" id="f-ps-qs">
+      <div><div class="tl">QuickStart Deployment Service</div><div class="tn">SKU auto-selected based on model range (30-90 / 100-900 / 1000-7000)</div></div>
+    </label>
+    <label class="trow">
+      <input type="checkbox" id="f-ps-remote">
+      <div><div class="tl">Remote Professional Services (per day SOW)</div><div class="tn">FP-10-0000-R08-00-00 — per day charge</div></div>
+    </label>
+    <div id="grp-ps-days" style="display:none;padding:0 8px 4px;">
+      <div class="grp" style="max-width:180px;">
+        <label class="lbl">PS Days</label>
+        <input type="number" id="f-ps-days" min="1" max="999" value="1">
+      </div>
+    </div>
+    <label class="trow">
+      <input type="checkbox" id="f-ps-ah">
+      <div><div class="tl">After Hours / Weekend PS Surcharge</div><div class="tn">FP-PS001-AH — per day surcharge on top of daily charge</div></div>
+    </label>
+    <label class="trow">
+      <input type="checkbox" id="f-ps-te">
+      <div><div class="tl">Custom Travel &amp; Expenses (On-site PS)</div><div class="tn">FP-MISC-TE — custom T&amp;E for on-site delivery</div></div>
+    </label>
+
+  </div>
+</div>
+
+<!-- ══ ACTIONS ════════════════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="actions">
+    <button class="btn btn-p" onclick="generateBOM()"><svg viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5h10M7 2l4.5 4.5L7 11" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Preview BOM</button>
+    <button class="btn btn-p" onclick="addToProjectBOM()" style="background:#2E7D32;border-color:#2E7D32;"><svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6l3 3 3-3" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="white" stroke-width="1.3" stroke-linecap="round"/></svg>Add to Project BOM</button>
+    <button class="btn btn-s" onclick="resetForm()"><svg viewBox="0 0 13 13" fill="none"><path d="M1.5 6.5a5 5 0 1 0 1.2-3.2L1.5 2v3h3" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Reset</button>
+    <span id="smsg" style="color:#C0392B;"></span>
+  </div>
+</div>
+
+</div><!-- end config-section -->
+
+<!-- ══ BOM OUTPUT ════════════════════════════════════════════════════════ -->
+<div class="card" id="bom-section">
+  <div class="ch">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1.5" width="11" height="10" rx="1.5" stroke="#6B7589" stroke-width="1.2"/><path d="M3.5 5h6M3.5 7h6M3.5 9h3.5" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <h2>Bill of Materials — FortiGate NGFW</h2>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-s" onclick="copyTSV()" style="padding:4px 10px;font-size:11px;"><svg viewBox="0 0 13 13" fill="none"><rect x="3.5" y="1" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/><rect x="1" y="3" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/></svg>Copy TSV</button>
+      <button class="btn btn-s" onclick="window.print()" style="padding:4px 10px;font-size:11px;"><svg viewBox="0 0 13 13" fill="none"><rect x="1.5" y="4" width="10" height="6" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M3.5 4V2h6v2M3.5 10h6" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Print</button>
+    </div>
+  </div>
+  <div class="cb">
+    <div class="bom-meta" id="bom-meta"></div>
+    <table class="bt" id="bom-table">
+      <thead><tr>
+        <th style="width:230px;">Part Number</th>
+        <th>Description</th>
+        <th style="width:55px;text-align:center;">Qty</th>
+        <th style="width:82px;">Type</th>
+        <th>Notes</th>
+      </tr></thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+    <div class="bom-totals" id="bom-totals"></div>
+  </div>
+</div>
+
+<script>
+// ── MODEL DATABASE ──────────────────────────────────────────────────────────
+// Each model: { id, display, seg, fw, threat, ssl, skuCode, wifiCode, variants }
+// skuCode = the part that goes into FC-10-{skuCode}-{bundle}-02-DD
+// Variants: storage = storage SKU suffix change; lte/poe = separate SKU
+const MODELS = [
+  // BRANCH — Small/Home Office (from Product Matrix, not in NGFW ordering guide bundle tables)
+  { id:'30G',   seg:'branch',   fw:'4 Gbps',   threat:'500 Mbps',  ssl:'400 Mbps',  skuCode:'0030G', wifiCode:'W030G', hwSku:'FG-30G',   wifiSku:'FWF-30G-A',   bundleCode:'30G',  v:{storage:false,lte:false,poe:false},  qsRange:1, matrixOnly:false },
+  { id:'40F',   seg:'branch',   fw:'5 Gbps',   threat:'600 Mbps',  ssl:'310 Mbps',  skuCode:'0040F', wifiCode:'W040F', hwSku:'FG-40F',   wifiSku:'FWF-40F',     bundleCode:'40F',  v:{storage:false,lte:true,poe:false},   qsRange:1, matrixOnly:true  },
+  { id:'50G',   seg:'branch',   fw:'5 Gbps',   threat:'1.1 Gbps',  ssl:'1.3 Gbps',  skuCode:'0050G', wifiCode:'W050G', hwSku:'FG-50G',   wifiSku:'FWF-50G-A',   bundleCode:'50G',  v:{storage:true,lte:true,poe:true},    qsRange:1, matrixOnly:false },
+  { id:'60F',   seg:'branch',   fw:'10 Gbps',  threat:'700 Mbps',  ssl:'630 Mbps',  skuCode:'0060F', wifiCode:'W060F', hwSku:'FG-60F',   wifiSku:'FWF-60F',     bundleCode:'60F',  v:{storage:true,lte:false,poe:false},   qsRange:1, matrixOnly:true  },
+  { id:'70F',   seg:'branch',   fw:'10 Gbps',  threat:'800 Mbps',  ssl:'700 Mbps',  skuCode:'0070F', wifiCode:null,    hwSku:'FG-70F',   wifiSku:null,          bundleCode:'70F',  v:{storage:true,lte:false,poe:false},   qsRange:1, matrixOnly:true  },
+  { id:'70G',   seg:'branch',   fw:'10 Gbps',  threat:'1.3 Gbps',  ssl:'1.4 Gbps',  skuCode:'0070G', wifiCode:'W070G', hwSku:'FG-70G',   wifiSku:'FWF-70G',     bundleCode:'70G',  v:{storage:true,lte:false,poe:true},    qsRange:1, matrixOnly:true  },
+  { id:'80F',   seg:'branch',   fw:'10 Gbps',  threat:'900 Mbps',  ssl:'715 Mbps',  skuCode:'0080F', wifiCode:'W080F', hwSku:'FG-80F',   wifiSku:'FWF-80F-2R-A',bundleCode:'80F',  v:{storage:true,lte:false,poe:true},   qsRange:1, matrixOnly:false },
+  { id:'90G',   seg:'branch',   fw:'28 Gbps',  threat:'2.2 Gbps',  ssl:'2.6 Gbps',  skuCode:'0090G', wifiCode:null,    hwSku:'FG-90G',   wifiSku:null,          bundleCode:'90G',  v:{storage:true,lte:false,poe:false},  qsRange:1, matrixOnly:false },
+  { id:'120G',  seg:'branch',   fw:'39 Gbps',  threat:'2.8 Gbps',  ssl:'3 Gbps',    skuCode:'F120G', wifiCode:null,    hwSku:'FG-120G',  wifiSku:null,          bundleCode:'120G', v:{storage:true,lte:false,poe:false},  qsRange:2, matrixOnly:false },
+  { id:'200G',  seg:'branch',   fw:'39 Gbps',  threat:'6 Gbps',    ssl:'7 Gbps',    skuCode:'F200G', wifiCode:null,    hwSku:'FG-200G',  wifiSku:null,          bundleCode:'200G', v:{storage:true,lte:false,poe:false},  qsRange:2, matrixOnly:false },
+  // MID RANGE
+  { id:'400F',  seg:'midrange', fw:'79.5 Gbps',threat:'9 Gbps',    ssl:'8 Gbps',    skuCode:'0400F', wifiCode:null,    hwSku:'FG-400F',  wifiSku:null,          bundleCode:'400F', v:{storage:true,lte:false,poe:false},  qsRange:2, matrixOnly:false },
+  { id:'400G',  seg:'midrange', fw:'164 Gbps', threat:'13 Gbps',   ssl:'11.5 Gbps', skuCode:'0400G', wifiCode:null,    hwSku:'FG-400G',  wifiSku:null,          bundleCode:'400G', v:{storage:true,lte:false,poe:false},  qsRange:2, matrixOnly:true  },
+  { id:'700G',  seg:'midrange', fw:'164 Gbps', threat:'26 Gbps',   ssl:'14 Gbps',   skuCode:'0700G', wifiCode:null,    hwSku:'FG-700G',  wifiSku:null,          bundleCode:'700G', v:{storage:true,lte:false,poe:false},  qsRange:2, matrixOnly:false },
+  { id:'900G',  seg:'midrange', fw:'164 Gbps', threat:'30 Gbps',   ssl:'16.7 Gbps', skuCode:'0900G', wifiCode:null,    hwSku:'FG-900G',  wifiSku:null,          bundleCode:'900G', v:{storage:true,lte:false,poe:false},  qsRange:2, matrixOnly:false },
+  // HIGH END
+  { id:'1000F', seg:'highend',  fw:'198 Gbps', threat:'13 Gbps',   ssl:'10 Gbps',   skuCode:'F1K0F', wifiCode:null,    hwSku:'FG-1000F', wifiSku:null,          bundleCode:'1000F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'1800F', seg:'highend',  fw:'198 Gbps', threat:'15 Gbps',   ssl:'12 Gbps',   skuCode:'F18HF', wifiCode:null,    hwSku:'FG-1800F', wifiSku:null,          bundleCode:'1800F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'2600F', seg:'highend',  fw:'198 Gbps', threat:'25 Gbps',   ssl:'20 Gbps',   skuCode:'F26HF', wifiCode:null,    hwSku:'FG-2600F', wifiSku:null,          bundleCode:'2600F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'3000F', seg:'highend',  fw:'397 Gbps', threat:'33 Gbps',   ssl:'29 Gbps',   skuCode:'F3K0F', wifiCode:null,    hwSku:'FG-3000F', wifiSku:null,          bundleCode:'3000F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'3000G', seg:'highend',  fw:'397 Gbps', threat:'80 Gbps',   ssl:'75 Gbps',   skuCode:'F3K0G', wifiCode:null,    hwSku:'FG-3000G', wifiSku:null,          bundleCode:'3000G',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:true  },
+  { id:'3200F', seg:'highend',  fw:'387 Gbps', threat:'45 Gbps',   ssl:'29 Gbps',   skuCode:'F3K2F', wifiCode:null,    hwSku:'FG-3200F', wifiSku:null,          bundleCode:'3200F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'3500F', seg:'highend',  fw:'595 Gbps', threat:'63 Gbps',   ssl:'63 Gbps',   skuCode:'F3K5F', wifiCode:null,    hwSku:'FG-3500F', wifiSku:null,          bundleCode:'3500F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'3500G', seg:'highend',  fw:'595 Gbps', threat:'105 Gbps',  ssl:'112 Gbps',  skuCode:'F3K5G', wifiCode:null,    hwSku:'FG-3500G', wifiSku:null,          bundleCode:'3500G',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:true  },
+  { id:'3700F', seg:'highend',  fw:'589 Gbps', threat:'75 Gbps',   ssl:'55 Gbps',   skuCode:'F3K6E', wifiCode:null,    hwSku:'FG-3700F', wifiSku:null,          bundleCode:'3700F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'3800G', seg:'highend',  fw:'795 Gbps', threat:'200 Gbps',  ssl:'120 Gbps',  skuCode:'F3K8G', wifiCode:null,    hwSku:'FG-3800G', wifiSku:null,          bundleCode:'3800G',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:true  },
+  { id:'4200F', seg:'highend',  fw:'800 Gbps', threat:'45 Gbps',   ssl:'50 Gbps',   skuCode:'F42HF', wifiCode:null,    hwSku:'FG-4200F', wifiSku:null,          bundleCode:'4200F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'4400F', seg:'highend',  fw:'1.15 Tbps',threat:'75 Gbps',   ssl:'86 Gbps',   skuCode:'F44HF', wifiCode:null,    hwSku:'FG-4400F', wifiSku:null,          bundleCode:'4400F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'4800F', seg:'highend',  fw:'3.1 Tbps', threat:'75 Gbps',   ssl:'63 Gbps',   skuCode:'F48HF', wifiCode:null,    hwSku:'FG-4800F', wifiSku:null,          bundleCode:'4800F',v:{storage:true,lte:false,poe:false},  qsRange:3, matrixOnly:false },
+  { id:'7081F', seg:'highend',  fw:'1.19 Tbps',threat:'312 Gbps',  ssl:'324 Gbps',  skuCode:'F78F1', wifiCode:null,    hwSku:'FG-7081F', wifiSku:null,          bundleCode:'7081F',v:{storage:false,lte:false,poe:false}, qsRange:3, matrixOnly:false },
+  { id:'7121F', seg:'highend',  fw:'1.89 Tbps',threat:'520 Gbps',  ssl:'540 Gbps',  skuCode:'F7CF1F',wifiCode:null,    hwSku:'FG-7121F', wifiSku:null,          bundleCode:'7121F',v:{storage:false,lte:false,poe:false}, qsRange:3, matrixOnly:false },
+];
+
+// Storage model +1 lookup (manual for irregular ones)
+const STORAGE_MODEL = {
+  '40F':'41F','50G':'51G','60F':'61F','70F':'71F','70G':'71G','80F':'81F','90G':'91G','120G':'121G','200G':'201G',
+  '400F':'401F','400G':'401G','700G':'701G','900G':'901G',
+  '1000F':'1001F','1800F':'1801F','2600F':'2601F','3000F':'3001F','3000G':'3001G','3200F':'3201F','3500F':'3501F',
+  '3500G':'3501G','3700F':'3701F','3800G':'3801G','4200F':'4201F','4400F':'4401F','4800F':'4801F',
+};
+// Storage sku codes (some differ from base)
+const STORAGE_SKU_CODE = {
+  '41F':'0041F','51G':'0051G','61F':'0061F','71F':'0071F','71G':'0071G','81F':'0081F','91G':'0091G','121G':'F121G','201G':'F201G',
+  '401F':'0401F','401G':'0401G','701G':'0701G','901G':'0901G',
+};
+// Bundle SKU codes for renewal – most follow pattern but high-end 700G/900G have UTP anomalies
+const RENEWAL_UTP_OVERRIDE = { '700G':'F7H0G','900G':'FG9H0' };
+
+let selectedModel = null;
+
+// ── BUILD MODEL GRID ────────────────────────────────────────────────────────
+function buildModelGrid() {
+  const grid = document.getElementById('model-grid');
+  const SEG_LABEL = { branch:'Branch', midrange:'Mid Range', highend:'High End' };
+  grid.innerHTML = MODELS.map(m => `
+    <div class="model-card" id="mc-${m.id}" onclick="selectModel('${m.id}')">
+      <div class="mn">FortiGate ${m.id}</div>
+      <div class="ms">FW: ${m.fw} &nbsp;·&nbsp; Threat: ${m.threat}</div>
+      <div class="mt">SSL: ${m.ssl}</div>
+      <span class="seg-badge">${SEG_LABEL[m.seg]}</span>${m.matrixOnly ? ' <span class="seg-badge" style="background:#FFF8EE;color:#8A5800;border-color:#F5D9A0;">Matrix</span>' : ''}
+    </div>
+  `).join('');
+}
+
+function selectModel(id) {
+  document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('mc-' + id).classList.add('selected');
+  selectedModel = MODELS.find(m => m.id === id);
+  // Update variant options based on selected model
+  updateVariantOptions();
+  document.getElementById('err-model').style.display = 'none';
+}
+
+function updateVariantOptions() {
+  if (!selectedModel) return;
+  const sel = document.getElementById('f-variant');
+  const v = selectedModel.v;
+  sel.innerHTML = '<option value="std">Standard</option>' +
+    (v.storage ? '<option value="storage">With Storage (+1 to model number)</option>' : '') +
+    (v.lte     ? '<option value="lte">LTE/5G variant</option>' : '') +
+    (v.poe     ? '<option value="poe">PoE variant</option>' : '');
+  // WiFi
+  const wifiSel = document.getElementById('f-wifi');
+  if (selectedModel.wifiCode) {
+    wifiSel.disabled = false;
+    wifiSel.style.opacity = '1';
+  } else {
+    wifiSel.value = 'no';
+    wifiSel.disabled = true;
+    wifiSel.style.opacity = '0.4';
+  }
+}
+
+function filterSeg(btn, seg) {
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.model-card').forEach(c => {
+    const id = c.id.replace('mc-','');
+    const m = MODELS.find(x => x.id === id);
+    c.style.display = (seg === 'all' || m.seg === seg) ? '' : 'none';
+  });
+}
+
+function onHAChange() {
+  const v = document.getElementById('f-ha').value;
+  document.getElementById('grp-ha-nodes').style.display = v !== 'no' ? '' : 'none';
+}
+
+document.getElementById('f-bundle').addEventListener('change', function() {
+  document.getElementById('alacarte-section').style.display = this.value === 'hw' ? '' : 'none';
+});
+
+document.getElementById('f-ps-remote').addEventListener('change', function() {
+  document.getElementById('grp-ps-days').style.display = this.checked ? '' : 'none';
+});
+
+// ── SKU BUILDERS ─────────────────────────────────────────────────────────────
+function buildHWSku(m, wifi, variant) {
+  const isWifi = wifi === 'yes' && m.wifiCode;
+  if (variant === 'lte') {
+    if (isWifi) return `FWF-${m.id}-5G-II`;
+    return `FG-${m.id}-5G`;
+  }
+  if (variant === 'poe') {
+    if (isWifi) return `FWF-${m.id}-2R-POE-A`;
+    return `FG-${m.id}-SFP-POE`;
+  }
+  if (variant === 'storage') {
+    const sModel = STORAGE_MODEL[m.id] || m.id;
+    if (isWifi) return `FWF-${sModel}-A`;
+    return `FG-${sModel}`;
+  }
+  if (isWifi) return m.wifiSku;
+  return m.hwSku;
+}
+
+function getSkuCode(m, wifi, variant) {
+  // Returns the model code segment for FC-10-{code}-{bundle}-02-DD
+  const isWifi = wifi === 'yes' && m.wifiCode;
+  if (variant === 'storage') {
+    const sModel = STORAGE_MODEL[m.id] || m.id;
+    if (STORAGE_SKU_CODE[sModel]) return STORAGE_SKU_CODE[sModel];
+    return m.skuCode; // fallback
+  }
+  // Special LTE codes
+  const LTE_CODES = { '40F':'0040F3G','50G':'F50G5','51G':'F51G5' };
+  if (variant === 'lte' && LTE_CODES[m.id]) return LTE_CODES[m.id];
+  // POE codes
+  const POE_CODES = { '50G':'F50GP','51G':'F51GP','70G':'0070GP','71G':'0071GP','80F':'F80FP','81F':'F81FP' };
+  if (variant === 'poe' && POE_CODES[m.id]) return POE_CODES[m.id];
+  // WiFi codes
+  const WIFI_POE = { '81F':'WP81F' };
+  if (isWifi && variant === 'poe' && WIFI_POE[m.id]) return WIFI_POE[m.id];
+  if (isWifi) return m.wifiCode;
+  return m.skuCode;
+}
+
+function buildBundleSku(m, wifi, variant, bundle, term, orderType) {
+  const code = getSkuCode(m, wifi, variant);
+  const termStr = String(term).padStart(2,'0');
+  const hwSku = buildHWSku(m, wifi, variant);
+  if (orderType === 'new') {
+    // Hardware bundle: FG-{model}-BDL-{bundle}-{term}
+    // e.g. FG-200G-BDL-809-36 for a 3-year Enterprise bundle
+    return `${hwSku}-BDL-${bundle}-${termStr}`;
+  } else {
+    // Renewal — FC-10-{code}-{bundle}-02-{term}
+    // UTP anomaly for 700G/900G
+    let useCode = code;
+    if (bundle === '950' && RENEWAL_UTP_OVERRIDE[m.id]) useCode = RENEWAL_UTP_OVERRIDE[m.id];
+    return `FC-10-${useCode}-${bundle}-02-${termStr}`;
+  }
+}
+
+function buildALaCarteSku(code_str, skuCode, term) {
+  const termStr = String(term).padStart(2,'0');
+  return `FC-10-${skuCode}-${code_str}-02-${termStr}`;
+}
+
+// ── QS SKU by model range ────────────────────────────────────────────────────
+const QS_SKU = { 1:'FP-10-QSNGFW-DP1-00-00', 2:'FP-10-QSNGFW-DP2-00-00', 3:'FP-10-QSNGFW-DP3-00-00' };
+const QS_DESC = { 1:'FortiGate Deployment QuickStart Service (models 30–90)', 2:'FortiGate Deployment QuickStart Service (models 100–900)', 3:'FortiGate Deployment QuickStart Service (models 1000–7000)' };
+
+// ── BUNDLE DESCRIPTIONS ──────────────────────────────────────────────────────
+const BUNDLE_DESC = {
+  '809': 'Enterprise Protection Bundle — FortiCare Premium + IPS + AMP + AV + Web Security + Anti-Spam + DLP + Attack Surface Security + AI Inline Malware Prevention + FortiConverter',
+  '950': 'Unified Threat Protection Bundle — FortiCare Premium + IPS + AMP + AV + Web Security + Anti-Spam',
+  '928': 'Advanced Threat Protection Bundle — FortiCare Premium + IPS + AMP + AV + Cloud Sandbox',
+  '1337':'SD-WAN Bundle — FortiCare Premium + SD-WAN Underlay/Overlay + FortiSASE Connector + FortiGate Cloud + FortiTelemetry',
+};
+
+// ── SHARED STATE ─────────────────────────────────────────────────────────────
+let _lastRows = [], _lastLabel = '', _lastMeta = {};
+
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'FORTIBOM_ADD', product:'FortiGate', label:_lastLabel, rows:_lastRows, meta:_lastMeta }, '*');
+    document.getElementById('smsg').textContent = '✓ Added to Project BOM.';
+    document.getElementById('smsg').style.color = '#2E7D32';
+  }
+}
+
+// ── MAIN GENERATE ─────────────────────────────────────────────────────────────
+function generateBOM() {
+  const qty      = parseInt(document.getElementById('f-qty').value, 10) || 0;
+  const ha       = document.getElementById('f-ha').value;
+  const haNodes  = parseInt(document.getElementById('f-ha-nodes').value, 10) || 2;
+  const wifi     = document.getElementById('f-wifi').value;
+  const variant  = document.getElementById('f-variant').value;
+  const bundle   = document.getElementById('f-bundle').value;
+  const termMo   = 'DD'; // Term is controlled at Project BOM level
+  const termStr  = 'DD';
+  const termLabel = 'Co-term (-DD)';
+  const orderType= document.getElementById('f-ordertype').value;
+  const gslbDns  = document.getElementById('f-gslb-dns').value;
+  const gslbHc   = document.getElementById('f-gslb-hc').value;
+  const incFD    = document.getElementById('f-fortideploy').checked;
+  const incQS    = document.getElementById('f-ps-qs').checked;
+  const incRemPS = document.getElementById('f-ps-remote').checked;
+  const psDays   = parseInt(document.getElementById('f-ps-days').value,10)||1;
+  const incAH    = document.getElementById('f-ps-ah').checked;
+  const incTE    = document.getElementById('f-ps-te').checked;
+
+  // Validate
+  let valid = true;
+  if (!selectedModel) { document.getElementById('err-model').style.display='block'; valid=false; }
+  if (!(qty >= 1)) { document.getElementById('f-qty').classList.add('invalid'); document.getElementById('err-qty').style.display='block'; valid=false; }
+  else { document.getElementById('f-qty').classList.remove('invalid'); document.getElementById('err-qty').style.display='none'; }
+  if (!bundle) { document.getElementById('f-bundle').classList.add('invalid'); document.getElementById('err-bundle').style.display='block'; valid=false; }
+  else { document.getElementById('f-bundle').classList.remove('invalid'); document.getElementById('err-bundle').style.display='none'; }
+  if (!valid) { document.getElementById('smsg').textContent='⚠ Please complete all required fields.'; document.getElementById('smsg').style.color='#C0392B'; return false; }
+  document.getElementById('smsg').textContent='';
+
+  const m = selectedModel;
+  const haMultiplier = ha !== 'no' ? haNodes : 1;
+  const totalUnits = qty * haMultiplier;
+  const haLabel = ha === 'no' ? 'Standalone' : ha === 'aa' ? `HA Active-Active (${haNodes} nodes)` : `HA Active-Passive (${haNodes} nodes)`;
+  const skuCode = getSkuCode(m, wifi, variant);
+  const hwSkuBase = buildHWSku(m, wifi, variant);
+  const rows = [];
+
+  // ── HARDWARE / BUNDLE ──────────────────────────────────────────────────────
+  const isWifi = wifi === 'yes' && m.wifiCode;
+  const productName = `${isWifi ? 'FortiWiFi' : 'FortiGate'} ${variant === 'storage' ? (STORAGE_MODEL[m.id]||m.id) : variant === 'lte' ? m.id+' (LTE/5G)' : variant === 'poe' ? m.id+' (PoE)' : m.id}`;
+
+  if (bundle === 'hw') {
+    rows.push({ section: `Hardware Only — ${productName}` });
+    rows.push({ sku: hwSkuBase, desc: `${productName} — Firewall: ${m.fw}, Threat Protection: ${m.threat}, SSL: ${m.ssl}`, qty: totalUnits, kind:'req', note: ha !== 'no' ? `${qty} deployment(s) × ${haMultiplier} nodes` : `${qty} unit(s)` });
+    if (m.matrixOnly) rows.push({ sku:'⚠', desc:'This model is from the Product Matrix (Apr 2026) and not listed in the NGFW Ordering Guide bundle tables. Verify hardware SKU with Fortinet/distributor before quoting.', qty:null, kind:'note', note:'Matrix-only model' });
+
+    // À la carte services
+    const alcItems = [...document.querySelectorAll('.alc:checked')];
+    if (alcItems.length > 0) {
+      rows.push({ section: 'À La Carte Services' });
+      for (const el of alcItems) {
+        const code = el.dataset.code;
+        const desc = el.dataset.desc;
+        const sku = buildALaCarteSku(code, skuCode, termMo);
+        const isCare = code === '247';
+        rows.push({ sku, desc: `${desc}${isCare ? '' : ` — ${termLabel}`}`, qty: totalUnits, kind: isCare ? 'req' : 'opt', note: isCare ? 'Required for support' : `${termLabel} subscription` });
+      }
+    }
+  } else {
+    const bundleLabel = { '809':'Enterprise (ENT)', '950':'UTP', '928':'ATP', '1337':'SD-WAN' }[bundle];
+    rows.push({ section: orderType === 'new' ? `Hardware + ${bundleLabel} Bundle — ${productName}` : `Service Renewal — ${bundleLabel} Bundle — ${productName}` });
+    const bundleSku = buildBundleSku(m, wifi, variant, bundle, termMo, orderType);
+    const bundleDesc = orderType === 'new'
+      ? `${productName} with ${termLabel} ${bundleLabel} Bundle. ${BUNDLE_DESC[bundle]}`
+      : `${termLabel} Renewal — ${bundleLabel} Bundle for ${productName}. ${BUNDLE_DESC[bundle]}`;
+    rows.push({ sku: bundleSku, desc: bundleDesc, qty: totalUnits, kind:'req', note: orderType === 'new' ? `Hardware + FortiCare + FortiGuard included` : `Service renewal — no hardware` });
+    if (m.matrixOnly) rows.push({ sku:'⚠', desc:'This model is from the Product Matrix (Apr 2026) and not listed in the NGFW Ordering Guide bundle tables. Bundle SKU derived from standard naming patterns — verify with Fortinet/distributor before quoting.', qty:null, kind:'note', note:'Matrix-only model' });
+  }
+
+  // ── GSLB ──────────────────────────────────────────────────────────────────
+  if (gslbDns || gslbHc) {
+    rows.push({ section: 'FortiGSLB Cloud — Global Service Load Balancing' });
+    if (gslbDns) {
+      const qps = {'FC2-10-CGSLB-330-02':'100 QPS','FC3-10-CGSLB-330-02':'500 QPS','FC4-10-CGSLB-330-02':'1000 QPS'}[gslbDns];
+      rows.push({ sku: `${gslbDns}-${termStr}`, desc: `FortiGSLB Cloud DNS Subscription — ${qps} DNS queries per second. Provides HA/geo load balancing for applications across data centers. Register under same FortiCare account as FortiGates.`, qty: 1, kind:'opt', note: `No FortiGate license required · ${termLabel}` });
+    }
+    if (gslbHc) {
+      const hc = {'FC1-10-CGSLB-332-02':'2','FC2-10-CGSLB-332-02':'10','FC4-10-CGSLB-332-02':'100'}[gslbHc];
+      rows.push({ sku: `${gslbHc}-${termStr}`, desc: `FortiGSLB Cloud Advanced Health Check Subscription — ${hc} health checks`, qty: 1, kind:'opt', note: `${termLabel} · stackable` });
+    }
+  }
+
+  // ── FORTIDEPLOY ────────────────────────────────────────────────────────────
+  if (incFD) {
+    rows.push({ section: 'Zero Touch Provisioning' });
+    rows.push({ sku:'FDP-SINGLE-USE', desc:'FortiDeploy — Zero Touch Provisioning. One SKU per purchase order routes all FortiGates in this PO to FortiDeploy ZTP portal.', qty:1, kind:'opt', note:'1 per purchase order' });
+  }
+
+  // ── SERVICES ───────────────────────────────────────────────────────────────
+  const hasServices = incQS || incRemPS || incAH || incTE;
+  if (hasServices) {
+    rows.push({ section: 'Professional Services' });
+    if (incQS) rows.push({ sku: QS_SKU[m.qsRange], desc: QS_DESC[m.qsRange], qty:qty, kind:'opt', note:`Based on model ${m.id} (range ${['','30–90','100–900','1000–7000'][m.qsRange]})` });
+    if (incRemPS) rows.push({ sku:'FP-10-0000-R08-00-00', desc:'Remote Professional Services — per day charge (SOW)', qty:psDays, kind:'opt', note:`${psDays} day(s) of remote PS` });
+    if (incAH) rows.push({ sku:'FP-PS001-AH', desc:'After Hours / Weekend PS Surcharge — per day surcharge in addition to daily charge', qty:incRemPS ? psDays : 1, kind:'opt', note:'Applied per day of after-hours delivery' });
+    if (incTE) rows.push({ sku:'FP-MISC-TE', desc:'Custom Travel & Expenses — On-site Professional Services', qty:1, kind:'opt', note:'Actual T&E costs; requires SOW' });
+  }
+
+  const bundleLbl = { '809':'ENT', '950':'UTP', '928':'ATP', '1337':'SD-WAN', 'hw':'HW-Only' }[bundle] || bundle;
+  const haShort = ha === 'no' ? '' : ` ${ha.toUpperCase()}×${haMultiplier}`;
+  _lastLabel = `FortiGate ${productName} — ${bundleLbl} ${orderType==='renewal'?'Renewal':''} ${termLabel}${haShort} (×${totalUnits})`.trim();
+  _lastRows  = rows;
+  _lastMeta  = { productName, bundle, orderType, termLabel, ha: haLabel, totalUnits };
+  renderBOM(rows, _lastMeta);
+  return true;
+}
+
+function renderBOM(rows, meta) {
+  const bundleLabel = { '809':'Enterprise (ENT)', '950':'UTP', '928':'ATP', '1337':'SD-WAN', 'hw':'Hardware Only (À La Carte)' }[meta.bundle] || meta.bundle;
+  document.getElementById('bom-meta').innerHTML = [
+    { label:'Product', value:meta.productName },
+    { label:'Bundle', value:bundleLabel },
+    { label:'Order Type', value:meta.orderType==='new'?'New':'Renewal' },
+    { label:'HA', value:meta.ha },
+    { label:'Units', value:meta.totalUnits },
+    { label:'Term', value:meta.termLabel },
+  ].map(m=>`<div class="bom-meta-item"><div class="ml">${m.label}</div><div class="mv">${m.value}</div></div>`).join('');
+
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+  let lines=0, totalQty=0;
+  for (const row of rows) {
+    const tr = document.createElement('tr');
+    if (row.section !== undefined) {
+      tr.className = 'rs';
+      tr.innerHTML = `<td colspan="5">${row.section}</td>`;
+    } else {
+      lines++;
+      if (typeof row.qty === 'number') totalQty += row.qty;
+      const badge = { req:'<span class="br br-req">Required</span>', opt:'<span class="br br-opt">Optional</span>', inc:'<span class="br br-inc">Included</span>' }[row.kind]||'';
+      tr.innerHTML = `<td><span class="sku">${row.sku}</span></td><td>${row.desc}</td><td class="qc">${row.qty??''}</td><td>${badge}</td><td class="nc">${row.note||''}</td>`;
+    }
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('bom-totals').innerHTML = `
+    <div class="tc"><div class="tl">Line Items</div><div class="tv">${lines}</div></div>
+    <div class="tc hi"><div class="tl">Total Units/Licenses</div><div class="tv">${totalQty}</div></div>
+  `;
+
+  document.getElementById('bom-section').style.display='block';
+  document.getElementById('bom-section').scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('smsg').textContent='✓ BOM generated.';
+  document.getElementById('smsg').style.color='#2E7D32';
+}
+
+function resetForm() {
+  document.getElementById('f-qty').value='1';
+  document.getElementById('f-ha').value='no';
+  document.getElementById('f-wifi').value='no';
+  document.getElementById('f-bundle').value='';
+  document.getElementById('f-ordertype').value='new';
+  document.getElementById('f-gslb-dns').value='';
+  document.getElementById('f-gslb-hc').value='';
+  document.getElementById('f-fortideploy').checked=false;
+  document.getElementById('f-ps-qs').checked=false;
+  document.getElementById('f-ps-remote').checked=false;
+  document.getElementById('f-ps-ah').checked=false;
+  document.getElementById('f-ps-te').checked=false;
+  document.querySelectorAll('.alc').forEach(e=>e.checked=false);
+  document.querySelectorAll('.model-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
+  document.querySelectorAll('.err').forEach(e=>e.style.display='none');
+  document.getElementById('alacarte-section').style.display='none';
+  document.getElementById('grp-ha-nodes').style.display='none';
+  document.getElementById('grp-ps-days').style.display='none';
+  document.getElementById('bom-section').style.display='none';
+  document.getElementById('smsg').textContent='';
+  selectedModel=null;
+}
+
+function copyTSV() {
+  const rows = document.querySelectorAll('#bom-table tbody tr');
+  const lines=['Part Number\tDescription\tQty\tType\tNotes'];
+  rows.forEach(r=>{
+    if(r.classList.contains('rs')){lines.push(`\t${r.querySelector('td').textContent.trim()}\t\t\t`);}
+    else{
+      const cells=r.querySelectorAll('td');
+      if(cells.length>=5) lines.push([cells[0].textContent.trim(),cells[1].textContent.trim(),cells[2].textContent.trim(),cells[3].textContent.trim(),cells[4].textContent.trim()].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    document.getElementById('smsg').textContent='✓ Copied.';
+    document.getElementById('smsg').style.color='#2E7D32';
+  });
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+buildModelGrid();
+</script>
+</body>
+</html>

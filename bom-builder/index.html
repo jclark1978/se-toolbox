@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FortiSKU BOM Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../src/shared/ui/toolbox-shell.css" />
+  <link rel="stylesheet" href="../src/features/bom-builder/page.css" />
+  <script src="../src/shared/ui/theme-init.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-row">
+        <div>
+          <h1>BOM Builder</h1>
+          <p>Plugin-backed BOM generation inside Fortisku using an upstream-friendly FortiBOM integration wrapper.</p>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch color mode" aria-pressed="false">
+          <span class="theme-toggle-track" aria-hidden="true">
+            <span class="theme-icon theme-icon-sun">☀</span>
+            <span class="theme-icon theme-icon-moon">☾</span>
+            <span class="theme-toggle-knob"></span>
+          </span>
+        </button>
+      </div>
+      <nav id="toolbox-nav" class="top-nav" aria-label="Primary navigation"></nav>
+    </header>
+
+    <main>
+      <section class="panel bom-builder-intro" aria-labelledby="bom-builder-heading">
+        <div class="panel-header">
+          <h2 id="bom-builder-heading">Integration Preview</h2>
+          <span class="integration-badge">Plugin-backed</span>
+        </div>
+        <p>
+          This first phase keeps FortiBOM as an upstream-managed engine while Fortisku owns the route, shared shell,
+          and theme styling. The current preview is centered on the FortiGate flow and the shared project BOM workspace.
+        </p>
+
+        <div class="bom-builder-launcher" aria-labelledby="bom-builder-launcher-heading">
+          <div class="launcher-header">
+            <h3 id="bom-builder-launcher-heading">Launch Product</h3>
+            <p>Search the BOM catalog and launch any embedded product generator without leaving the Fortisku shell.</p>
+          </div>
+
+          <div class="bom-builder-search-row">
+            <div class="bom-builder-search-shell">
+              <label class="sr-only" for="bom-builder-search-input">Search BOM products</label>
+              <input
+                id="bom-builder-search-input"
+                type="search"
+                placeholder="Search products like FortiGate, FortiManager, FortiAP..."
+                aria-label="Search BOM products"
+                autocomplete="off"
+                aria-expanded="false"
+                aria-controls="bom-builder-search-results"
+              />
+              <div id="bom-builder-search-results" class="bom-builder-search-results" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bom-builder-actions">
+          <button id="bom-builder-project-button" type="button" class="bom-button secondary">Project BOM</button>
+          <a id="bom-builder-open-full-link" class="secondary action-link" href="../vendor/FortiBOM/index.html" target="_blank" rel="noopener noreferrer">Open Full FortiBOM</a>
+        </div>
+
+        <p id="bom-builder-status" class="status-message info" role="status" aria-live="polite">
+          Loading the embedded BOM workspace…
+        </p>
+      </section>
+
+      <section class="panel bom-builder-host-panel" aria-labelledby="bom-builder-host-heading">
+        <div class="panel-header">
+          <h2 id="bom-builder-host-heading">Embedded BOM Workspace</h2>
+        </div>
+        <iframe
+          id="bom-builder-frame"
+          class="bom-builder-frame"
+          src="../vendor/FortiBOM/index.html"
+          title="Embedded FortiBOM workspace"
+          loading="eager"
+        ></iframe>
+      </section>
+    </main>
+
+    <footer>
+      BOM Builder is currently hosted through a Fortisku wrapper around a vendored FortiBOM snapshot so upstream changes can be integrated more safely.
+    </footer>
+  </div>
+
+  <script type="module" src="../src/features/bom-builder/main.js"></script>
+</body>
+</html>
