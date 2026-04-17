@@ -136,7 +136,7 @@
 
     button:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(38, 128, 194, 0.25);
+      box-shadow: 0 6px 14px rgba(218, 41, 28, 0.22);
     }
 
     .spinner {
@@ -267,24 +267,6 @@
       color: #f0f0f0;
     }
 
-    body.theme-dark .top-nav a {
-      background: #646464;
-      border-color: #969696;
-      color: #ffffff;
-    }
-
-    body.theme-dark .top-nav a:hover {
-      background: #5a5a5a;
-      color: #ffffff;
-    }
-
-    body.theme-dark .top-nav a[aria-current="page"] {
-      background: var(--brand-red);
-      border-color: var(--brand-red);
-      color: #ffffff;
-      box-shadow: 0 6px 14px rgba(218, 41, 28, 0.35);
-    }
-
     body.theme-dark .panel {
       background: #464646;
       border-color: #969696;
@@ -340,16 +322,6 @@
       color: #f0f0f0;
     }
 
-    body.theme-dark .theme-toggle-track {
-      background: linear-gradient(180deg, #646464, #464646);
-      border-color: #969696;
-    }
-
-    body.theme-dark .theme-toggle-knob {
-      transform: translateX(30px);
-      background: #ffffff;
-      border-color: #c8c8c8;
-    }
   </style>
 </head>
 <body>
@@ -362,8 +334,8 @@
         </div>
         <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch color mode" aria-pressed="false">
           <span class="theme-toggle-track" aria-hidden="true">
-            <span class="theme-icon">☀</span>
-            <span class="theme-icon">☾</span>
+            <span class="theme-icon theme-icon-sun">☀</span>
+            <span class="theme-icon theme-icon-moon">☾</span>
             <span class="theme-toggle-knob"></span>
           </span>
         </button>
