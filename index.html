@@ -5,41 +5,7 @@
   <title>FortiSKU Finder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="./src/shared/ui/toolbox-shell.css" />
-  <script>
-    (function () {
-      var key = "fortisku-theme";
-      var theme = "light";
-      try {
-        var stored = window.localStorage.getItem(key);
-        if (stored === "light" || stored === "dark") {
-          theme = stored;
-        } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-          theme = "dark";
-        }
-      } catch (error) {
-        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-          theme = "dark";
-        }
-      }
-
-      document.documentElement.style.colorScheme = theme;
-
-      function apply() {
-        if (!document.body) return false;
-        document.body.classList.toggle("theme-dark", theme === "dark");
-        return true;
-      }
-
-      if (apply()) return;
-
-      var observer = new MutationObserver(function () {
-        if (apply()) {
-          observer.disconnect();
-        }
-      });
-      observer.observe(document.documentElement, { childList: true, subtree: true });
-    })();
-  </script>
+  <script src="./src/shared/ui/theme-init.js"></script>
   <style>
     .panel {
       background: var(--brand-panel);
