@@ -23,7 +23,7 @@ frame?.addEventListener("load", () => {
     setStatus("success", `Embedded BOM workspace is ready. Starting in the ${initialProduct.label} configurator.`);
   } catch (error) {
     console.error("Failed to bridge FortiBOM shell", error);
-    setStatus("warn", "The BOM workspace loaded, but the native Fortisku bridge could not be fully applied.");
+    setStatus("warn", "The BOM workspace loaded, but the native SE Toolbox bridge could not be fully applied.");
   }
 });
 

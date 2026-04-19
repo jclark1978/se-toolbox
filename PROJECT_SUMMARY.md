@@ -2,11 +2,11 @@
 
 ## Overview
 
-Fortisku is a static, browser-only toolkit for working with Fortinet data and lightweight internal workflows. It runs entirely client-side, uses no backend, and can be served from any simple static host.
+SE Toolbox is a static, browser-only toolkit for working with Fortinet data and lightweight internal workflows. It runs entirely client-side, uses no backend, and can be served from any simple static host.
 
 The project started as a SKU finder and has grown into a small suite of related tools for a Fortinet SE:
 
-- FortiSKU Finder
+- SKU Finder
 - BOM Builder
 - Hardware LifeCycle lookup
 - Software LifeCycle lookup
@@ -23,9 +23,9 @@ The codebase is now organized by feature instead of keeping every page module fl
 ### Top-level pages
 
 - `index.html`
-  - Main FortiSKU Finder page and current toolbox landing page
+  - Main SKU Finder page and current toolbox landing page
 - `fortisku/`
-  - Optional compatibility alias for the finder route
+  - Optional compatibility alias for the SKU Finder route
 - `bom-builder/`
   - Canonical BOM Builder integration preview page
 - `hardware-lifecycle/`
@@ -57,8 +57,8 @@ Legacy page URLs are still present only as lightweight redirect files for backwa
 
 ### Source layout
 
-- `src/features/finder/`
-  - Main SKU finder logic, UI, BOM support
+- `src/features/sku-finder/`
+  - Main SKU Finder logic, UI, BOM support
 - `src/features/bom-builder/`
   - FortiBOM-backed wrapper route, adapter logic, and theme bridge assets
 - `src/features/hardware-lifecycle/`
@@ -83,7 +83,7 @@ Legacy page URLs are still present only as lightweight redirect files for backwa
 
 ## Main Workflows
 
-### 1. FortiSKU Finder
+### 1. SKU Finder
 
 Primary page: `index.html`
 
@@ -96,10 +96,10 @@ Purpose:
 - Build a bill of materials with quantity and discount support
 
 Key modules:
-- `src/features/finder/main.js`
-- `src/features/finder/ui.js`
-- `src/features/finder/bom.js`
-- `src/features/finder/bomExport.js`
+- `src/features/sku-finder/main.js`
+- `src/features/sku-finder/ui.js`
+- `src/features/sku-finder/bom.js`
+- `src/features/sku-finder/bomExport.js`
 - `src/shared/data/ingest.js`
 - `src/shared/data/search.js`
 - `src/shared/data/storage.js`
@@ -110,8 +110,8 @@ Key modules:
 Primary page: `bom-builder/index.html`
 
 Purpose:
-- Provide a Fortisku-native wrapper around a vendored FortiBOM workspace
-- Keep BOM-building inside the shared Fortisku shell and navigation
+- Provide an SE Toolbox-native wrapper around a vendored FortiBOM workspace
+- Keep BOM-building inside the shared SE Toolbox shell and navigation
 - Preserve a cleaner path for future upstream FortiBOM updates
 
 Key modules:

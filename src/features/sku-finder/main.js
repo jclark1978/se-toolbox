@@ -45,7 +45,7 @@ const ui = initUI({
   onClearBom: handleClearBom
 });
 
-initToolboxNav({ current: "finder", basePath: "./" });
+initToolboxNav({ current: "sku-finder", basePath: "./" });
 initThemeToggle();
 bootstrap();
 

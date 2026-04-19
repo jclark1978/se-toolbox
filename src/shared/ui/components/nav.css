@@ -145,8 +145,8 @@ body.theme-dark .theme-toggle-knob {
 }
 
 .forti-nav-link[aria-current="page"] {
-  background: var(--color-accent);
-  border-left-color: var(--color-accent);
+  background: #3f8f45;
+  border-left-color: #3f8f45;
   color: #fff;
 }
 
@@ -200,7 +200,7 @@ body.theme-dark .theme-toggle-knob {
 }
 
 .forti-nav-group-menu .forti-nav-link[aria-current="page"] {
-  background: var(--color-accent);
+  background: #3f8f45;
   border-left-color: transparent;
   color: #fff;
 }

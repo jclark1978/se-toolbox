@@ -1,11 +1,11 @@
 # Fortinet SE Toolbox
 
-Fortinet SE Toolbox is a static, browser-only suite of utilities for common Fortinet SE workflows. It currently includes FortiSKU Finder, BOM Builder, Hardware LifeCycle lookup, Software LifeCycle lookup, Ordering Guides lookup, Asset Reports, and the Lab Portal Generator.
+Fortinet SE Toolbox is a static, browser-only suite of utilities for common Fortinet SE workflows. It currently includes SKU Finder, BOM Builder, Hardware LifeCycle lookup, Software LifeCycle lookup, Ordering Guides lookup, Asset Reports, and the Lab Portal Generator.
 
 ## Features
 
-- FortiSKU Finder for pricelist ingestion, search, export, and BOM building
-- BOM Builder as an upstream-friendly FortiBOM integration wrapped in the Fortisku shell
+- SKU Finder for pricelist ingestion, search, export, and BOM building
+- BOM Builder as an upstream-friendly FortiBOM integration wrapped in the SE Toolbox shell
 - Hardware LifeCycle lookup for milestone and support-planning searches using the Fortinet RSS feed
 - Software LifeCycle lookup for release and support milestone searches using the Fortinet RSS feed
 - Ordering Guides lookup for cross-referencing guides and related products
@@ -41,10 +41,10 @@ No backend or server-side computation is required.
 
 ## Project Layout
 
-- `index.html` is the main FortiSKU Finder experience and current landing page for the toolbox.
+- `index.html` is the main SKU Finder experience and current landing page for the toolbox.
 - `bom-builder/`, `hardware-lifecycle/`, `software-lifecycle/`, `ordering-guides/`, `asset-reports/`, and `lab-portal/` each contain a page entrypoint for a separate workflow.
 - `src/features/` groups browser logic by product surface:
-  - `finder/`
+  - `sku-finder/`
   - `bom-builder/` for the FortiBOM-backed BOM Builder wrapper and bridge assets
   - `hardware-lifecycle/` for the RSS-based hardware lifecycle flow
   - `software-lifecycle/` for the RSS-based software lifecycle flow
@@ -65,16 +65,16 @@ Primary routes are:
 - `/asset-reports/`
 - `/lab-portal/`
 
-The optional `/fortisku/` route can be kept as a compatibility alias, but `/` remains the primary finder entrypoint.
+The optional `/fortisku/` route can be kept as a compatibility alias, but `/` remains the primary SKU Finder entrypoint.
 
 Legacy top-level page URLs such as `asset-report.html` are kept only as lightweight redirects for backward compatibility.
 
 ## Usage Notes
 
-1. Open `/` to use FortiSKU Finder, or jump to the other tools from the shared top navigation.
-2. Open `/bom-builder/` for the BOM Builder integration preview, which wraps a vendored FortiBOM workspace inside the Fortisku shell.
-3. In FortiSKU Finder, upload an Excel workbook (.xlsx). By default, the app targets the `DataSet` sheet; provide an alternative sheet name if needed.
-4. The workbook is parsed entirely in the browser. FortiSKU Finder auto-detects the first row containing SKU/Description headers (so banner rows can stay) and skips rows lacking SKU or Description #1.
+1. Open `/` to use SKU Finder, or jump to the other tools from the shared top navigation.
+2. Open `/bom-builder/` for the BOM Builder integration preview, which wraps a vendored FortiBOM workspace inside the SE Toolbox shell.
+3. In SKU Finder, upload an Excel workbook (.xlsx). By default, the app targets the `DataSet` sheet; provide an alternative sheet name if needed.
+4. The workbook is parsed entirely in the browser. SKU Finder auto-detects the first row containing SKU/Description headers (so banner rows can stay) and skips rows lacking SKU or Description #1.
 5. After the first upload, the normalized rows, MiniSearch index, and metadata persist in IndexedDB. Reloading the page resumes instantly.
 6. Use spaces for AND searches across Description #1/#2 (e.g. `FortiGate 90G Enterprise bdl`). Add `OR` (or `|`) for alternatives, such as `FortiGate (90G OR 70F) Enterprise bdl`. Results are capped at 200 rows for fast rendering.
 7. Use the `+` button beside any SKU to add it to the BOM. Quantities are prompted on add, and you can adjust them from the drawer. A `–` button removes the SKU; the drawer also offers a trash icon per line.

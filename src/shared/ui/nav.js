@@ -7,7 +7,7 @@ function categoryKey(category) {
 }
 
 const TOOLBOX_ITEMS = [
-  { key: "finder", label: "FortiSKU Finder", href: "" },
+  { key: "sku-finder", label: "SKU Finder", href: "" },
   {
     key: "bom-builder",
     label: "BOM Builder",
@@ -30,7 +30,7 @@ const TOOLBOX_ITEMS = [
     ]
   },
   { key: "ordering-guides", label: "Ordering Guides", href: "ordering-guides/" },
-  { key: "asset-reports", label: "Asset Reports", href: "asset-reports/" },
+  { key: "asset-reports", label: "Asset Report Cleanup", href: "asset-reports/" },
   { key: "lab-portal", label: "Lab Portal Generator", href: "lab-portal/" }
 ];
 
@@ -113,7 +113,7 @@ function buildShell(nav) {
   sidebar.innerHTML = `
     <div class="forti-sidebar-brand">
       <span class="forti-sidebar-brand-mark" aria-hidden="true">■</span>
-      <span class="forti-sidebar-brand-text">FortiSKU</span>
+      <span class="forti-sidebar-brand-text">SE Toolbox</span>
     </div>
   `;
 
@@ -189,4 +189,3 @@ export function initToolboxNav({ current, basePath = "./", navId = "toolbox-nav"
 
   wireShellInteractions();
 }
-

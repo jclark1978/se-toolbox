@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>FortiSKU BOM Builder</title>
+  <title>SE Toolbox - BOM Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="../src/shared/ui/toolbox-shell.css" />
   <link rel="stylesheet" href="../src/features/bom-builder/page.css" />
@@ -14,7 +14,7 @@
       <div class="header-row">
         <div>
           <h1>BOM Builder</h1>
-          <p>Plugin-backed BOM generation inside Fortisku using an upstream-friendly FortiBOM integration wrapper.</p>
+          <p>Plugin-backed BOM generation inside SE Toolbox using an upstream-friendly FortiBOM integration wrapper.</p>
         </div>
         <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch color mode" aria-pressed="false">
           <span class="theme-toggle-track" aria-hidden="true">
@@ -34,19 +34,12 @@
           <span class="integration-badge">Plugin-backed</span>
         </div>
         <p>
-          Choose a Fortinet product below to open its configurator inside Fortisku, add the items you need, and
-          manage the combined quote in Project BOM. Use this page when you want to build a customer BOM without
-          leaving the toolbox.
+          Open a product configurator from the left sidebar, add the items you need, and manage the combined quote
+          in Project BOM. Use this page when you want to build a customer BOM without leaving SE Toolbox.
         </p>
-
-        <div class="bom-builder-launcher" aria-labelledby="bom-builder-launcher-heading">
-          <div class="launcher-header">
-            <h3 id="bom-builder-launcher-heading">Launch Product</h3>
-            <p>Expand a product category, then choose the configurator you want to launch inside the Fortisku shell.</p>
-          </div>
-
-          <div id="bom-builder-category-list" class="bom-builder-category-list" aria-label="BOM product categories"></div>
-        </div>
+        <p class="bom-builder-guidance">
+          Expand <strong>BOM Builder</strong> in the left sidebar, then open the product category and configurator you want to launch.
+        </p>
 
         <div class="bom-builder-actions">
           <button id="bom-builder-project-button" type="button" class="ui-btn ui-btn--secondary bom-button secondary">Project BOM</button>
@@ -73,7 +66,7 @@
     </main>
 
     <footer>
-      Build product configurations and manage your Project BOM from one place inside Fortisku.
+      Build product configurations and manage your Project BOM from one place inside SE Toolbox.
     </footer>
   </div>
 
