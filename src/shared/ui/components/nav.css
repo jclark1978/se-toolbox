@@ -108,12 +108,19 @@ body.theme-dark .theme-toggle-knob {
 .forti-sidebar-brand-mark {
   color: var(--ds-primary-fixed);
   font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 .forti-sidebar-nav {
   display: grid;
   gap: 0;
   padding: 0.5rem 0 1rem;
+}
+
+.forti-nav-icon {
+  flex-shrink: 0;
+  margin-right: 0.6rem;
 }
 
 .forti-nav-link,
