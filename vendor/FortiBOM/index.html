@@ -750,7 +750,13 @@ async function renderGroups() {
   try {
     const pricingRaw = await getPricingIDB();
     if (pricingRaw && pricingRaw.rows && pricingRaw.rows.length) {
-      priceMap = new Map(pricingRaw.rows.map(r => [r['SKU'], r['Price']]));
+      priceMap = new Map(pricingRaw.rows.map(r => [
+        r.sku || r.SKU,
+        {
+          numeric: typeof r.price === 'number' ? r.price : parsePriceValue(r.Price),
+          display: normalizePriceDisplay(r.price_display || r.Price, typeof r.price === 'number' ? r.price : parsePriceValue(r.Price))
+        }
+      ]));
     }
   } catch(e) { /* pricing unavailable */ }
   const hasPricing = priceMap !== null;
@@ -798,10 +804,10 @@ async function renderGroups() {
         const bm={req:'<span class="br br-r">Required</span>',mand:'<span class="br br-m">Mandatory</span>',opt:'<span class="br br-o">Optional</span>',inc:'<span class="br br-o">Included</span>',note:''};
         let priceCells = '';
         if (hasPricing) {
-          const listPrice = priceMap.get(r.sku || '');
-          const listPriceNum = listPrice ? parseFloat(String(listPrice).replace(/[^0-9.]/g, '')) : NaN;
+          const pricing = priceMap.get(r.sku || '');
+          const listPriceNum = pricing ? pricing.numeric : NaN;
           const totalNum = (!isNaN(listPriceNum) && typeof r.qty === 'number') ? listPriceNum * r.qty : NaN;
-          priceCells = `<td class="nc" style="text-align:right;white-space:nowrap;">${listPrice ? h(listPrice) : ''}</td><td class="nc" style="text-align:right;white-space:nowrap;">${!isNaN(totalNum) ? '$'+totalNum.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : ''}</td>`;
+          priceCells = `<td class="nc" style="text-align:right;white-space:nowrap;">${pricing?.display ? h(pricing.display) : ''}</td><td class="nc" style="text-align:right;white-space:nowrap;">${!isNaN(totalNum) ? formatCurrency(totalNum) : ''}</td>`;
         }
         const detailRows = [];
         if (r.desc) detailRows.push(`<tr><td class="det-k">Description</td><td class="det-v nc">${h(r.desc)}</td></tr>`);
@@ -1184,6 +1190,27 @@ document.addEventListener('click', function(e) {
   if (p && !p.contains(e.target) && e.target.id !== 'project-btn') p.classList.remove('on');
 });
 
+function parsePriceValue(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const cleaned = String(value || '').replace(/[^0-9.-]+/g, '').trim();
+  if (!cleaned) return NaN;
+  const numeric = parseFloat(cleaned);
+  return Number.isFinite(numeric) ? numeric : NaN;
+}
+
+function formatCurrency(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '';
+  return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function normalizePriceDisplay(displayValue, numericValue) {
+  const cleanedDisplay = String(displayValue || '').trim();
+  if (cleanedDisplay && !/^[-—–]+$/.test(cleanedDisplay) && !/^n\/?a$/i.test(cleanedDisplay)) {
+    return cleanedDisplay;
+  }
+  return formatCurrency(numericValue);
+}
+
 function clipboardWrite(text, msg) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(() => toast(msg), () => clipboardFallback(text, msg));
@@ -1463,6 +1490,11 @@ function checkBOMFragment() {
 
 // ── PRICING (IndexedDB) ────────────────────────────────────────────────────────
 let _pricingDb = null;
+let _fortiSkuDb = null;
+const FORTISKU_DB_NAME = 'fortisku-idb';
+const FORTISKU_STORE_NAME = 'store';
+const FORTISKU_ROWS_KEY_PREFIX = 'fortisku-finder:rows:v';
+const FORTISKU_META_KEY_PREFIX = 'fortisku-finder:meta:v';
 
 function openPricingDB() {
   if (_pricingDb) return Promise.resolve(_pricingDb);
@@ -1483,13 +1515,7 @@ async function savePricingIDB(data) {
   });
 }
 async function getPricingIDB() {
-  const db = await openPricingDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('pricing', 'readonly');
-    const req = tx.objectStore('pricing').get('current');
-    req.onsuccess = e => resolve(e.target.result || null);
-    req.onerror = e => reject(e.target.error);
-  });
+  return getFortiSkuPricingIDB();
 }
 async function deletePricingIDB() {
   const db = await openPricingDB();
@@ -1499,6 +1525,92 @@ async function deletePricingIDB() {
     tx.oncomplete = resolve;
     tx.onerror = e => reject(e.target.error);
   });
+}
+
+function openFortiSkuDB() {
+  if (_fortiSkuDb) return Promise.resolve(_fortiSkuDb);
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(FORTISKU_DB_NAME, 1);
+    req.onsuccess = e => { _fortiSkuDb = e.target.result; resolve(_fortiSkuDb); };
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function fortiSkuGet(key) {
+  const db = await openFortiSkuDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FORTISKU_STORE_NAME, 'readonly');
+    const req = tx.objectStore(FORTISKU_STORE_NAME).get(key);
+    req.onsuccess = e => resolve(e.target.result || null);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function fortiSkuKeys() {
+  const db = await openFortiSkuDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FORTISKU_STORE_NAME, 'readonly');
+    const req = tx.objectStore(FORTISKU_STORE_NAME).getAllKeys();
+    req.onsuccess = e => resolve(Array.isArray(e.target.result) ? e.target.result : []);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function getLatestFortiSkuKeys() {
+  const keys = await fortiSkuKeys();
+  const metaKeys = keys.filter(k => typeof k === 'string' && k.startsWith(FORTISKU_META_KEY_PREFIX));
+  if (!metaKeys.length) return null;
+  metaKeys.sort((a, b) => {
+    const av = parseInt(String(a).slice(FORTISKU_META_KEY_PREFIX.length), 10) || 0;
+    const bv = parseInt(String(b).slice(FORTISKU_META_KEY_PREFIX.length), 10) || 0;
+    return bv - av;
+  });
+  const metaKey = metaKeys[0];
+  const version = metaKey.slice(FORTISKU_META_KEY_PREFIX.length);
+  return {
+    metaKey,
+    rowsKey: `${FORTISKU_ROWS_KEY_PREFIX}${version}`
+  };
+}
+
+async function getFortiSkuPricingIDB() {
+  try {
+    const latest = await getLatestFortiSkuKeys();
+    if (!latest) return null;
+    const [meta, rows] = await Promise.all([
+      fortiSkuGet(latest.metaKey),
+      fortiSkuGet(latest.rowsKey)
+    ]);
+    if (!meta || !Array.isArray(rows) || !rows.length) {
+      return null;
+    }
+    const pricingRows = rows
+      .filter(r => r && r.sku)
+      .map(r => ({
+        sku: String(r.sku || '').trim(),
+        price: typeof r.price === 'number' ? r.price : parsePriceValue(r.price_display || r.price),
+        price_display: normalizePriceDisplay(
+          r.price_display,
+          typeof r.price === 'number' ? r.price : parsePriceValue(r.price_display || r.price)
+        )
+      }))
+      .filter(r => r.sku);
+
+    if (!pricingRows.length) {
+      return null;
+    }
+
+    return {
+      source: 'fortisku',
+      name: meta.priceListLabel || 'SKU Finder Price List',
+      effectiveDate: meta.updatedAt || '',
+      uploadedAt: meta.updatedAt || '',
+      meta,
+      rows: pricingRows
+    };
+  } catch (error) {
+    return null;
+  }
 }
 
 function parsePricingLine(line) {
@@ -1581,11 +1693,14 @@ async function renderPricingSection() {
     const data = await getPricingIDB();
     if (!data) {
       el.innerHTML = `
-        <div id="pricing-drop" onclick="document.getElementById('pricing-file').click()"
-             ondragover="pricingDragOver(event)" ondragleave="pricingDragLeave(event)" ondrop="pricingDrop(event)">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="opacity:.35"><rect x="4" y="4" width="24" height="24" rx="3" stroke="#6B7589" stroke-width="1.5"/><path d="M10 16h12M16 10v12" stroke="#6B7589" stroke-width="1.5" stroke-linecap="round"/></svg>
-          <div style="font-weight:600;color:var(--c-text);margin-top:8px;">Drop a Fortinet Pricing CSV here or click to browse</div>
-          <p>The price list name and effective date will be read automatically from the file header.</p>
+        <div class="sp-list">
+          <div class="sp-card">
+            <div class="sp-accent"></div>
+            <div class="sp-body">
+              <div class="sp-name">SKU Finder pricing not available</div>
+              <div class="sp-meta">Upload a price list in SKU Finder first. Project BOM pricing now uses the shared SKU Finder database instead of a separate CSV upload.</div>
+            </div>
+          </div>
         </div>`;
     } else {
       const when = new Date(data.uploadedAt).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
@@ -1596,13 +1711,7 @@ async function renderPricingSection() {
             <div class="sp-accent"></div>
             <div class="sp-body">
               <div class="sp-name">${h(data.name)}</div>
-              <div class="sp-meta">Effective: ${h(data.effectiveDate || '—')} &middot; ${rowCount} items &middot; Uploaded ${when}</div>
-            </div>
-            <div class="sp-actions">
-              <button class="btn bd" onclick="deletePricing()">
-                <svg viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M5.5 6v4M7.5 6v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3 3.5l.5 7a1 1 0 0 0 1 .9h4a1 1 0 0 0 1-.9l.5-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                Delete
-              </button>
+              <div class="sp-meta">Source: SKU Finder shared database &middot; Effective: ${h(data.effectiveDate || '—')} &middot; ${rowCount} items &middot; Updated ${when}</div>
             </div>
           </div>
         </div>`;
