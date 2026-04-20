@@ -55,6 +55,13 @@ No backend or server-side computation is required.
 - `src/shared/ui/` contains shared shell assets such as theme handling, nav generation, and shared toolbox page styling.
 - `vendor/` contains vendored browser dependencies.
 
+## Documentation
+
+- `PROJECT_SUMMARY.md` is a root pointer to the fuller project summary in `docs/project/PROJECT_SUMMARY.md`.
+- `DESIGN.md` is a root pointer to the design concept docs in `docs/design-concepts/`.
+- `docs/design-concepts/DESIGN-FORTIGATE.md` captures the FortiGate / Tactical Precision design language.
+- `docs/design-concepts/DESIGN-SOLTESZ.md` captures the Soltesz / Precision Ledger design language.
+
 Primary routes are:
 
 - `/`

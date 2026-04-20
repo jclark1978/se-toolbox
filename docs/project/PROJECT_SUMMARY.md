@@ -1,0 +1,219 @@
+# Project Summary
+
+## Overview
+
+SE Toolbox is a static, browser-only toolkit for working with Fortinet data and lightweight internal workflows. It runs entirely client-side, uses no backend, and can be served from any simple static host.
+
+The project started as a SKU finder and has grown into a small suite of related tools for a Fortinet SE:
+
+- SKU Finder
+- BOM Builder
+- Hardware LifeCycle lookup
+- Software LifeCycle lookup
+- Ordering Guides lookup
+- Asset Report builder
+- Lab Portal Generator
+
+All workbook processing happens in the browser. Persisted data is stored locally in IndexedDB, and vendored browser dependencies are included directly in the repository.
+
+## Current Architecture
+
+The codebase is now organized by feature instead of keeping every page module flat in `src/`.
+
+### Top-level pages
+
+- `index.html`
+  - Main SKU Finder page and current toolbox landing page
+- `fortisku/`
+  - Optional compatibility alias for the SKU Finder route
+- `bom-builder/`
+  - Canonical BOM Builder integration preview page
+- `hardware-lifecycle/`
+  - Canonical Hardware LifeCycle lookup page
+- `software-lifecycle/`
+  - Canonical Software LifeCycle lookup page
+- `ordering-guides/`
+  - Canonical Ordering Guides page
+- `asset-reports/`
+  - Canonical Asset Report builder page
+- `lab-portal/`
+  - Canonical Lab Portal Generator page
+
+Primary browser routes are:
+
+- `/`
+- `/bom-builder/`
+- `/hardware-lifecycle/`
+- `/software-lifecycle/`
+- `/ordering-guides/`
+- `/asset-reports/`
+- `/lab-portal/`
+
+Legacy page URLs are still present only as lightweight redirect files for backward compatibility:
+
+- `ordering.html`
+- `asset-report.html`
+- `Lab-Portal-Generator.html`
+
+### Source layout
+
+- `src/features/sku-finder/`
+  - Main SKU Finder logic, UI, BOM support
+- `src/features/bom-builder/`
+  - FortiBOM-backed wrapper route, adapter logic, and theme bridge assets
+- `src/features/hardware-lifecycle/`
+  - Hardware LifeCycle parsing, storage, search, UI
+- `src/features/software-lifecycle/`
+  - Software LifeCycle parsing, storage, search, UI
+- `src/shared/lifecycle/`
+  - Shared lifecycle controller and search helpers used by both lifecycle tools
+- `src/features/ordering-guides/`
+  - Ordering Guide page logic and UI
+- `src/features/asset-reports/`
+  - Asset workbook inspection and report generation
+- `src/shared/data/`
+  - Shared ingestion, search, storage, and CSV helpers
+- `src/shared/ui/`
+  - Shared UI helpers like theme handling, toolbox navigation, and shared page-shell styling
+- `vendor/`
+  - Vendored client-side dependencies:
+    - `xlsx`
+    - `minisearch`
+    - `idb-keyval`
+
+## Main Workflows
+
+### 1. SKU Finder
+
+Primary page: `index.html`
+
+Purpose:
+- Upload a Fortinet price list workbook
+- Normalize workbook data into a standard SKU row format
+- Build a client-side search index
+- Search SKU and description data quickly
+- Export full results or filtered results to CSV
+- Build a bill of materials with quantity and discount support
+
+Key modules:
+- `src/features/sku-finder/main.js`
+- `src/features/sku-finder/ui.js`
+- `src/features/sku-finder/bom.js`
+- `src/features/sku-finder/bomExport.js`
+- `src/shared/data/ingest.js`
+- `src/shared/data/search.js`
+- `src/shared/data/storage.js`
+- `src/shared/data/csv.js`
+
+### 2. BOM Builder
+
+Primary page: `bom-builder/index.html`
+
+Purpose:
+- Provide an SE Toolbox-native wrapper around a vendored FortiBOM workspace
+- Keep BOM-building inside the shared SE Toolbox shell and navigation
+- Preserve a cleaner path for future upstream FortiBOM updates
+
+Key modules:
+- `src/features/bom-builder/main.js`
+- `src/features/bom-builder/page.css`
+- `src/features/bom-builder/theme-bridge.css`
+- `vendor/FortiBOM/`
+
+### 3. Hardware LifeCycle Lookup
+
+Primary page: `hardware-lifecycle/index.html`
+
+Purpose:
+- Refresh hardware lifecycle data from the Fortinet RSS feed
+- Import RSS XML through a guided modal workflow
+- Store normalized lifecycle rows in IndexedDB
+- Search lifecycle-specific records through a dedicated UI
+
+Key modules:
+- `src/features/hardware-lifecycle/main.js`
+- `src/features/hardware-lifecycle/rss.js`
+- `src/features/hardware-lifecycle/search.js`
+- `src/features/hardware-lifecycle/storage.js`
+- `src/features/hardware-lifecycle/ui.js`
+- `src/shared/lifecycle/app.js`
+- `src/shared/lifecycle/search.js`
+
+### 4. Software LifeCycle Lookup
+
+Primary page: `software-lifecycle/index.html`
+
+Purpose:
+- Refresh software lifecycle data from the Fortinet RSS feed
+- Import RSS XML through a guided modal workflow
+- Store normalized lifecycle rows in IndexedDB
+- Search software release-specific records through a dedicated UI
+
+Key modules:
+- `src/features/software-lifecycle/main.js`
+- `src/features/software-lifecycle/rss.js`
+- `src/features/software-lifecycle/search.js`
+- `src/features/software-lifecycle/storage.js`
+- `src/features/software-lifecycle/ui.js`
+- `src/shared/lifecycle/app.js`
+- `src/shared/lifecycle/search.js`
+
+### 5. Ordering Guides
+
+Primary page: `ordering-guides/index.html`
+
+Purpose:
+- Reuse uploaded price list data
+- Extract ordering guide rows
+- Search ordering guide and related product text
+
+Key modules:
+- `src/features/ordering-guides/main.js`
+- `src/features/ordering-guides/ui.js`
+- `src/shared/data/ingest.js`
+- `src/shared/data/storage.js`
+
+### 6. Asset Reports
+
+Primary page: `asset-reports/index.html`
+
+Purpose:
+- Load an asset workbook
+- Inspect and summarize source data
+- Generate an output workbook for customer-facing reporting
+
+Key modules:
+- `src/features/asset-reports/main.js`
+- `src/features/asset-reports/ui.js`
+- `src/features/asset-reports/workbook.js`
+
+### 7. Lab Portal Generator
+
+Primary page: `lab-portal/index.html`
+
+Purpose:
+- Provide a standalone browser-based generator workflow for lab portal content
+
+Notes:
+- This page remains largely self-contained in HTML today and may be a good candidate for future extraction into `src/features/lab-portal/` if it grows further.
+
+## Storage and Runtime Model
+
+- No backend services are required
+- No build step is required
+- The app can be served using `python3 -m http.server`
+- IndexedDB is used for persisted workbook/search data
+- A service worker in `sw.js` provides optional offline caching
+
+## Deployment
+
+Deployment is currently handled as a static site through GitHub and Azure Static Web Apps workflows in `.github/workflows/`.
+
+## Security and Data Handling
+
+- Workbook data stays client-side during app use
+- `Sample_Files/` is now ignored by git and no longer tracked
+- Sensitive example files should not be committed back into the repository
+- If older sensitive files were committed previously, they still remain in git history unless history is rewritten separately
+
+## Development Notes
