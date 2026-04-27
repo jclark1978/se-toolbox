@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Custom SKU — FortiBOM</title>
+<style>
+:root {
+  --forti-red:            #EE3124;
+  --forti-border:         #DDE1E9;
+  --forti-bg:             #F2F4F7;
+  --forti-white:          #FFFFFF;
+  --forti-text:           #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:        #EEF3FF;
+  --forti-info-border:    #B8CBF5;
+  --forti-info-text:      #3557A5;
+  --forti-warn-bg:        #FFF8EE;
+  --forti-warn-border:    #F5D9A0;
+  --forti-warn-text:      #8A5800;
+  --radius:               6px;
+  --page-pad:             16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--forti-text);
+  background: var(--forti-bg);
+  /* bottom pad ensures content clears the sticky action bar */
+  padding-bottom: 100px;
+}
+
+/* ── Popover mode ── */
+/* When embedded in an iframe, body gets .popover-mode via JS */
+body.popover-mode {
+  background: var(--forti-white);
+  padding-bottom: 100px;
+}
+body.popover-mode .page-header {
+  border-bottom: 1px solid var(--forti-border);
+  background: var(--forti-white);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 10px var(--page-pad);
+  margin-bottom: 0;
+}
+body.popover-mode .page-header .page-title { font-size: 14px; }
+body.popover-mode .page-header .page-subtitle { display: none; }
+body.popover-mode .page-icon { width: 32px; height: 32px; }
+body.popover-mode .page-icon svg { width: 18px; height: 18px; }
+body.popover-mode .info-callout { display: none; }
+body.popover-mode .content-wrap { padding-top: 12px; }
+/* Close button shown only in popover */
+.popover-close {
+  display: none;
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--forti-text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+.popover-close:hover { background: var(--forti-bg); color: var(--forti-text); }
+body.popover-mode .popover-close { display: flex; align-items: center; }
+
+/* ── Page Header ── */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: var(--page-pad);
+  margin-bottom: 4px;
+}
+.page-icon {
+  width: 40px; height: 40px;
+  background: var(--forti-red);
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.page-icon svg { width: 22px; height: 22px; fill: white; }
+.page-title { font-size: 17px; font-weight: 700; color: var(--forti-text); line-height: 1.2; }
+.page-subtitle { font-size: 11px; color: var(--forti-text-muted); margin-top: 2px; }
+
+/* ── Content wrap ── */
+.content-wrap {
+  padding: 0 var(--page-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Info callout ── */
+.info-callout {
+  background: var(--forti-info-bg);
+  border: 1px solid var(--forti-info-border);
+  color: var(--forti-info-text);
+  border-radius: var(--radius);
+  padding: 10px 13px;
+  font-size: 12px;
+  line-height: 1.6;
+  display: flex;
+  gap: 8px;
+}
+.info-callout code {
+  background: rgba(53,87,165,.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--forti-white);
+  border: 1px solid var(--forti-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-header {
+  background: var(--forti-section-header);
+  border-bottom: 1px solid var(--forti-border);
+  padding: 9px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card-header-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--forti-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.card-body { padding: 14px; }
+
+/* ── Form fields ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.field + .field { margin-top: 12px; }
+label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--forti-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+label .req { color: var(--forti-red); margin-left: 2px; }
+label .hint {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--forti-text-muted);
+  margin-left: 4px;
+}
+input[type=text], input[type=number], select, textarea {
+  background: white;
+  border: 1px solid var(--forti-input-border);
+  border-radius: 4px;
+  padding: 9px 11px;
+  font-size: 14px;
+  font-family: inherit;
+  width: 100%;
+  color: var(--forti-text);
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+}
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--forti-red);
+  box-shadow: 0 0 0 3px rgba(238,49,36,.1);
+}
+input.invalid, select.invalid, textarea.invalid {
+  border-color: var(--forti-red);
+  background: #fff8f8;
+}
+.field-err {
+  display: none;
+  font-size: 11px;
+  color: var(--forti-red);
+  font-weight: 600;
+}
+textarea { resize: vertical; min-height: 68px; }
+.hint-text {
+  font-size: 11px;
+  color: var(--forti-text-muted);
+}
+
+/* ── SKU monospace ── */
+input.sku-input {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #1A4E82;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* ── Qty row (inline pair) ── */
+.qty-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+/* ── Type button group ── */
+.type-group {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+@media (max-width: 380px) {
+  .type-group { grid-template-columns: repeat(3, 1fr); }
+}
+.type-btn {
+  padding: 6px 4px;
+  border-radius: 4px;
+  border: 1px solid var(--forti-border);
+  background: white;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: all .12s;
+  color: var(--forti-text-secondary);
+  text-align: center;
+}
+.type-btn:hover { border-color: #aaa; }
+.type-btn.selected-req  { background:#FEF0EE; color:#C0392B; border-color:#F5C6C2; }
+.type-btn.selected-mand { background:#FFF8EE; color:#8A5800; border-color:#F5D9A0; }
+.type-btn.selected-opt  { background:#EEF3FF; color:#3557A5; border-color:#B8CBF5; }
+.type-btn.selected-inc  { background:#EEF3FF; color:#3557A5; border-color:#B8CBF5; }
+.type-btn.selected-note { background:var(--forti-bg); color:var(--forti-text-secondary); border-color:#C8CDD9; }
+
+/* ── SKU entry cards (mobile rows) ── */
+#sku-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sku-row-card {
+  border: 1px solid var(--forti-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: white;
+  transition: opacity .2s;
+}
+.sku-row-card.dragging { opacity: .45; }
+
+.sku-row-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--forti-table-head);
+  border-bottom: 1px solid var(--forti-border);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.sku-row-card-header:active { cursor: grabbing; }
+
+.drag-handle {
+  color: var(--forti-text-muted);
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.sku-row-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--forti-red);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: .04em;
+}
+.sku-row-card-header-spacer { flex: 1; }
+.remove-btn {
+  background: none;
+  border: 1px solid #F5C6C2;
+  border-radius: 4px;
+  color: #C0392B;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 5px 8px;
+  transition: background .12s;
+  flex-shrink: 0;
+}
+.remove-btn:hover { background: #FEF0EE; }
+
+.sku-row-card-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+/* ── Section header row card ── */
+.section-row-card {
+  border: 1px solid #C5CAD9;
+  border-top: 2px solid #C5CAD9;
+  border-radius: var(--radius);
+  background: #EAECF3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.section-row-card:active { cursor: grabbing; }
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--forti-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.section-label-input {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--forti-text-secondary);
+  flex: 1;
+  background: #EAECF3;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 5px 8px;
+  cursor: text;
+}
+.section-label-input:focus {
+  outline: none;
+  border-color: var(--forti-red);
+  box-shadow: 0 0 0 2px rgba(238,49,36,.1);
+  background: white;
+}
+
+/* ── Normalize toggle ── */
+.norm-toggle {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  margin-top: 4px;
+}
+.norm-toggle-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--forti-text-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.norm-toggle-btn {
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--forti-border);
+  background: white;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--forti-text-muted);
+  letter-spacing: .04em;
+  transition: all .1s;
+}
+.norm-toggle-btn.nt-active {
+  background: var(--forti-info-bg);
+  color: var(--forti-info-text);
+  border-color: var(--forti-info-border);
+}
+
+/* ── Add row buttons ── */
+.add-row-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.add-row-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 12px;
+  border-radius: var(--radius);
+  border: 1.5px dashed var(--forti-input-border);
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--forti-text-secondary);
+  cursor: pointer;
+  transition: all .12s;
+}
+.add-row-btn:hover, .add-row-btn:active {
+  border-color: var(--forti-red);
+  color: var(--forti-red);
+  background: #FEF8F8;
+}
+
+/* ── Sticky action bar ── */
+.sticky-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: white;
+  border-top: 1px solid var(--forti-border);
+  padding: 10px var(--page-pad);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+}
+.btn {
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter .12s, opacity .12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn:hover { filter: brightness(.92); }
+.btn-primary { background: var(--forti-red); color: white; }
+.btn-success { background: #2E7D32; color: white; }
+.btn-secondary {
+  background: white;
+  color: var(--forti-text-secondary);
+  border: 1px solid var(--forti-border);
+}
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+
+/* On narrow screens, hide "Preview BOM" text label, show icon only */
+@media (max-width: 360px) {
+  .btn-preview-label { display: none; }
+}
+
+#smsg {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2E7D32;
+  display: none;
+  min-width: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#smsg.error { color: var(--forti-red); }
+
+/* Reset at far right */
+.action-spacer { flex: 1; }
+
+/* ── BOM Preview ── */
+#bom-section { display: none; }
+
+.bom-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.bom-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 480px; }
+.bom-table thead th {
+  background: var(--forti-table-head);
+  border: 1px solid var(--forti-border);
+  padding: 7px 11px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+  text-align: left;
+  white-space: nowrap;
+}
+.bom-table tbody td {
+  border: 1px solid var(--forti-border);
+  padding: 7px 11px;
+  vertical-align: top;
+}
+.bom-table tbody tr:nth-child(even) td { background: var(--forti-table-stripe); }
+.bom-table .section-row td {
+  background: #EAECF3 !important;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--forti-text-secondary);
+  padding: 5px 11px;
+  border-top: 2px solid #C5CAD9;
+}
+.sku-cell {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #1A4E82;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; border-radius: 2px; padding: 1px 4px;
+  display: inline-block; white-space: nowrap;
+}
+.badge-req  { background:#FEF0EE; color:#C0392B; border:1px solid #F5C6C2; }
+.badge-mand { background:#FFF8EE; color:#8A5800; border:1px solid #F5D9A0; }
+.badge-opt  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.badge-inc  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.qty-cell { text-align:center; font-weight:600; white-space:nowrap; }
+
+/* ── Autocomplete ── */
+.ac-dropdown {
+  position: fixed;
+  z-index: 9999;
+  background: white;
+  border: 1px solid var(--forti-input-border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+  min-width: 280px;
+}
+.ac-item {
+  padding: 9px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--forti-border);
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.ac-item-active { background: var(--forti-info-bg); }
+.ac-item-sku {
+  font-family: 'Courier New', monospace;
+  font-size: 11px; font-weight: 700; color: #1A4E82;
+  letter-spacing: .03em; text-transform: uppercase;
+}
+.ac-item-desc {
+  font-size: 11px; color: var(--forti-text-secondary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Row count badge ── */
+.row-count-badge {
+  font-size: 10px;
+  background: var(--forti-red);
+  color: white;
+  border-radius: 10px;
+  padding: 1px 7px;
+}
+
+/* ── Error state ── */
+#err-no-rows {
+  display: none;
+  font-size: 12px;
+  color: var(--forti-red);
+  font-weight: 600;
+}
+
+/* ── Drag-over highlight on cards ── */
+.sku-row-card.drag-over,
+.section-row-card.drag-over {
+  outline: 2px solid var(--forti-red);
+  outline-offset: 1px;
+}
+</style>
+</head>
+<body>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>
+    </svg>
+  </div>
+  <div>
+    <div class="page-title">Custom SKU Entry</div>
+    <div class="page-subtitle">FortiBOM · Manually add any part number to the Project BOM</div>
+  </div>
+  <button class="popover-close" onclick="closePopover()" title="Close">✕</button>
+</div>
+
+<div class="content-wrap">
+
+  <!-- Info callout (hidden in popover) -->
+  <div class="info-callout">
+    <span>ℹ</span>
+    <div>
+      Use this page to add <strong>any SKU</strong> that isn't covered by an existing product page — hardware, third-party accessories, custom bundles, or manually entered part numbers.
+      SKUs with a term suffix should use <code>-DD</code>; the main BOM tool will substitute the correct term on export.
+    </div>
+  </div>
+
+  <!-- Group / Bundle Label -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-title">Group / Bundle Label</div>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label>Group Name <span class="req">*</span></label>
+        <input type="text" id="f-group-name" placeholder="e.g. FortiGate 91G — ENT Bundle"
+               oninput="clearErr('f-group-name','err-group-name')">
+        <span class="field-err" id="err-group-name">Group name is required</span>
+      </div>
+      <div class="field">
+        <label>Section Header Label <span class="hint">(dark divider row in BOM)</span></label>
+        <input type="text" id="f-section-label"
+               placeholder="e.g. Hardware + Enterprise Bundle — FortiGate 91G">
+        <span class="hint-text">Leave blank to omit the section header row.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKU Rows -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-title">
+        SKU Line Items
+        <span class="row-count-badge" id="row-count-badge">0</span>
+      </div>
+    </div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+
+      <div id="sku-rows"></div>
+
+      <div id="err-no-rows">⚠ Add at least one SKU row before generating a BOM.</div>
+
+      <div class="add-row-btns">
+        <button class="add-row-btn" onclick="addSkuRow()">
+          <strong>＋</strong> Add SKU Row
+        </button>
+        <button class="add-row-btn" onclick="addSectionRow()">
+          <strong>≡</strong> Add Section Header
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOM Preview -->
+  <div id="bom-section" class="card">
+    <div class="card-header">
+      <div class="card-header-title">BOM Preview</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="copyTSV()">Copy TSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+      </div>
+    </div>
+    <div class="card-body bom-scroll" style="padding:0;">
+      <table class="bom-table">
+        <thead>
+          <tr>
+            <th>Part Number</th>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Type</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="bom-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /content-wrap -->
+
+<!-- Sticky Action Bar -->
+<div class="sticky-actions">
+  <button class="btn btn-primary" onclick="generateBOM()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:5px;margin-top:-1px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg><span class="btn-preview-label">Preview</span>
+  </button>
+  <button class="btn btn-success" onclick="addToProjectBOM()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:5px;margin-top:-1px;"><path d="M12 3v13M5 13l7 7 7-7"/><line x1="5" y1="21" x2="19" y2="21"/></svg>Add to BOM
+  </button>
+  <span id="smsg"></span>
+  <div class="action-spacer"></div>
+  <button class="btn btn-secondary btn-sm" onclick="resetForm()">Reset</button>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  Popover mode detection
+// ─────────────────────────────────────────────
+(function() {
+  try {
+    if (window.self !== window.top) {
+      document.body.classList.add('popover-mode');
+    }
+  } catch(e) {
+    // Cross-origin iframe: treat as popover
+    document.body.classList.add('popover-mode');
+  }
+})();
+
+function closePopover() {
+  window.parent.postMessage({ type: 'FORTIBOM_CLOSE' }, '*');
+}
+
+// ─────────────────────────────────────────────
+//  State
+// ─────────────────────────────────────────────
+let _rowIdCounter = 0;
+let _lastRows  = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+const KIND_OPTIONS = [
+  { value: 'req',  label: 'REQ',  cls: 'selected-req'  },
+  { value: 'mand', label: 'MAND', cls: 'selected-mand' },
+  { value: 'opt',  label: 'OPT',  cls: 'selected-opt'  },
+  { value: 'inc',  label: 'INC',  cls: 'selected-inc'  },
+  { value: 'note', label: 'NOTE', cls: 'selected-note' },
+];
+
+// ─────────────────────────────────────────────
+//  Row builders
+// ─────────────────────────────────────────────
+function newId() { return ++_rowIdCounter; }
+
+function addSkuRow(data) {
+  const id = newId();
+  data = data || {};
+  const container = document.getElementById('sku-rows');
+
+  const div = document.createElement('div');
+  div.className = 'sku-row-card';
+  div.dataset.rowId = id;
+  div.dataset.rowType = 'sku';
+
+  div.innerHTML = `
+    <div class="sku-row-card-header" data-drag-handle>
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <span class="sku-row-number">#${countSkuRows() + 1}</span>
+      <span class="sku-row-card-header-spacer"></span>
+      <button class="remove-btn" onclick="removeRow(this)" title="Remove row">✕</button>
+    </div>
+    <div class="sku-row-card-body">
+      <div class="field">
+        <label>Part Number <span class="req">*</span></label>
+        <input type="text" class="sku-input" id="sku-${id}"
+               placeholder="FG-91G-BDL-809-DD"
+               value="${escHtml(data.sku||'')}"
+               oninput="this.value=this.value.toUpperCase();clearRowErr(${id})"
+               autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+        <div class="norm-toggle" id="norm-toggle-${id}">
+          <span class="norm-toggle-label">Term:</span>
+          <button type="button" class="norm-toggle-btn nt-active" id="norm-btn-dd-${id}"
+                  onclick="setRowNormalized(${id}, true)">-DD</button>
+          <button type="button" class="norm-toggle-btn" id="norm-btn-asis-${id}"
+                  onclick="setRowNormalized(${id}, false)">As-Is</button>
+        </div>
+        <div class="field-err" id="err-sku-${id}">Part number required</div>
+      </div>
+
+      <div class="field">
+        <label>Description <span class="req">*</span></label>
+        <textarea id="desc-${id}" rows="2"
+                  placeholder="Full description of the SKU…"
+                  oninput="clearRowErr(${id})">${escHtml(data.desc||'')}</textarea>
+        <div class="field-err" id="err-desc-${id}">Description required</div>
+      </div>
+
+      <div class="qty-row">
+        <div class="field">
+          <label>Qty <span class="req">*</span></label>
+          <input type="number" id="qty-${id}" min="1" value="${data.qty||1}"
+                 style="text-align:center;" oninput="clearRowErr(${id})">
+          <div class="field-err" id="err-qty-${id}">≥ 1</div>
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <div class="type-group" id="type-btns-${id}">
+            ${KIND_OPTIONS.map(k => `<button type="button"
+              class="type-btn${(data.kind||'req')===k.value?' '+k.cls:''}"
+              data-kind="${k.value}"
+              onclick="selectKind(${id},'${k.value}')">${k.label}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="notes-${id}" rows="2"
+                  placeholder="e.g. Hardware + FortiCare included">${escHtml(data.note||'')}</textarea>
+      </div>
+    </div>
+  `;
+
+  attachDragEvents(div);
+  container.appendChild(div);
+  updateRowNumbers();
+  updateRowCountBadge();
+  attachSkuAutocomplete(id);
+  attachDescAutocomplete(id);
+}
+
+function addSectionRow(data) {
+  const id = newId();
+  data = data || {};
+  const container = document.getElementById('sku-rows');
+
+  const div = document.createElement('div');
+  div.className = 'section-row-card';
+  div.dataset.rowId = id;
+  div.dataset.rowType = 'section';
+
+  div.innerHTML = `
+    <span class="drag-handle" title="Drag to reorder">⠿</span>
+    <span class="section-label">§ Section:</span>
+    <input type="text" class="section-label-input" id="sec-${id}"
+           placeholder="e.g. Hardware + Enterprise Bundle"
+           value="${escHtml(data.label||'')}"
+           onclick="event.stopPropagation()">
+    <button class="remove-btn" onclick="removeRow(this)" title="Remove">✕</button>
+  `;
+
+  attachDragEvents(div);
+  container.appendChild(div);
+  updateRowNumbers();
+  updateRowCountBadge();
+}
+
+function removeRow(btn) {
+  const card = btn.closest('[data-row-id]');
+  _rowPricingItems.delete(parseInt(card.dataset.rowId, 10));
+  card.remove();
+  updateRowNumbers();
+  updateRowCountBadge();
+}
+
+function selectKind(id, kind) {
+  const container = document.getElementById(`type-btns-${id}`);
+  container.querySelectorAll('.type-btn').forEach(btn => {
+    const match = btn.dataset.kind === kind;
+    KIND_OPTIONS.forEach(k => btn.classList.remove(k.cls));
+    if (match) {
+      const opt = KIND_OPTIONS.find(k => k.value === kind);
+      if (opt) btn.classList.add(opt.cls);
+    }
+  });
+}
+
+function countSkuRows() {
+  return document.querySelectorAll('#sku-rows [data-row-type="sku"]').length;
+}
+
+function updateRowNumbers() {
+  let n = 0;
+  document.querySelectorAll('#sku-rows [data-row-type="sku"]').forEach(card => {
+    n++;
+    const badge = card.querySelector('.sku-row-number');
+    if (badge) badge.textContent = '#' + n;
+  });
+}
+
+function updateRowCountBadge() {
+  const total = document.querySelectorAll('#sku-rows [data-row-id]').length;
+  document.getElementById('row-count-badge').textContent = total;
+}
+
+// ─────────────────────────────────────────────
+//  Drag-and-drop (pointer events for touch+mouse)
+// ─────────────────────────────────────────────
+let _dragSrc = null;
+let _dragPointerStartY = 0;
+let _dragPointerCardY  = 0;
+let _dragClone = null;
+let _dragPlaceholder = null;
+
+function attachDragEvents(card) {
+  // Desktop HTML5 drag
+  card.draggable = true;
+  card.addEventListener('dragstart', onDragStart);
+  card.addEventListener('dragover',  onDragOver);
+  card.addEventListener('dragleave', onDragLeave);
+  card.addEventListener('drop',      onDrop);
+  card.addEventListener('dragend',   onDragEnd);
+
+  // Touch drag via pointer events on the handle area
+  const header = card.querySelector('[data-drag-handle]') || card;
+  header.addEventListener('pointerdown', onPointerDown, { passive: false });
+}
+
+// ── HTML5 drag (desktop) ──
+function onDragStart(e) {
+  _dragSrc = this;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+  setTimeout(() => { if (_dragSrc) _dragSrc.style.opacity = '.4'; }, 0);
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (this !== _dragSrc) this.classList.add('drag-over');
+}
+function onDragLeave() { this.classList.remove('drag-over'); }
+function onDrop(e) {
+  e.stopPropagation();
+  this.classList.remove('drag-over');
+  if (_dragSrc && _dragSrc !== this) {
+    const container = document.getElementById('sku-rows');
+    const all = [...container.children];
+    const si = all.indexOf(_dragSrc), ti = all.indexOf(this);
+    if (si < ti) this.after(_dragSrc); else this.before(_dragSrc);
+  }
+}
+function onDragEnd() {
+  if (_dragSrc) _dragSrc.style.opacity = '';
+  document.querySelectorAll('#sku-rows [data-row-id]').forEach(c => {
+    c.classList.remove('drag-over');
+  });
+  _dragSrc = null;
+  updateRowNumbers();
+}
+
+// ── Pointer/touch drag ──
+function onPointerDown(e) {
+  if (e.pointerType === 'mouse') return; // mouse uses HTML5 drag
+  const card = e.currentTarget.closest('[data-row-id]') || e.currentTarget;
+  e.preventDefault();
+  _dragSrc = card;
+
+  const rect = card.getBoundingClientRect();
+  _dragPointerStartY = e.clientY;
+  _dragPointerCardY  = rect.top;
+
+  // create visual clone
+  _dragClone = card.cloneNode(true);
+  _dragClone.style.cssText = `
+    position:fixed; left:${rect.left}px; top:${rect.top}px;
+    width:${rect.width}px; z-index:9999; opacity:.85;
+    pointer-events:none; box-shadow:0 8px 24px rgba(0,0,0,.25);
+    transition: none;
+  `;
+  document.body.appendChild(_dragClone);
+
+  // placeholder
+  _dragPlaceholder = document.createElement('div');
+  _dragPlaceholder.style.cssText = `height:${rect.height}px;border:2px dashed var(--forti-red);border-radius:6px;background:#FEF8F8;`;
+  card.after(_dragPlaceholder);
+  card.style.display = 'none';
+
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup',   onPointerUp);
+}
+
+function onPointerMove(e) {
+  if (!_dragClone) return;
+  const dy = e.clientY - _dragPointerStartY;
+  _dragClone.style.top = (_dragPointerCardY + dy) + 'px';
+
+  // find hovered card
+  _dragClone.style.display = 'none';
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  _dragClone.style.display = '';
+  if (!el) return;
+
+  const target = el.closest('#sku-rows > [data-row-id]');
+  if (target && target !== _dragSrc && target !== _dragPlaceholder) {
+    const rect = target.getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height / 2) {
+      target.before(_dragPlaceholder);
+    } else {
+      target.after(_dragPlaceholder);
+    }
+  }
+}
+
+function onPointerUp() {
+  document.removeEventListener('pointermove', onPointerMove);
+  document.removeEventListener('pointerup',   onPointerUp);
+
+  if (_dragClone) { _dragClone.remove(); _dragClone = null; }
+  if (_dragSrc)   { _dragSrc.style.display = ''; }
+
+  if (_dragPlaceholder && _dragSrc) {
+    _dragPlaceholder.replaceWith(_dragSrc);
+  } else if (_dragPlaceholder) {
+    _dragPlaceholder.remove();
+  }
+
+  _dragPlaceholder = null;
+  _dragSrc = null;
+  updateRowNumbers();
+}
+
+// ─────────────────────────────────────────────
+//  Validation helpers
+// ─────────────────────────────────────────────
+function clearErr(fieldId, errId) {
+  document.getElementById(fieldId)?.classList.remove('invalid');
+  const e = document.getElementById(errId);
+  if (e) e.style.display = 'none';
+}
+function showErr(fieldId, errId) {
+  document.getElementById(fieldId)?.classList.add('invalid');
+  const e = document.getElementById(errId);
+  if (e) e.style.display = 'block';
+}
+function clearRowErr(id) {
+  [`sku-${id}`,`desc-${id}`,`qty-${id}`].forEach(fid => {
+    document.getElementById(fid)?.classList.remove('invalid');
+  });
+  [`err-sku-${id}`,`err-desc-${id}`,`err-qty-${id}`].forEach(eid => {
+    const e = document.getElementById(eid);
+    if (e) e.style.display = 'none';
+  });
+}
+
+// ─────────────────────────────────────────────
+//  generateBOM
+// ─────────────────────────────────────────────
+function generateBOM() {
+  let valid = true;
+  const rows = [];
+
+  const groupName = document.getElementById('f-group-name').value.trim();
+  if (!groupName) {
+    showErr('f-group-name','err-group-name');
+    document.getElementById('f-group-name').scrollIntoView({ behavior:'smooth', block:'center' });
+    valid = false;
+  } else {
+    clearErr('f-group-name','err-group-name');
+  }
+
+  const skuRowEls = document.querySelectorAll('#sku-rows [data-row-type="sku"]');
+  if (skuRowEls.length === 0) {
+    document.getElementById('err-no-rows').style.display = 'block';
+    valid = false;
+  } else {
+    document.getElementById('err-no-rows').style.display = 'none';
+  }
+
+  if (!valid) return false;
+
+  const sectionLabel = document.getElementById('f-section-label').value.trim();
+  if (sectionLabel) rows.push({ section: sectionLabel });
+
+  document.querySelectorAll('#sku-rows [data-row-id]').forEach(card => {
+    const id   = card.dataset.rowId;
+    const type = card.dataset.rowType;
+
+    if (type === 'section') {
+      const label = document.getElementById(`sec-${id}`)?.value.trim();
+      if (label) rows.push({ section: label });
+
+    } else {
+      const skuEl  = document.getElementById(`sku-${id}`);
+      const descEl = document.getElementById(`desc-${id}`);
+      const qtyEl  = document.getElementById(`qty-${id}`);
+      const sku    = skuEl?.value.trim() || '';
+      const desc   = descEl?.value.trim() || '';
+      const qty    = parseInt(qtyEl?.value, 10);
+      const note   = document.getElementById(`notes-${id}`)?.value.trim() || '';
+
+      const activeBtnEl = document.querySelector(`#type-btns-${id} .type-btn[class*="selected"]`);
+      const kind = activeBtnEl?.dataset.kind || 'req';
+
+      let rowValid = true;
+      if (!sku)  { showErr(`sku-${id}`,  `err-sku-${id}`);  rowValid = false; valid = false; }
+      if (!desc) { showErr(`desc-${id}`, `err-desc-${id}`); rowValid = false; valid = false; }
+      if (!qty || qty < 1) { showErr(`qty-${id}`, `err-qty-${id}`); rowValid = false; valid = false; }
+
+      if (rowValid) rows.push({ sku, desc, qty, kind, note });
+    }
+  });
+
+  if (!valid) return false;
+
+  _lastRows  = rows;
+  _lastLabel = groupName;
+  _lastMeta  = {
+    group:     groupName,
+    totalSkus: rows.filter(r => !r.section).length,
+    totalQty:  rows.filter(r => !r.section && r.qty).reduce((s,r) => s + r.qty, 0),
+  };
+
+  renderBOM(rows);
+  return true;
+}
+
+// ─────────────────────────────────────────────
+//  renderBOM
+// ─────────────────────────────────────────────
+const BADGE_MAP = {
+  req:  '<span class="badge badge-req">REQUIRED</span>',
+  mand: '<span class="badge badge-mand">MANDATORY</span>',
+  opt:  '<span class="badge badge-opt">OPTIONAL</span>',
+  inc:  '<span class="badge badge-inc">INCLUDED</span>',
+  note: '',
+};
+
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.section) {
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${escHtml(row.section)}</td>`;
+    } else {
+      tr.innerHTML = `
+        <td class="sku-cell">${escHtml(row.sku)}</td>
+        <td>${escHtml(row.desc)}</td>
+        <td class="qty-cell">${row.qty ?? ''}</td>
+        <td>${BADGE_MAP[row.kind] || ''}</td>
+        <td style="color:var(--forti-text-muted);font-size:11px;">${escHtml(row.note||'')}</td>
+      `;
+    }
+    tbody.appendChild(tr);
+  });
+
+  const sec = document.getElementById('bom-section');
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─────────────────────────────────────────────
+//  addToProjectBOM
+// ─────────────────────────────────────────────
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+
+  window.parent.postMessage({
+    type:    'FORTIBOM_ADD',
+    product: 'Custom SKU',
+    label:   _lastLabel,
+    rows:    _lastRows,
+    meta:    _lastMeta,
+  }, '*');
+
+  const msg = document.getElementById('smsg');
+  msg.textContent = `✓ "${_lastLabel}" added`;
+  msg.className = '';
+  msg.style.display = 'inline';
+  setTimeout(() => { msg.style.display = 'none'; }, 4000);
+}
+
+// ─────────────────────────────────────────────
+//  resetForm
+// ─────────────────────────────────────────────
+function resetForm() {
+  document.getElementById('f-group-name').value = '';
+  document.getElementById('f-section-label').value = '';
+  document.getElementById('sku-rows').innerHTML = '';
+  document.getElementById('bom-section').style.display = 'none';
+  document.getElementById('smsg').style.display = 'none';
+  document.getElementById('err-no-rows').style.display = 'none';
+  clearErr('f-group-name','err-group-name');
+  _rowIdCounter = 0;
+  _lastRows = [];
+  updateRowCountBadge();
+}
+
+// ─────────────────────────────────────────────
+//  Copy TSV
+// ─────────────────────────────────────────────
+function copyTSV() {
+  if (!_lastRows.length) return;
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  _lastRows.forEach(r => {
+    if (r.section) {
+      lines.push(`[${r.section}]\t\t\t\t`);
+    } else {
+      lines.push([r.sku, r.desc, r.qty, r.kind, r.note||''].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const msg = document.getElementById('smsg');
+    msg.textContent = '✓ TSV copied';
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  Utility
+// ─────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────
+//  Pricing IndexedDB (same DB as index.html)
+// ─────────────────────────────────────────────
+let _pricingDb     = null;
+let _pricingCache  = null;
+let _pricingLoaded = false;
+
+function openPricingDB() {
+  if (_pricingDb) return Promise.resolve(_pricingDb);
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('fabricbom_pricing', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('pricing');
+    req.onsuccess = e => { _pricingDb = e.target.result; resolve(_pricingDb); };
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function getPricingData() {
+  if (_pricingLoaded) return _pricingCache;
+  try {
+    const db = await openPricingDB();
+    const data = await new Promise((resolve, reject) => {
+      const tx = db.transaction('pricing', 'readonly');
+      const req = tx.objectStore('pricing').get('current');
+      req.onsuccess = e => resolve(e.target.result || null);
+      req.onerror   = e => reject(e.target.error);
+    });
+    _pricingCache  = data;
+    _pricingLoaded = true;
+    return data;
+  } catch(e) {
+    _pricingLoaded = true;
+    _pricingCache  = null;
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Autocomplete — singleton dropdown
+// ─────────────────────────────────────────────
+let _acDropdown = null;
+let _acOnSelect = null;
+let _acItems    = [];
+let _acIndex    = -1;
+
+function getAcDropdown() {
+  if (!_acDropdown) {
+    _acDropdown = document.createElement('div');
+    _acDropdown.className = 'ac-dropdown';
+    _acDropdown.addEventListener('mousedown', e => e.preventDefault());
+    document.body.appendChild(_acDropdown);
+  }
+  return _acDropdown;
+}
+
+function showAcDropdown(inputEl, items, onSelect) {
+  const dd = getAcDropdown();
+  _acOnSelect = onSelect;
+  _acItems    = items;
+  _acIndex    = -1;
+
+  dd.innerHTML = '';
+  if (!items.length) { hideAcDropdown(); return; }
+
+  items.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'ac-item';
+    const skuDiv  = document.createElement('div');
+    skuDiv.className = 'ac-item-sku';
+    skuDiv.textContent = item.sku;
+    const descDiv = document.createElement('div');
+    descDiv.className = 'ac-item-desc';
+    descDiv.textContent = item.desc1;
+    div.appendChild(skuDiv);
+    div.appendChild(descDiv);
+    div.addEventListener('mouseenter', () => setAcActiveIndex(i));
+    div.addEventListener('mousedown',  () => { _acOnSelect && _acOnSelect(_acItems[i]); hideAcDropdown(); });
+    dd.appendChild(div);
+  });
+
+  const rect = inputEl.getBoundingClientRect();
+  dd.style.display = 'block';
+  dd.style.top   = (rect.bottom + 2) + 'px';
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = Math.max(rect.width, 300) + 'px';
+}
+
+function hideAcDropdown() {
+  if (_acDropdown) _acDropdown.style.display = 'none';
+  _acItems  = [];
+  _acIndex  = -1;
+  _acOnSelect = null;
+}
+
+function setAcActiveIndex(i) {
+  _acIndex = i;
+  if (!_acDropdown) return;
+  _acDropdown.querySelectorAll('.ac-item').forEach((el, idx) => {
+    el.classList.toggle('ac-item-active', idx === i);
+    if (idx === i) el.scrollIntoView({ block: 'nearest' });
+  });
+}
+
+function acKeydown(e) {
+  if (!_acDropdown || _acDropdown.style.display === 'none') return;
+  if      (e.key === 'ArrowDown')  { e.preventDefault(); setAcActiveIndex(Math.min(_acIndex + 1, _acItems.length - 1)); }
+  else if (e.key === 'ArrowUp')    { e.preventDefault(); setAcActiveIndex(Math.max(_acIndex - 1, 0)); }
+  else if (e.key === 'Enter')      { if (_acIndex >= 0) { e.preventDefault(); _acOnSelect && _acOnSelect(_acItems[_acIndex]); } hideAcDropdown(); }
+  else if (e.key === 'Escape')     { e.preventDefault(); hideAcDropdown(); }
+}
+
+document.addEventListener('click', e => {
+  if (_acDropdown && !_acDropdown.contains(e.target)) hideAcDropdown();
+});
+
+// ─────────────────────────────────────────────
+//  Pricing search helpers
+// ─────────────────────────────────────────────
+function rowToAcItem(row) {
+  return {
+    sku:     row.SKU || '',
+    desc1:   row['Description #1'] || '',
+    desc2:   row['Description #2'] || '',
+    product: row.Product || '',
+    item:    row.Item    || '',
+  };
+}
+
+async function searchBySku(query) {
+  const data = await getPricingData();
+  if (!data || !data.rows) return [];
+  const q = query.trim().toUpperCase();
+  if (q.length < 2) return [];
+  return data.rows.filter(row => (row.SKU||'').toUpperCase().includes(q)).slice(0,15).map(rowToAcItem);
+}
+
+async function searchByDesc(query) {
+  const data = await getPricingData();
+  if (!data || !data.rows) return [];
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(t => t.length > 0);
+  if (!terms.length || terms[0].length < 3) return [];
+  return data.rows.filter(row => {
+    const d = (row['Description #1']||'').toLowerCase();
+    return terms.every(t => d.includes(t));
+  }).slice(0,15).map(rowToAcItem);
+}
+
+async function findExactSku(sku) {
+  const data = await getPricingData();
+  if (!data || !data.rows) return null;
+  const q   = sku.trim().toUpperCase();
+  const row = data.rows.find(r => (r.SKU||'').toUpperCase() === q);
+  return row ? rowToAcItem(row) : null;
+}
+
+async function findExactDesc(desc) {
+  const data = await getPricingData();
+  if (!data || !data.rows) return null;
+  const q   = desc.trim().toLowerCase();
+  const row = data.rows.find(r => (r['Description #1']||'').toLowerCase() === q);
+  return row ? rowToAcItem(row) : null;
+}
+
+// ─────────────────────────────────────────────
+//  Normalization helpers
+// ─────────────────────────────────────────────
+function normalizeSkuTerm(sku)  { return sku.replace(/-(?:12|24|36|48|60)$/i, '-DD'); }
+function normalizeDesc(desc)    { return desc.replace(/\b\d+\s+[Yy]ears?\s+/g, ''); }
+
+// ─────────────────────────────────────────────
+//  Per-row pricing state
+// ─────────────────────────────────────────────
+const _rowPricingItems = new Map();
+
+function fillRowFromPricing(id, item) {
+  _rowPricingItems.set(id, { item, normalized: true });
+  applyPricingToRow(id);
+  _showNormToggle(id);
+  clearRowErr(id);
+}
+
+function applyPricingToRow(id) {
+  const state = _rowPricingItems.get(id);
+  if (!state) return;
+  const { item, normalized } = state;
+  const skuEl = document.getElementById(`sku-${id}`);
+  if (skuEl)   skuEl.value = normalized ? normalizeSkuTerm(item.sku).toUpperCase() : item.sku.toUpperCase();
+  const descEl = document.getElementById(`desc-${id}`);
+  if (descEl)  descEl.value = normalized ? normalizeDesc(item.desc1) : item.desc1;
+  const notesEl = document.getElementById(`notes-${id}`);
+  if (notesEl) notesEl.value = normalized ? normalizeDesc(item.desc2) : item.desc2;
+}
+
+function setRowNormalized(id, normalized) {
+  const state = _rowPricingItems.get(id);
+  if (!state) return;
+  state.normalized = normalized;
+  applyPricingToRow(id);
+  _updateNormToggle(id, normalized);
+  clearRowErr(id);
+}
+
+function _showNormToggle(id) {
+  const el = document.getElementById(`norm-toggle-${id}`);
+  if (el) el.style.display = 'flex';
+  _updateNormToggle(id, true);
+}
+
+function _updateNormToggle(id, normalized) {
+  document.getElementById(`norm-btn-dd-${id}`)?.classList.toggle('nt-active', normalized);
+  document.getElementById(`norm-btn-asis-${id}`)?.classList.toggle('nt-active', !normalized);
+}
+
+// ─────────────────────────────────────────────
+//  Attach autocomplete to a row's inputs
+// ─────────────────────────────────────────────
+function attachSkuAutocomplete(id) {
+  const inputEl = document.getElementById(`sku-${id}`);
+  if (!inputEl) return;
+  inputEl.addEventListener('input', async () => {
+    const q = inputEl.value;
+    if (q.trim().length < 2) { hideAcDropdown(); return; }
+    const matches = await searchBySku(q);
+    showAcDropdown(inputEl, matches, item => fillRowFromPricing(id, item));
+  });
+  inputEl.addEventListener('keydown', acKeydown);
+  inputEl.addEventListener('blur', async () => {
+    const q = inputEl.value.trim();
+    if (q) { const match = await findExactSku(q); if (match) fillRowFromPricing(id, match); }
+    setTimeout(hideAcDropdown, 150);
+  });
+}
+
+function attachDescAutocomplete(id) {
+  const inputEl = document.getElementById(`desc-${id}`);
+  if (!inputEl) return;
+  inputEl.addEventListener('input', async () => {
+    const q = inputEl.value;
+    if (q.trim().length < 3) { hideAcDropdown(); return; }
+    const matches = await searchByDesc(q);
+    showAcDropdown(inputEl, matches, item => fillRowFromPricing(id, item));
+  });
+  inputEl.addEventListener('keydown', acKeydown);
+  inputEl.addEventListener('blur', async () => {
+    const q = inputEl.value.trim();
+    if (q) { const match = await findExactDesc(q); if (match) fillRowFromPricing(id, match); }
+    setTimeout(hideAcDropdown, 150);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  Init
+// ─────────────────────────────────────────────
+addSkuRow();
+</script>
+</body>
+</html>

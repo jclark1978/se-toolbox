@@ -23,7 +23,7 @@ frame?.addEventListener("load", () => {
     bridgeFortiBomShell();
     openInitialView();
   } catch (error) {
-    console.error("Failed to bridge FortiBOM shell", error);
+    console.error("Failed to bridge FabricBOM shell", error);
     setStatus("warn", "The BOM workspace loaded, but the native SE Toolbox bridge could not be fully applied.");
   }
 });
@@ -93,7 +93,7 @@ function bridgeFortiBomShell() {
   const appWindow = frame?.contentWindow;
   const appDocument = frame?.contentDocument;
   if (!appWindow || !appDocument) {
-    throw new Error("FortiBOM iframe is not available.");
+    throw new Error("FabricBOM iframe is not available.");
   }
 
   injectBridgeStyles(appDocument);
@@ -111,7 +111,7 @@ function bridgeFortiBomShell() {
           syncEmbeddedTheme(productDocument);
         }
       } catch (error) {
-        console.warn("Failed to bridge FortiBOM product frame", error);
+        console.warn("Failed to bridge FabricBOM product frame", error);
       }
       scheduleFrameHeightSync();
     });

@@ -1,4 +1,4 @@
-const CACHE = 'fabricbom-v2';
+const CACHE = 'fabricbom-v3.0.0.4-fortisku';
 
 const SHELL = [
   './',
@@ -14,7 +14,10 @@ const SHELL = [
   './products/fortisase-bomgen.html',
   './products/fortisandbox-bomgen.html',
   './products/fortiadc-bomgen.html',
+  './products/fortiddos-bomgen.html',
   './products/fortideceptor-bomgen.html',
+  './products/fortipam-bomgen.html',
+  './products/fortiproxy-bomgen.html',
   './products/fortiweb-bomgen.html',
   './products/fortiap-bomgen.html',
   './products/fortiswitch-bomgen.html',
@@ -26,6 +29,7 @@ const SHELL = [
   './products/fortiaiops-bomgen.html',
   './products/fortimonitor-bomgen.html',
   './products/fortisiem-bomgen.html',
+  './products/fortisoar-bomgen.html',
   './products/fortiflex-bomgen.html',
   './products/fortiedr-bomgen.html',
   './products/fortiappsec-bomgen.html',
@@ -37,6 +41,7 @@ const SHELL = [
   './products/fortipresence-bomgen.html',
   './products/fortirecon-bomgen.html',
   './products/custom-sku-bomgen.html',
+  './products/custom-sku-bomgen-mobile.html',
 ];
 
 self.addEventListener('install', event => {

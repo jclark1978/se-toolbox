@@ -5,7 +5,7 @@ SE Toolbox is a static, browser-only suite of utilities for common Fortinet SE w
 ## Features
 
 - SKU Finder for pricelist ingestion, search, export, and BOM building
-- BOM Builder as an upstream-friendly FortiBOM integration wrapped in the SE Toolbox shell
+- BOM Builder as an upstream-friendly FabricBOM integration wrapped in the SE Toolbox shell
 - Hardware LifeCycle lookup for milestone and support-planning searches using the Fortinet RSS feed
 - Software LifeCycle lookup for release and support milestone searches using the Fortinet RSS feed
 - Ordering Guides lookup for cross-referencing guides and related products
@@ -45,7 +45,7 @@ No backend or server-side computation is required.
 - `bom-builder/`, `hardware-lifecycle/`, `software-lifecycle/`, `ordering-guides/`, `asset-reports/`, and `lab-portal/` each contain a page entrypoint for a separate workflow.
 - `src/features/` groups browser logic by product surface:
   - `sku-finder/`
-  - `bom-builder/` for the FortiBOM-backed BOM Builder wrapper and bridge assets
+  - `bom-builder/` for the FabricBOM-backed BOM Builder wrapper and bridge assets
   - `hardware-lifecycle/` for the RSS-based hardware lifecycle flow
   - `software-lifecycle/` for the RSS-based software lifecycle flow
   - `ordering-guides/`
@@ -79,7 +79,7 @@ Legacy top-level page URLs such as `asset-report.html` are kept only as lightwei
 ## Usage Notes
 
 1. Open `/` to start in the main SE Toolbox workspace, then use SKU Finder or jump to the other tools from the shared navigation.
-2. Open `/bom-builder/` for the BOM Builder integration preview, which wraps a vendored FortiBOM workspace inside the SE Toolbox shell.
+2. Open `/bom-builder/` for the BOM Builder integration preview, which wraps a vendored FabricBOM workspace inside the SE Toolbox shell.
 3. In SKU Finder, upload an Excel workbook (.xlsx). By default, the app targets the `DataSet` sheet; provide an alternative sheet name if needed.
 4. The workbook is parsed entirely in the browser. SKU Finder auto-detects the first row containing SKU/Description headers (so banner rows can stay) and skips rows lacking SKU or Description #1.
 5. After the first upload, the normalized rows, MiniSearch index, and metadata persist in IndexedDB. Reloading the page resumes instantly.

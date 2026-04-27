@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiDDoS BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--forti-text);
+  background: var(--forti-bg);
+  padding: 20px;
+}
+
+/* Page header */
+.page-header { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+.icon-box {
+  width:42px; height:42px; background:var(--forti-red); border-radius:4px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.icon-box svg { width:24px; height:24px; fill:white; }
+.page-header h1 { font-size:20px; font-weight:700; color:var(--forti-text); }
+.page-header p { font-size:11px; color:var(--forti-text-muted); margin-top:2px; }
+
+/* Cards */
+.card { background:var(--forti-white); border:1px solid var(--forti-border); border-radius:4px; margin-bottom:14px; overflow:hidden; }
+.card-header { background:var(--forti-section-header); border-bottom:1px solid var(--forti-border); padding:9px 18px; font-weight:600; font-size:12px; color:var(--forti-text-secondary); text-transform:uppercase; letter-spacing:.04em; }
+.card-body { padding:16px 18px; }
+
+/* Model cards */
+.model-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:8px; }
+.model-card {
+  border:1px solid var(--forti-border); border-radius:4px; padding:10px 12px;
+  cursor:pointer; transition:border-color .15s, background .15s;
+  background:white;
+}
+.model-card:hover { border-color:#aab0c0; background:#FAFBFD; }
+.model-card.selected { border:2px solid var(--forti-red); background:#FEF8F8; }
+.model-card .mc-sku { font-weight:700; font-size:13px; color:var(--forti-text); }
+.model-card .mc-perf { font-size:11px; color:var(--forti-text-secondary); margin-top:3px; }
+.model-card .mc-type { font-size:10px; color:var(--forti-text-muted); margin-top:2px; }
+
+/* Form fields */
+.form-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
+.field { display:flex; flex-direction:column; gap:4px; }
+label { font-size:12px; font-weight:600; color:var(--forti-text-secondary); }
+label .req { color:var(--forti-red); margin-left:2px; }
+input[type=number], select {
+  background:white; border:1px solid var(--forti-input-border); border-radius:3px;
+  padding:6px 9px; font-size:13px; width:100%; color:var(--forti-text);
+  outline:none; transition:border-color .15s, box-shadow .15s;
+}
+input[type=number]:focus, select:focus {
+  border-color:var(--forti-red); box-shadow:0 0 0 2px rgba(238,49,36,.1);
+}
+input.invalid { border-color:#E53935 !important; box-shadow:0 0 0 2px rgba(229,57,53,.12) !important; }
+.err-msg { color:#C0392B; font-size:11px; display:none; }
+
+/* Checkboxes */
+.checkbox-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:8px; }
+.cb-item { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; border:1px solid var(--forti-border); border-radius:3px; background:white; }
+.cb-item input[type=checkbox] { margin-top:2px; accent-color:var(--forti-red); flex-shrink:0; }
+.cb-item.disabled { opacity:0.4; pointer-events:none; }
+.cb-label { font-size:12px; color:var(--forti-text); }
+.cb-sku { font-size:10px; color:var(--forti-text-muted); font-family:'Courier New',monospace; margin-top:2px; }
+
+/* Callouts */
+.callout { border-radius:3px; padding:9px 12px; font-size:12px; line-height:1.6; display:flex; gap:8px; }
+.info { background:var(--forti-info-bg); border:1px solid var(--forti-info-border); color:var(--forti-info-text); }
+.warn { background:var(--forti-warn-bg); border:1px solid var(--forti-warn-border); color:var(--forti-warn-text); }
+.callout-icon { flex-shrink:0; font-size:14px; }
+
+/* Action row */
+.action-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+.btn { padding:8px 18px; border-radius:3px; border:none; font-size:13px; font-weight:600; cursor:pointer; transition:opacity .15s; }
+.btn:hover { opacity:.88; }
+.btn-primary { background:var(--forti-red); color:white; }
+.btn-success { background:#2E7D32; color:white; }
+.btn-secondary { background:white; color:var(--forti-text); border:1px solid var(--forti-input-border); }
+.btn-sm { padding:5px 12px; font-size:11px; }
+#smsg { font-size:12px; font-weight:600; }
+
+/* BOM table */
+#bom-section { display:none; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th { background:var(--forti-table-head); border:1px solid var(--forti-border); padding:7px 11px; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); font-weight:700; text-align:left; }
+tbody td { border:1px solid var(--forti-border); padding:7px 11px; vertical-align:top; }
+tbody tr:nth-child(even) td { background:var(--forti-table-stripe); }
+.section-row td { background:#EAECF3!important; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--forti-text-secondary); padding:5px 11px; border-top:2px solid #C5CAD9; }
+.sku-cell { font-family:'Courier New',monospace; font-size:11px; color:#1A4E82; }
+.nc { color:var(--forti-text-muted); }
+.badge { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-radius:2px; padding:1px 5px; display:inline-block; white-space:nowrap; }
+.badge-req  { background:#FEF0EE; color:#C0392B; border:1px solid #F5C6C2; }
+.badge-opt  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.badge-mand { background:#FFF8EE; color:#8A5800; border:1px solid #F5D9A0; }
+.badge-inc  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+
+/* Comparison table */
+.cmp-table { width:100%; border-collapse:collapse; font-size:11px; }
+.cmp-table th { background:var(--forti-table-head); border:1px solid var(--forti-border); padding:6px 10px; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--forti-text-secondary); font-weight:700; text-align:center; }
+.cmp-table th.row-hdr { text-align:left; }
+.cmp-table td { border:1px solid var(--forti-border); padding:5px 10px; text-align:center; vertical-align:middle; color:var(--forti-text-secondary); }
+.cmp-table td.row-hdr { text-align:left; font-weight:600; color:var(--forti-text); background:var(--forti-section-header); }
+.cmp-table td.section-hdr { background:#EAECF3; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); text-align:left; }
+.cmp-table tr:nth-child(even) td:not(.row-hdr):not(.section-hdr) { background:var(--forti-table-stripe); }
+.chk { color:#2E7D32; font-size:13px; }
+.dash { color:#C8CDD9; }
+.vm-badge { display:inline-block; background:#E8F4FD; color:#1565C0; border:1px solid #90CAF9; border-radius:2px; font-size:9px; font-weight:700; padding:1px 5px; margin-left:4px; }
+.appl-badge { display:inline-block; background:#E8F5E9; color:#1B5E20; border:1px solid #A5D6A7; border-radius:2px; font-size:9px; font-weight:700; padding:1px 5px; margin-left:4px; }
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="icon-box">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+  </div>
+  <div>
+    <h1>FortiDDoS BOM Generator</h1>
+    <p>Ordering Guide: FDD-OG-R12-20260323 &nbsp;·&nbsp; Appliances (200F–3000G) and Virtual Machines (VM04/VM08/VM16)</p>
+  </div>
+</div>
+
+<!-- COMPARISON TABLE -->
+<div class="card">
+  <div class="card-header">Product Comparison &amp; Connectivity</div>
+  <div class="card-body" style="padding:0; overflow-x:auto;">
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th class="row-hdr" style="min-width:210px;">Specification</th>
+          <th>VM04 <span class="vm-badge">VM</span></th>
+          <th>VM08 <span class="vm-badge">VM</span></th>
+          <th>VM16 <span class="vm-badge">VM</span></th>
+          <th>200F <span class="appl-badge">Appl</span></th>
+          <th>1500F <span class="appl-badge">Appl</span></th>
+          <th>1500F-LR <span class="appl-badge">Appl</span></th>
+          <th>2000F <span class="appl-badge">Appl</span></th>
+          <th>3000G <span class="appl-badge">Appl</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="section-hdr" colspan="9">Performance</td></tr>
+        <tr>
+          <td class="row-hdr">Enterprise Inspected Throughput (Gbps)</td>
+          <td>3</td><td>5</td><td>10</td><td>8</td><td>22</td><td>39</td><td>—</td><td>85</td>
+        </tr>
+        <tr>
+          <td class="row-hdr">Small UDP Throughput (Mpps)</td>
+          <td>4</td><td>6</td><td>10</td><td>9</td><td>27</td><td>52</td><td>—</td><td>104</td>
+        </tr>
+        <tr>
+          <td class="row-hdr">SYN Validation Throughput (Mpps)</td>
+          <td>2.6</td><td>5</td><td>5</td><td>5.3</td><td>19</td><td>40</td><td>—</td><td>55</td>
+        </tr>
+        <tr><td class="section-hdr" colspan="9">Capacity</td></tr>
+        <tr>
+          <td class="row-hdr">Max Service Protection Profiles (SPP)</td>
+          <td>4</td><td>8</td><td>16</td><td>8</td><td>16</td><td>16</td><td>16</td><td>16</td>
+        </tr>
+        <tr>
+          <td class="row-hdr">Max Protected Subnets</td>
+          <td>512/SPP</td><td>512/SPP</td><td>512/SPP</td><td>512/SPP</td><td>1024/SPP</td><td>1024/SPP</td><td>1024/SPP</td><td>1024/SPP</td>
+        </tr>
+        <tr>
+          <td class="row-hdr">Dual Power Supplies</td>
+          <td class="dash">—</td><td class="dash">—</td><td class="dash">—</td>
+          <td class="chk">✓ AC</td><td class="chk">✓ AC</td><td class="chk">✓ AC</td><td class="chk">✓ AC</td><td class="chk">✓ AC</td>
+        </tr>
+        <tr>
+          <td class="row-hdr">Form Factor</td>
+          <td>VM</td><td>VM</td><td>VM</td><td>1 RU</td><td>2 RU</td><td>2 RU</td><td>2 RU</td><td>2 RU</td>
+        </tr>
+        <tr><td class="section-hdr" colspan="9">Recommended Connectivity</td></tr>
+        <tr>
+          <td class="row-hdr">GE or 2×GE BGP</td>
+          <td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td>
+          <td class="dash">—</td><td class="dash">—</td><td class="dash">—</td><td class="dash">—</td>
+        </tr>
+        <tr>
+          <td class="row-hdr">10GE or 2×10GE BGP</td>
+          <td class="dash">—</td><td class="dash">—</td><td class="chk">✓</td><td class="dash">—</td>
+          <td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td>
+        </tr>
+        <tr>
+          <td class="row-hdr">2×10GE LACP</td>
+          <td class="dash">—</td><td class="dash">—</td><td class="dash">—</td><td class="dash">—</td>
+          <td class="chk">✓</td><td class="chk">✓</td><td class="chk">✓</td><td class="dash">—</td>
+        </tr>
+        <tr>
+          <td class="row-hdr">40GE or 2×40GE BGP</td>
+          <td class="dash">—</td><td class="dash">—</td><td class="dash">—</td><td class="dash">—</td>
+          <td class="dash">—</td><td class="dash">—</td><td class="chk">✓</td><td class="chk">✓</td>
+        </tr>
+        <tr>
+          <td class="row-hdr">100GE or 2×100GE BGP</td>
+          <td class="dash">—</td><td class="dash">—</td><td class="dash">—</td><td class="dash">—</td>
+          <td class="dash">—</td><td class="dash">—</td><td class="dash">—</td><td class="chk">✓</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- DEPLOYMENT TYPE SELECTION -->
+<div class="card">
+  <div class="card-header">1 · Deployment Type</div>
+  <div class="card-body">
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div class="model-card selected" id="dtype-appliance" onclick="setDeployType('appliance')" style="min-width:140px;">
+        <div class="mc-sku">Appliance</div>
+        <div class="mc-perf">Physical hardware</div>
+        <div class="mc-type">200F · 1500F · 1500F-LR · 2000F · 3000G</div>
+      </div>
+      <div class="model-card" id="dtype-vm" onclick="setDeployType('vm')" style="min-width:140px;">
+        <div class="mc-sku">Virtual Machine</div>
+        <div class="mc-perf">Perpetual VM license</div>
+        <div class="mc-type">VM04 · VM08 · VM16</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODEL SELECTION -->
+<div class="card">
+  <div class="card-header">2 · Model Selection</div>
+  <div class="card-body">
+    <div id="appliance-models" class="model-grid">
+      <div class="model-card selected" id="m-200F" onclick="selectModel('200F')">
+        <div class="mc-sku">FDD-200F</div>
+        <div class="mc-perf">8 Gbps · 9 Mpps UDP</div>
+        <div class="mc-type">1 RU · 8× GE copper · 4× GE SFP · 4× GE LC bypass · AC PSU</div>
+      </div>
+      <div class="model-card" id="m-1500F" onclick="selectModel('1500F')">
+        <div class="mc-sku">FDD-1500F</div>
+        <div class="mc-perf">22 Gbps · 27 Mpps UDP</div>
+        <div class="mc-type">2 RU · 4× 10GE SFP+ · 4× 10GE LC bypass · Dual AC PSU</div>
+      </div>
+      <div class="model-card" id="m-1500F-LR" onclick="selectModel('1500F-LR')">
+        <div class="mc-sku">FDD-1500F-LR</div>
+        <div class="mc-perf">39 Gbps · 52 Mpps UDP</div>
+        <div class="mc-type">2 RU · Long-reach optics · Dual AC PSU</div>
+      </div>
+      <div class="model-card" id="m-2000F" onclick="selectModel('2000F')">
+        <div class="mc-sku">FDD-2000F</div>
+        <div class="mc-perf">— Gbps · 4× 40GE QSFP+ · Dual AC PSU</div>
+        <div class="mc-type">2 RU · 4× 10GE SFP+ · 4× 40GE QSFP+</div>
+      </div>
+      <div class="model-card" id="m-3000G" onclick="selectModel('3000G')">
+        <div class="mc-sku">FDD-3000G</div>
+        <div class="mc-perf">85 Gbps · 104 Mpps UDP</div>
+        <div class="mc-type">2 RU · 4× 100GE QSFP28 · Dual AC PSU</div>
+      </div>
+    </div>
+    <div id="vm-models" class="model-grid" style="display:none;">
+      <div class="model-card" id="m-VM04" onclick="selectModel('VM04')">
+        <div class="mc-sku">FDD-VM04</div>
+        <div class="mc-perf">3 Gbps · 4 Mpps UDP</div>
+        <div class="mc-type">4 SPP · 512 subnets/SPP</div>
+      </div>
+      <div class="model-card" id="m-VM08" onclick="selectModel('VM08')">
+        <div class="mc-sku">FDD-VM08</div>
+        <div class="mc-perf">5 Gbps · 6 Mpps UDP</div>
+        <div class="mc-type">8 SPP · 512 subnets/SPP</div>
+      </div>
+      <div class="model-card" id="m-VM16" onclick="selectModel('VM16')">
+        <div class="mc-sku">FDD-VM16</div>
+        <div class="mc-perf">10 Gbps · 10 Mpps UDP</div>
+        <div class="mc-type">16 SPP · 512 subnets/SPP</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUANTITY & OPTIONS -->
+<div class="card">
+  <div class="card-header">3 · Quantity &amp; Configuration</div>
+  <div class="card-body">
+    <div class="form-grid">
+      <div class="field">
+        <label for="f-qty">Quantity<span class="req">*</span></label>
+        <input type="number" id="f-qty" min="1" max="999" value="1" oninput="onQtyChange()">
+        <div class="err-msg" id="err-qty">Please enter a valid quantity (≥ 1).</div>
+      </div>
+    </div>
+    <div id="vm-notes-section" style="display:none; margin-top:12px;">
+      <div class="callout warn">
+        <span class="callout-icon">⚠</span>
+        <div>
+          <strong>VM Deployment Requirements:</strong> Stated specifications require DPDK CPUs and SR-IOV NICs with PCIe x8 buses. VMs do not support traffic bypass — external bypass is required for most deployments. A bare-metal server is strongly recommended. VMs have less granular TCP/UDP Port and ICMP flood mitigation than appliances.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD-ON LICENSES -->
+<div class="card">
+  <div class="card-header">4 · Optional Add-On Subscriptions</div>
+  <div class="card-body">
+    <div class="callout info" style="margin-bottom:12px;">
+      <span class="callout-icon">ℹ</span>
+      <div>IP and Domain Reputation subscriptions are <strong>optional</strong> and are not required for enterprise DDoS mitigation. They provide additional threat intelligence feeds for enhanced protection.</div>
+    </div>
+    <div class="checkbox-grid">
+      <div class="cb-item" id="cb-iprep-wrap">
+        <input type="checkbox" id="cb-iprep">
+        <div>
+          <div class="cb-label">IP Reputation Subscription</div>
+          <div class="cb-sku" id="cb-iprep-sku">FC-10-FI2HF-140-02-DD</div>
+        </div>
+      </div>
+      <div class="cb-item" id="cb-domrep-wrap">
+        <input type="checkbox" id="cb-domrep">
+        <div>
+          <div class="cb-label">Domain Reputation Subscription</div>
+          <div class="cb-sku" id="cb-domrep-sku">FC-10-FI2HF-191-02-DD</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTION ROW -->
+<div class="action-row">
+  <button class="btn btn-primary" onclick="generateBOM()">Preview BOM</button>
+  <button class="btn btn-success" onclick="addToProjectBOM()">Add to Project BOM</button>
+  <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+  <span id="smsg"></span>
+</div>
+
+<!-- BOM PREVIEW -->
+<div id="bom-section" class="card">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>BOM Preview</span>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="copyTSV()">Copy TSV</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0; overflow-x:auto;">
+    <table id="bom-table">
+      <thead>
+        <tr>
+          <th style="width:200px;">Part Number</th>
+          <th>Description</th>
+          <th style="width:50px; text-align:center;">Qty</th>
+          <th style="width:80px;">Type</th>
+          <th style="width:180px;">Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA MODEL
+// ============================================================
+const MODELS = {
+  // Appliances
+  '200F':    { hw:'FDD-200F',    careSku:'FC-10-FI2HF-247-02-DD', iprepSku:'FC-10-FI2HF-140-02-DD', domrepSku:'FC-10-FI2HF-191-02-DD', type:'appliance', label:'FortiDDoS 200F',    careDesc:'24×7 FortiCare Support for FDD-200F'    },
+  '1500F':   { hw:'FDD-1500F',   careSku:'FC-10-F1K5F-247-02-DD', iprepSku:'FC-10-F1K5F-140-02-DD', domrepSku:'FC-10-F1K5F-191-02-DD', type:'appliance', label:'FortiDDoS 1500F',   careDesc:'24×7 FortiCare Support for FDD-1500F'   },
+  '1500F-LR':{ hw:'FDD-1500F-LR',careSku:'FC-10-F15SF-247-02-DD', iprepSku:'FC-10-F15SF-140-02-DD', domrepSku:'FC-10-F15SF-191-02-DD', type:'appliance', label:'FortiDDoS 1500F-LR', careDesc:'24×7 FortiCare Support for FDD-1500F-LR' },
+  '2000F':   { hw:'FDD-2000F',   careSku:'FC-10-FD2KF-247-02-DD', iprepSku:'FC-10-FD2KF-140-02-DD', domrepSku:'FC-10-FD2KF-191-02-DD', type:'appliance', label:'FortiDDoS 2000F',   careDesc:'24×7 FortiCare Support for FDD-2000F'   },
+  '3000G':   { hw:'FDD-3000G',   careSku:'FC-10-FI3KG-247-02-DD', iprepSku:'FC-10-FI3KG-140-02-DD', domrepSku:'FC-10-FI3KG-191-02-DD', type:'appliance', label:'FortiDDoS 3000G',   careDesc:'24×7 FortiCare Support for FDD-3000G'   },
+  // Virtual Machines
+  'VM04': { hw:'FDD-VM04', careSku:'FC-10-FIM04-248-02-DD', iprepSku:'FC-10-FIM04-140-02-DD', domrepSku:'FC-10-FIM04-191-02-DD', type:'vm', label:'FortiDDoS VM04', careDesc:'24×7 FortiCare Support for FDD-VM04' },
+  'VM08': { hw:'FDD-VM08', careSku:'FC-10-FIM08-248-02-DD', iprepSku:'FC-10-FIM08-140-02-DD', domrepSku:'FC-10-FIM08-191-02-DD', type:'vm', label:'FortiDDoS VM08', careDesc:'24×7 FortiCare Support for FDD-VM08' },
+  'VM16': { hw:'FDD-VM16', careSku:'FC-10-FIM16-248-02-DD', iprepSku:'FC-10-FIM16-140-02-DD', domrepSku:'FC-10-FIM16-191-02-DD', type:'vm', label:'FortiDDoS VM16', careDesc:'24×7 FortiCare Support for FDD-VM16' },
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let _deployType   = 'appliance';
+let _selectedModel = '200F';
+let _lastRows  = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+// ============================================================
+// UI INTERACTIONS
+// ============================================================
+function setDeployType(t) {
+  _deployType = t;
+  document.getElementById('dtype-appliance').classList.toggle('selected', t==='appliance');
+  document.getElementById('dtype-vm').classList.toggle('selected', t==='vm');
+  document.getElementById('appliance-models').style.display = t==='appliance' ? '' : 'none';
+  document.getElementById('vm-models').style.display        = t==='vm'        ? '' : 'none';
+  document.getElementById('vm-notes-section').style.display = t==='vm'        ? '' : 'none';
+  // Pick first model of selected type
+  const firstModel = t==='appliance' ? '200F' : 'VM04';
+  selectModel(firstModel);
+}
+
+function selectModel(id) {
+  _selectedModel = id;
+  // Clear all model card selections
+  document.querySelectorAll('.model-card[id^="m-"]').forEach(el => el.classList.remove('selected'));
+  const card = document.getElementById('m-' + id);
+  if (card) card.classList.add('selected');
+  // Update addon SKU labels
+  updateAddonLabels();
+  clearStatus();
+}
+
+function updateAddonLabels() {
+  const m = MODELS[_selectedModel];
+  if (!m) return;
+  document.getElementById('cb-iprep-sku').textContent  = m.iprepSku;
+  document.getElementById('cb-domrep-sku').textContent = m.domrepSku;
+}
+
+function onQtyChange() { clearStatus(); }
+
+function clearStatus() {
+  const s = document.getElementById('smsg');
+  s.textContent = '';
+  s.style.color = '';
+}
+
+// ============================================================
+// VALIDATION
+// ============================================================
+function validate(fieldId, errId, condition) {
+  const field = document.getElementById(fieldId);
+  const err   = document.getElementById(errId);
+  if (!condition) {
+    field.classList.add('invalid');
+    err.style.display = 'block';
+    return false;
+  }
+  field.classList.remove('invalid');
+  err.style.display = 'none';
+  return true;
+}
+
+// ============================================================
+// BOM GENERATION
+// ============================================================
+function generateBOM() {
+  clearStatus();
+
+  const qtyRaw = parseInt(document.getElementById('f-qty').value, 10);
+  let ok = true;
+  ok = validate('f-qty', 'err-qty', !isNaN(qtyRaw) && qtyRaw >= 1) && ok;
+  if (!ok) return false;
+
+  const m    = MODELS[_selectedModel];
+  const qty  = qtyRaw;
+  const rows = [];
+
+  // ---- Hardware / VM License ----
+  if (m.type === 'appliance') {
+    rows.push({ section: 'Hardware Appliance' });
+    rows.push({ sku: m.hw, desc: m.label + ' DDoS Mitigation Appliance', qty, kind: 'req', note: 'Per unit' });
+  } else {
+    rows.push({ section: 'Virtual Machine License (Perpetual)' });
+    rows.push({ sku: m.hw, desc: m.label + ' DDoS Mitigation VM — Perpetual License', qty, kind: 'req', note: 'Perpetual; per VM' });
+    rows.push({ sku: '⚠', desc: 'VM requires DPDK CPUs and SR-IOV NICs (PCIe x8). Bare-metal server recommended. External bypass required for most deployments.', qty: null, kind: 'note', note: '' });
+  }
+
+  // ---- Support / FortiCare ----
+  rows.push({ section: 'Support' });
+  rows.push({
+    sku:  m.careSku,
+    desc: m.careDesc,
+    qty,
+    kind: 'req',
+    note: 'Co-term -DD · per unit · 1/3/5-yr 24×7'
+  });
+
+  // ---- Optional Add-ons ----
+  const wantIpRep  = document.getElementById('cb-iprep').checked;
+  const wantDomRep = document.getElementById('cb-domrep').checked;
+
+  if (wantIpRep || wantDomRep) {
+    rows.push({ section: 'Optional Security Subscriptions' });
+    if (wantIpRep) {
+      rows.push({ sku: m.iprepSku,  desc: 'IP Reputation Subscription for ' + m.hw,  qty, kind: 'opt', note: 'Co-term -DD · per unit · optional' });
+    }
+    if (wantDomRep) {
+      rows.push({ sku: m.domrepSku, desc: 'Domain Reputation Subscription for ' + m.hw, qty, kind: 'opt', note: 'Co-term -DD · per unit · optional' });
+    }
+  }
+
+  _lastRows  = rows;
+  _lastLabel = m.label + ' ×' + qty;
+  _lastMeta  = {
+    Model:      m.hw,
+    Qty:        qty,
+    Type:       m.type === 'appliance' ? 'Physical Appliance' : 'Virtual Machine',
+    'IP Rep':   wantIpRep  ? 'Yes' : 'No',
+    'Dom Rep':  wantDomRep ? 'Yes' : 'No',
+    Guide:      'FDD-OG-R12-20260323'
+  };
+
+  renderBOM(rows);
+  return true;
+}
+
+// ============================================================
+// RENDER BOM TABLE
+// ============================================================
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.section !== undefined) {
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${esc(row.section)}</td>`;
+    } else {
+      const badgeMap = { req:'badge-req', opt:'badge-opt', mand:'badge-mand', inc:'badge-inc', note:'' };
+      const labelMap = { req:'Required', opt:'Optional', mand:'Mandatory', inc:'Included', note:'' };
+      const badgeClass = badgeMap[row.kind] || '';
+      const badgeLabel = labelMap[row.kind] || '';
+      const badge = badgeClass ? `<span class="badge ${badgeClass}">${badgeLabel}</span>` : '';
+      const skuCell = row.sku === '⚠' ? `<span style="color:var(--forti-warn-text);">⚠ Note</span>` : `<span class="sku-cell">${esc(row.sku)}</span>`;
+      const qtyDisplay = row.qty !== null && row.qty !== undefined ? row.qty : '';
+      tr.innerHTML = `
+        <td>${skuCell}</td>
+        <td class="nc">${esc(row.desc)}</td>
+        <td style="text-align:center;">${qtyDisplay}</td>
+        <td>${badge}</td>
+        <td class="nc">${esc(row.note || '')}</td>
+      `;
+    }
+    tbody.appendChild(tr);
+  });
+
+  const section = document.getElementById('bom-section');
+  section.style.display = '';
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ============================================================
+// ADD TO PROJECT BOM
+// ============================================================
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type:    'FORTIBOM_ADD',
+      product: 'FortiDDoS',
+      label:   _lastLabel,
+      rows:    _lastRows,
+      meta:    _lastMeta
+    }, '*');
+  }
+  const s = document.getElementById('smsg');
+  s.textContent = '✓ Added to Project BOM.';
+  s.style.color = '#2E7D32';
+}
+
+// ============================================================
+// RESET
+// ============================================================
+function resetForm() {
+  setDeployType('appliance');
+  selectModel('200F');
+  document.getElementById('f-qty').value = 1;
+  document.getElementById('f-qty').classList.remove('invalid');
+  document.getElementById('err-qty').style.display = 'none';
+  document.getElementById('cb-iprep').checked  = false;
+  document.getElementById('cb-domrep').checked = false;
+  document.getElementById('bom-section').style.display = 'none';
+  document.getElementById('bom-tbody').innerHTML = '';
+  clearStatus();
+}
+
+// ============================================================
+// COPY TSV
+// ============================================================
+function copyTSV() {
+  const rows = _lastRows;
+  if (!rows.length) return;
+  const lines = [['Part Number','Description','Qty','Type','Notes'].join('\t')];
+  rows.forEach(r => {
+    if (r.section !== undefined) {
+      lines.push(['--- ' + r.section + ' ---','','','',''].join('\t'));
+    } else {
+      const typeMap = { req:'Required', opt:'Optional', mand:'Mandatory', inc:'Included', note:'' };
+      lines.push([r.sku||'', r.desc||'', r.qty!=null?r.qty:'', typeMap[r.kind]||'', r.note||''].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const s = document.getElementById('smsg');
+    s.textContent = '✓ TSV copied to clipboard.';
+    s.style.color = '#1A4E82';
+  });
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Init
+updateAddonLabels();
+</script>
+</body>
+</html>

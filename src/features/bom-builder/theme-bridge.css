@@ -85,7 +85,11 @@ html[data-fortisku-bridge="true"] .sbar,
 html[data-fortisku-bridge="true"] .bom-group-row,
 html[data-fortisku-bridge="true"] .sp-card,
 html[data-fortisku-bridge="true"] #copy-menu,
-html[data-fortisku-bridge="true"] #project-menu {
+html[data-fortisku-bridge="true"] #project-menu,
+html[data-fortisku-bridge="true"] #add-menu,
+html[data-fortisku-bridge="true"] #sku-box,
+html[data-fortisku-bridge="true"] #project-total,
+html[data-fortisku-bridge="true"] #kind-popover {
   background: var(--bridge-surface) !important;
   border-color: var(--bridge-border) !important;
   border-radius: 16px !important;
@@ -127,6 +131,8 @@ html[data-fortisku-bridge="true"] .exp-btn,
 html[data-fortisku-bridge="true"] input,
 html[data-fortisku-bridge="true"] select,
 html[data-fortisku-bridge="true"] textarea,
+html[data-fortisku-bridge="true"] .qty-input,
+html[data-fortisku-bridge="true"] .label-input,
 html[data-fortisku-bridge="true"] #pricing-drop {
   background: var(--bridge-surface) !important;
   border-color: var(--bridge-border) !important;
@@ -191,10 +197,16 @@ html[data-fortisku-bridge="true"] .ec h3,
 html[data-fortisku-bridge="true"] .ec p,
 html[data-fortisku-bridge="true"] .sp-name,
 html[data-fortisku-bridge="true"] .sp-meta,
+html[data-fortisku-bridge="true"] .sp-rev-date,
 html[data-fortisku-bridge="true"] .det-k,
 html[data-fortisku-bridge="true"] .det-v,
 html[data-fortisku-bridge="true"] .dm-section,
 html[data-fortisku-bridge="true"] .dm-item,
+html[data-fortisku-bridge="true"] .kp-item,
+html[data-fortisku-bridge="true"] .pi-vl,
+html[data-fortisku-bridge="true"] .pi-vv,
+html[data-fortisku-bridge="true"] .pt-label,
+html[data-fortisku-bridge="true"] .pt-value,
 html[data-fortisku-bridge="true"] #ws h2,
 html[data-fortisku-bridge="true"] #ws p,
 html[data-fortisku-bridge="true"] #toast {
@@ -212,6 +224,35 @@ html[data-fortisku-bridge="true"] .ni.active,
 html[data-fortisku-bridge="true"] .ni:hover {
   background: transparent !important;
   border-left-color: transparent !important;
+}
+
+html[data-fortisku-bridge="true"] #spv-filter-wrap,
+html[data-fortisku-bridge="true"] .sp-rev-list,
+html[data-fortisku-bridge="true"] .pi-vg .pi-vf.cust-row {
+  border-color: var(--bridge-border) !important;
+}
+
+html[data-fortisku-bridge="true"] .sp-rev-toggle,
+html[data-fortisku-bridge="true"] .type-btn,
+html[data-fortisku-bridge="true"] .pi-edit-btn,
+html[data-fortisku-bridge="true"] .pi-clear-btn {
+  color: var(--bridge-text) !important;
+  border-color: var(--bridge-border) !important;
+}
+
+html[data-fortisku-bridge="true"] .type-btn:hover,
+html[data-fortisku-bridge="true"] .pi-edit-btn:hover,
+html[data-fortisku-bridge="true"] .pi-clear-btn:hover,
+html[data-fortisku-bridge="true"] .kp-item:hover {
+  background: var(--bridge-surface-soft) !important;
+}
+
+html[data-fortisku-bridge="true"] .sp-empty h3,
+html[data-fortisku-bridge="true"] .type-empty,
+html[data-fortisku-bridge="true"] .type-hint,
+html[data-fortisku-bridge="true"] #spv-filter::placeholder,
+html[data-fortisku-bridge="true"] .pi-vv.empty {
+  color: var(--bridge-text-muted) !important;
 }
 
 html[data-fortisku-bridge="true"] #toast {

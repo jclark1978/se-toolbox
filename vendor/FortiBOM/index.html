@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 <title>FabricBOM</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/pwa-192x192.png">
@@ -26,7 +26,8 @@
     --c-ib:#C8CDD9; --c-th:#EEF1F6;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--forti-dark);color:var(--forti-text-primary);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+  html{touch-action:pan-x pan-y;}
+  body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--forti-dark);color:var(--forti-text-primary);height:100vh;overflow:hidden;display:flex;flex-direction:column;touch-action:pan-x pan-y;}
 
   /* TOP BAR */
   #top-bar{height:var(--hh);background:var(--forti-dark);border-bottom:1px solid var(--forti-border);display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;z-index:200;}
@@ -143,11 +144,17 @@
   .sr td{background:#EAECF3!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--c-text2);padding:4px 10px;border-top:2px solid #C5CAD9;}
   .sk{font-family:'Courier New',monospace;font-size:11px;color:#1A4E82;font-weight:700;white-space:nowrap;}
   .qc{text-align:center;font-weight:700;color:var(--c-textm);}
+  .qty-input{width:58px;text-align:center;border:1px solid transparent;border-radius:3px;background:transparent;font-size:12px;font-weight:700;color:var(--c-textm);font-family:inherit;padding:1px 3px;-moz-appearance:textfield;}
+  .qty-input:hover{border-color:var(--c-border);}
+  .qty-input:focus{border-color:#4A90D9;outline:none;background:#fff;}
+  .qty-input::-webkit-inner-spin-button,.qty-input::-webkit-outer-spin-button{opacity:0;}
+  .qty-input:hover::-webkit-inner-spin-button,.qty-input:focus::-webkit-inner-spin-button{opacity:1;}
   .nc{color:var(--c-textm);font-size:11px;}
   .br{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px;padding:1px 4px;}
   .br-r{background:#FEE0DE;color:#C0392B;border:1px solid #F5C6C2;}
   .br-o{background:#EEF3FF;color:#3557A5;border:1px solid #B8CBF5;}
   .br-m{background:#FFF8EE;color:#8A5800;border:1px solid #F5D9A0;}
+  .br-ex{background:#F0F0F2;color:#6B7280;border:1px solid #D1D5DB;}
 
   /* Responsive column hiding for BOM table */
   .col-exp{visibility:hidden;width:0;max-width:0;overflow:hidden;padding:0!important;border-width:0!important;}
@@ -187,6 +194,14 @@
   .drag-handle:active{cursor:grabbing;}
   .drag-handle svg{pointer-events:none;}
 
+  /* Inline label editing */
+  .label-input{font-family:inherit;border:1px solid transparent;border-radius:3px;background:transparent;padding:1px 4px;box-sizing:border-box;}
+  .label-input:hover{border-color:var(--c-border);}
+  .label-input:focus{border-color:#4A90D9;outline:none;background:#fff;}
+  .bgr-label.label-input{font-size:13px;font-weight:700;color:var(--c-text);flex:1;width:auto;min-width:40px;}
+  input.bgp.label-input{font-size:12px;font-weight:700;color:var(--c-text);width:100%;display:block;}
+  .sr .label-input{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--c-text2);width:100%;display:block;}
+
   /* BOM Group header rows (user-created section dividers) */
   .bom-group-row{background:#D8DCE6;border:1px solid #B4BAC8;border-radius:4px;display:flex;align-items:stretch;gap:0;overflow:hidden;cursor:default;}
   .bom-group-row.dragging{opacity:.45;box-shadow:0 4px 18px rgba(0,0,0,.18);}
@@ -201,6 +216,11 @@
   .bgr-btn:hover{background:var(--c-sh);color:var(--c-text);}
   .bgr-btn.del{border-color:#F5C6C2;color:#C0392B;background:#FEF0EE;}
   .bgr-btn.del:hover{background:#F5C6C2;}
+
+  /* Project Total */
+  #project-total{background:var(--c-white);border:1px solid var(--c-border);border-radius:4px;padding:14px 20px;display:flex;justify-content:flex-end;align-items:center;gap:20px;}
+  #project-total .pt-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--c-text2);}
+  #project-total .pt-value{font-size:22px;font-weight:700;color:var(--forti-red);}
 
   /* Import modal */
   #imp-modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);align-items:center;justify-content:center;}
@@ -244,8 +264,15 @@
   }
 
   /* Copy/Export dropdown menu */
-  #copy-menu,#project-menu{display:none;position:fixed;background:#fff;border:1px solid var(--c-border);border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.15);min-width:196px;z-index:600;overflow:hidden;padding:4px 0;}
-  #copy-menu.on,#project-menu.on{display:block;}
+  #copy-menu,#project-menu,#add-menu{display:none;position:fixed;background:#fff;border:1px solid var(--c-border);border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.15);min-width:196px;z-index:600;overflow:hidden;padding:4px 0;}
+  #copy-menu.on,#project-menu.on,#add-menu.on{display:block;}
+
+  /* Add SKU modal */
+  #sku-modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);align-items:center;justify-content:center;}
+  #sku-modal.on{display:flex;}
+  #sku-box{background:#fff;border-radius:5px;width:540px;max-width:95vw;height:82vh;max-height:780px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.3);display:flex;flex-direction:column;}
+  #sku-box iframe{flex:1;border:none;width:100%;display:block;}
+  @media(max-width:600px){#sku-box{width:100%;max-width:100%;height:90vh;border-radius:5px 5px 0 0;}#sku-modal.on{align-items:flex-end;}}
   .dm-section{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--c-textm);padding:6px 12px 2px;}
   .dm-item{display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:12px;color:var(--c-text);cursor:pointer;white-space:nowrap;font-family:inherit;background:none;border:none;width:100%;text-align:left;}
   .dm-item:hover{background:var(--c-sh);}
@@ -268,20 +295,81 @@
   .sp-empty svg{opacity:.2;}
   .sp-empty h3{font-size:16px;font-weight:500;color:var(--c-text2);}
   .sp-empty p{font-size:13px;max-width:320px;line-height:1.6;}
+  #spv-filter-wrap{padding:10px 18px;border-bottom:1px solid var(--c-border);position:relative;}
+  #spv-filter{width:100%;box-sizing:border-box;background:var(--c-white);border:1px solid var(--c-border);border-radius:3px;color:var(--c-text);font-size:12px;padding:6px 28px 6px 10px;outline:none;font-family:inherit;}
+  #spv-filter::placeholder{color:var(--c-textm);}
+  #spv-filter:focus{border-color:rgba(238,49,36,.5);}
+  #spv-filter-clear{position:absolute;right:24px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--c-textm);font-size:16px;padding:0;line-height:1;display:none;}
+  #spv-filter-clear:hover{color:var(--c-text2);}
+  .sp-rev-toggle{display:inline-flex;align-items:center;gap:5px;margin-top:6px;background:none;border:none;padding:2px 0;font-size:11px;color:var(--c-text2);cursor:pointer;font-family:inherit;line-height:1.4;transition:color .12s;}
+  .sp-rev-toggle:hover{color:var(--forti-red);}
+  .sp-rev-arrow{font-size:9px;}
+  .sp-rev-list{margin-top:6px;border-top:1px solid var(--c-border);padding-top:6px;display:flex;flex-direction:column;gap:4px;}
+  .sp-rev-row{display:flex;align-items:center;gap:10px;padding:3px 0;}
+  .sp-rev-date{font-size:11px;color:var(--c-text2);flex:1;}
+  .sp-rev-load{font-size:11px;padding:3px 8px;flex-shrink:0;}
 
   /* Saved Pricing upload drop zone */
   #pricing-drop{border:2px dashed var(--c-ib);border-radius:4px;padding:32px 20px;text-align:center;color:var(--c-text2);font-size:13px;cursor:pointer;transition:border-color .15s,background .15s;}
   #pricing-drop:hover,#pricing-drop.over{border-color:var(--forti-red);background:#FFF5F4;}
   #pricing-drop p{margin-top:6px;font-size:11px;color:var(--c-textm);}
 
+  /* Kind (type) override popover */
+  .type-btn{display:inline-flex;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:2px;font-family:inherit;line-height:1;}
+  .type-btn:hover{background:rgba(0,0,0,.07);}
+  .type-hint{font-size:9px;color:var(--c-textm);opacity:0;transition:opacity .1s;}
+  .type-btn:hover .type-hint{opacity:1;}
+  .type-empty{font-size:11px;color:var(--c-textm);}
+  #kind-popover{display:none;position:fixed;background:#fff;border:1px solid var(--c-border);border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:700;min-width:140px;padding:4px 0;}
+  #kind-popover.on{display:block;}
+  .kp-item{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-size:12px;color:var(--c-text);white-space:nowrap;background:none;border:none;width:100%;text-align:left;font-family:inherit;}
+  .kp-item:hover{background:var(--c-sh);}
+  .kp-item.kp-active{background:#EEF3FF;}
+  .kp-sep{height:1px;background:var(--c-border);margin:3px 0;}
+
   /* Print */
+  /* Project Info view/edit toggle */
+  .pi-edit-btn{margin-left:auto;background:none;border:1px solid var(--c-ib);border-radius:3px;padding:3px 9px;cursor:pointer;color:var(--c-text2);font-size:11px;font-weight:500;font-family:inherit;display:inline-flex;align-items:center;gap:5px;transition:background .12s,border-color .12s;}
+  .pi-edit-btn:hover{background:var(--c-sh);border-color:var(--c-text2);}
+  .pi-edit-btn.active{background:#EEF3FF;border-color:#B8CBF5;color:#3557A5;}
+  .pi-edit-btn svg{width:11px;height:11px;flex-shrink:0;}
+  .pi-clear-btn{background:none;border:1px solid var(--c-ib);border-radius:3px;padding:3px 9px;cursor:pointer;color:var(--c-text2);font-size:11px;font-weight:500;font-family:inherit;display:inline-flex;align-items:center;gap:5px;transition:background .12s,border-color .12s;}
+  .pi-clear-btn:hover{background:#FEF2F2;border-color:#FCA5A5;color:#B91C1C;}
+  .pi-clear-btn svg{width:11px;height:11px;flex-shrink:0;}
+  #proj-info-card.view-mode #pi-clear-btn{display:none!important;}
+  #pi-view{display:none;padding:0;}
+  #proj-info-card.view-mode .pfg{display:none;}
+  #proj-info-card.view-mode #pi-view{display:block;}
+  .pi-vg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:8px 24px;}
+  .pi-vf{display:flex;flex-direction:column;gap:2px;}
+  .pi-vf.full{grid-column:1/-1;}
+  .pi-vl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--c-textm);}
+  .pi-vv{font-size:13px;color:var(--c-text);line-height:1.5;word-break:break-word;}
+  .pi-vv a{color:#1A4E82;text-decoration:none;border-bottom:1px solid #B8CBF5;}
+  .pi-vv a:hover{color:#3557A5;border-bottom-color:#3557A5;}
+  .pi-vv.empty{color:var(--c-textm);font-style:italic;}
+  .pi-vv.pi-cust-val{font-size:17px;font-weight:600;color:var(--c-text);}
+  .pi-vg .pi-vf.cust-row{grid-column:1/-1;margin-bottom:4px;padding-bottom:10px;border-bottom:1px solid var(--c-border);}
+
+  /* Term applied warning (still at default -DD) */
+  #sum-term.term-warn{color:#8A5800;}
+
+  /* Welcome screen step list */
+  .ws-steps{list-style:none;text-align:left;display:inline-flex;flex-direction:column;gap:8px;margin:0;}
+  .ws-steps li{display:flex;align-items:baseline;gap:10px;font-size:13px;color:#4A5168;line-height:1.5;}
+  .ws-steps li .sn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--forti-red);color:#fff;font-size:10px;font-weight:700;flex-shrink:0;}
+
   @media print {
     body{background:#fff;overflow:auto;height:auto;}
-    #top-bar,#sidebar,#ch,.act-row,#toast,#pfw{display:none!important;}
+    #top-bar,#sidebar,#ch,.act-row,#toast,#pfw,#copy-menu,#project-menu,#add-menu{display:none!important;}
     #main{display:block;}
     #pbv{display:flex!important;overflow:visible;padding:20px;}
-    .bg-del{display:none!important;}
+    .bg-del,.bgr-actions{display:none!important;}
     .lc,.bg{break-inside:avoid;}
+    .pi-edit-btn,.pi-clear-btn{display:none!important;}
+    #proj-info-card .pfg{display:none!important;}
+    #proj-info-card #pi-view{display:block!important;}
+    .pi-vv a{color:#1A4E82;text-decoration:none;border-bottom:1px solid #B8CBF5;}
   }
 </style>
 <script>var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",e={};function t(r,o){if(!e[r]){e[r]={};for(var n=0;n<r.length;n++)e[r][r.charAt(n)]=n}return e[r][o]}var i={compressToBase64:function(r){if(null==r)return"";var n=i._compress(r,6,function(r){return o.charAt(r)});switch(n.length%4){default:case 0:return n;case 1:return n+"===";case 2:return n+"==";case 3:return n+"="}},decompressFromBase64:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(n){return t(o,r.charAt(n))})},compressToUTF16:function(o){return null==o?"":i._compress(o,15,function(o){return r(o+32)})+" "},decompressFromUTF16:function(r){return null==r?"":""==r?null:i._decompress(r.length,16384,function(o){return r.charCodeAt(o)-32})},compressToUint8Array:function(r){for(var o=i.compress(r),n=new Uint8Array(2*o.length),e=0,t=o.length;e<t;e++){var s=o.charCodeAt(e);n[2*e]=s>>>8,n[2*e+1]=s%256}return n},decompressFromUint8Array:function(o){if(null==o)return i.decompress(o);for(var n=new Array(o.length/2),e=0,t=n.length;e<t;e++)n[e]=256*o[2*e]+o[2*e+1];var s=[];return n.forEach(function(o){s.push(r(o))}),i.decompress(s.join(""))},compressToEncodedURIComponent:function(r){return null==r?"":i._compress(r,6,function(r){return n.charAt(r)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:(r=r.replace(/ /g,"+"),i._decompress(r.length,32,function(o){return t(n,r.charAt(o))}))},compress:function(o){return i._compress(o,16,function(o){return r(o)})},_compress:function(r,o,n){if(null==r)return"";var e,t,i,s={},u={},a="",p="",c="",l=2,f=3,h=2,d=[],m=0,v=0;for(i=0;i<r.length;i+=1)if(a=r.charAt(i),Object.prototype.hasOwnProperty.call(s,a)||(s[a]=f++,u[a]=!0),p=c+a,Object.prototype.hasOwnProperty.call(s,p))c=p;else{if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++),s[p]=f++,c=String(a)}if(""!==c){if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++)}for(t=2,e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;for(;;){if(m<<=1,v==o-1){d.push(n(m));break}v++}return d.join("")},decompress:function(r){return null==r?"":""==r?null:i._decompress(r.length,32768,function(o){return r.charCodeAt(o)})},_decompress:function(o,n,e){var t,i,s,u,a,p,c,l=[],f=4,h=4,d=3,m="",v=[],g={val:e(0),position:n,index:1};for(t=0;t<3;t+=1)l[t]=t;for(s=0,a=Math.pow(2,2),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 2:return""}for(l[3]=c,i=c,v.push(c);;){if(g.index>o)return"";for(s=0,a=Math.pow(2,d),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(c=s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 2:return v.join("")}if(0==f&&(f=Math.pow(2,d),d++),l[c])m=l[c];else{if(c!==h)return null;m=i+i.charAt(0)}v.push(m),l[h++]=i+m.charAt(0),i=m,0==--f&&(f=Math.pow(2,d),d++)}}};return i}();"function"==typeof define&&define.amd?define(function(){return LZString}):"undefined"!=typeof module&&null!=module?module.exports=LZString:"undefined"!=typeof angular&&null!=angular&&angular.module("LZString",[]).factory("LZString",function(){return LZString});</script>
@@ -297,14 +385,13 @@
     <span class="product-name"><span>Fabric</span>BOM</span>
   </div>
   <div class="tb-div"></div>
-  <span class="tb-sub">Project BOM Generator</span>
+  <span class="tb-sub"><!-- Project BOM Generator--></span>
   <div class="spacer"></div>
-  <button id="cart-btn" onclick="showPBV()">
+  <button id="cart-btn" onclick="showPBV()" title="View Project BOM">
     <svg viewBox="0 0 15 15" fill="none"><path d="M1 1h2l2 7h7l1-5H5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="13" r="1" fill="currentColor"/><circle cx="12" cy="13" r="1" fill="currentColor"/></svg>
     Project BOM
     <span id="cbadge">0</span>
   </button>
-  <span class="ver-badge">v2.0</span>
 </div>
 
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -348,8 +435,17 @@
       <div id="ws">
         <svg class="wl" viewBox="0 0 56 56" fill="none"><rect width="56" height="56" rx="8" fill="#EE3124"/><path d="M12 16h32v6H12zM12 25h20v6H12zM12 34h32v6H12z" fill="white"/></svg>
         <h2>Select a product to begin</h2>
-        <p>Choose a Fortinet product from the left sidebar. Configure the BOM, then click <strong>"Add to Project BOM"</strong> to build a cross-product project quote. You can add the same product multiple times.</p>
-        <div class="hint">Products load from <code>products/</code> · Multiple runs per product supported</div>
+        <ol class="ws-steps">
+          <li><span class="sn">1</span>Pick a product from the left sidebar</li>
+          <li><span class="sn">2</span>Configure options in the product page</li>
+          <li><span class="sn">3</span>Click "Add to Project BOM" at the bottom of that page</li>
+          <li><span class="sn">4</span>Repeat for each product, then open Project BOM</li>
+        </ol>
+        <div class="hint">Multiple runs of the same product are supported</div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn bs" onclick="openImport()"><svg viewBox="0 0 13 13" fill="none"><path d="M6.5 9V1M9.5 6l-3 3-3-3" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round"/></svg>Import from CSV</button>
+          <button class="btn bs" onclick="openSkuModal()"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="3" width="11" height="7" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M3.5 6.5h6M6.5 5v3" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Add SKU</button>
+        </div>
       </div>
       <iframe id="pf" style="display:none;" title="Product BOM Generator"></iframe>
     </div>
@@ -357,10 +453,18 @@
     <!-- Project BOM view -->
     <div id="pbv">
       <!-- Project Info -->
-      <div class="lc">
+      <div class="lc" id="proj-info-card">
         <div class="lch">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="11" height="11" rx="1.5" stroke="#6B7589" stroke-width="1.2"/><path d="M3.5 4.5h6M3.5 6.5h4" stroke="#6B7589" stroke-width="1.2" stroke-linecap="round"/></svg>
           <h2>Project Information</h2>
+          <button class="pi-edit-btn" id="pi-edit-btn" onclick="togglePiEdit()" title="Toggle edit mode">
+            <svg viewBox="0 0 11 11" fill="none"><path d="M7.5 1.5l2 2L3 10H1V8L7.5 1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>
+            <span id="pi-edit-label">View</span>
+          </button>
+          <button class="pi-clear-btn" id="pi-clear-btn" onclick="clearPiFields()" title="Clear all project information fields">
+            <svg viewBox="0 0 11 11" fill="none"><path d="M2 2l7 7M9 2l-7 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Clear
+          </button>
         </div>
         <div class="lcb">
           <div class="pfg">
@@ -380,20 +484,20 @@
             </div>
             <div class="pg full"><label class="pl">Project Scope / Notes</label><textarea class="pi" id="pi-notes" placeholder="Optional: overall project scope, deployment context, or assumptions…"></textarea></div>
           </div>
+          <div id="pi-view"></div>
         </div>
       </div>
 
       <!-- Summary + Actions -->
-      <div class="sbar" id="sbar" style="display:none;">
+      <div class="sbar" id="sbar">
         <div class="si"><div class="sl">Product Groups</div><div class="sv" id="sum-g">0</div></div>
         <div class="si hi"><div class="sl">Total Line Items</div><div class="sv" id="sum-l">0</div></div>
         <div class="si"><div class="sl">Total Units / Licenses</div><div class="sv" id="sum-q">0</div></div>
         <div class="si"><div class="sl">Term Applied</div><div class="sv" id="sum-term" style="font-size:14px;">-DD</div></div>
         <div class="act-row">
           <button class="btn bp" id="project-btn" onclick="toggleProjectMenu(event)"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="11" height="11" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="4" y="1" width="5" height="4" rx=".5" stroke="currentColor" stroke-width="1.1"/><rect x="3" y="7" width="7" height="4" rx=".5" stroke="currentColor" stroke-width="1.1"/></svg>Save / Export<svg viewBox="0 0 10 6" fill="none" style="width:9px;height:9px;margin-left:1px;"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button class="btn bs" onclick="openAddGroup()"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="4" width="11" height="5" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M4 6.5h5M6.5 5.5v2" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Add Group</button>
-          <button class="btn bs" onclick="window.print()"><svg viewBox="0 0 13 13" fill="none"><rect x="1.5" y="4" width="10" height="6" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M3.5 4V2h6v2M3.5 10h6" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Print</button>
-          <button class="btn bs" id="copy-export-btn" onclick="toggleCopyMenu(event)"><svg viewBox="0 0 13 13" fill="none"><rect x="3.5" y="1" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/><rect x="1" y="3" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/></svg>Copy / Share<svg viewBox="0 0 10 6" fill="none" style="width:9px;height:9px;margin-left:1px;"><path d="M1 1l4 4 4-4" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="btn bs" id="add-btn" onclick="toggleAddMenu(event)"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="4" width="11" height="5" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M4 6.5h5M6.5 5.5v2" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Add<svg viewBox="0 0 10 6" fill="none" style="width:9px;height:9px;margin-left:1px;"><path d="M1 1l4 4 4-4" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<button class="btn bs" id="copy-export-btn" onclick="toggleCopyMenu(event)"><svg viewBox="0 0 13 13" fill="none"><rect x="3.5" y="1" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/><rect x="1" y="3" width="8" height="9" rx="1" stroke="#6B7589" stroke-width="1.1"/></svg>Copy / Share<svg viewBox="0 0 10 6" fill="none" style="width:9px;height:9px;margin-left:1px;"><path d="M1 1l4 4 4-4" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="btn bd" onclick="clearCart()"><svg viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M5.5 6v4M7.5 6v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3 3.5l.5 7a1 1 0 0 0 1 .9h4a1 1 0 0 0 1-.9l.5-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Clear All</button>
         </div>
       </div>
@@ -404,10 +508,17 @@
         <h3>Project BOM is empty</h3>
         <p>Select a product from the left sidebar, configure it, and click <strong>Add to Project BOM</strong>. You can add multiple products and run the same product page multiple times to build a complete project quote.</p>
         <button class="btn bs" onclick="openImport()" style="margin-top:4px;"><svg viewBox="0 0 13 13" fill="none"><path d="M6.5 9V1M9.5 6l-3 3-3-3" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="#6B7589" stroke-width="1.3" stroke-linecap="round"/></svg>Import from CSV</button>
+        <button class="btn bs" onclick="openSkuModal()"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="3" width="11" height="7" rx="1" stroke="#6B7589" stroke-width="1.1"/><path d="M3.5 6.5h6M6.5 5v3" stroke="#6B7589" stroke-width="1.1" stroke-linecap="round"/></svg>Add SKU</button>
       </div>
 
       <!-- BOM groups container -->
       <div id="bgc"></div>
+
+      <!-- Project Total (only shown when pricing data is loaded) -->
+      <div id="project-total" style="display:none;">
+        <span class="pt-label">Project Total</span>
+        <span class="pt-value" id="pt-value"></span>
+      </div>
     </div>
 
     <!-- Saved Projects view -->
@@ -416,6 +527,10 @@
         <div class="lch">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="11" height="11" rx="1" stroke="#6B7589" stroke-width="1.1"/><rect x="4" y="1" width="5" height="4" rx=".5" stroke="#6B7589" stroke-width="1.1"/><rect x="3" y="7" width="7" height="4" rx=".5" stroke="#6B7589" stroke-width="1.1"/></svg>
           <h2>Saved Projects</h2>
+        </div>
+        <div id="spv-filter-wrap">
+          <input id="spv-filter" type="text" placeholder="Filter by project name, opportunity ID, or SE…" oninput="filterSavedProjects(this.value)" autocomplete="off" spellcheck="false">
+          <button id="spv-filter-clear" onclick="clearSpvFilter()" title="Clear">&times;</button>
         </div>
         <div id="spv-content" class="lcb"></div>
       </div>
@@ -444,9 +559,24 @@
   <button class="dm-item" onclick="copyMD()"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="2.5" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.1"/><path d="M3.5 8.5V4.5l2 2.5 2-2.5v4M9.5 8.5V4.5l-1.5 2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>Copy Markdown</button>
 </div>
 
+<!-- Add Item dropdown menu -->
+<div id="add-menu">
+  <div class="dm-section">Add to BOM</div>
+  <button class="dm-item" onclick="openSkuModal();closeAddMenu()"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="3" width="11" height="7" rx="1" stroke="currentColor" stroke-width="1.1"/><path d="M3.5 6.5h6M6.5 5v3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Add SKU</button>
+  <button class="dm-item" onclick="openAddGroup();closeAddMenu()"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="4" width="11" height="5" rx="1" stroke="currentColor" stroke-width="1.1"/><path d="M4 6.5h5M6.5 5.5v2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Add Group</button>
+</div>
+
+<!-- Add SKU modal (iframe popover) -->
+<div id="sku-modal">
+  <div id="sku-box">
+    <iframe id="sku-frame" src="" title="Add Custom SKU"></iframe>
+  </div>
+</div>
+
 <!-- Save/Export/Import dropdown menu -->
 <div id="project-menu">
   <div class="dm-section">Project</div>
+  <button class="dm-item" onclick="newProject();closeProjectMenu()"><svg viewBox="0 0 13 13" fill="none"><path d="M7 1H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V5L7 1z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M7 1v4h4" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M6.5 6v4M4.5 8h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>New Project</button>
   <button class="dm-item" onclick="saveProject();closeProjectMenu()"><svg viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="11" height="11" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="4" y="1" width="5" height="4" rx=".5" stroke="currentColor" stroke-width="1.1"/><rect x="3" y="7" width="7" height="4" rx=".5" stroke="currentColor" stroke-width="1.1"/></svg>Save Project</button>
   <div class="dm-sep"></div>
   <div class="dm-section">File</div>
@@ -459,6 +589,8 @@
     <button class="dm-item" onclick="exportSFDC('EMEA');closeProjectMenu()"><svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Export SFDC-EMEA</button>
     <button class="dm-item" onclick="exportSFDC('APAC');closeProjectMenu()"><svg viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Export SFDC-APAC</button>
   </div>
+  <div class="dm-sep"></div>
+  <button class="dm-item" onclick="window.print();closeProjectMenu()"><svg viewBox="0 0 13 13" fill="none"><rect x="1.5" y="4" width="10" height="6" rx="1" stroke="currentColor" stroke-width="1.1"/><path d="M3.5 4V2h6v2M3.5 10h6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>Print</button>
 </div>
 
 <!-- Import CSV Modal -->
@@ -505,6 +637,17 @@
   </div>
 </div>
 
+<!-- Kind override popover -->
+<div id="kind-popover">
+  <button class="kp-item" data-kind="req" onclick="setKind('req')"><span class="br br-r">Required</span></button>
+  <button class="kp-item" data-kind="mand" onclick="setKind('mand')"><span class="br br-m">Mandatory</span></button>
+  <button class="kp-item" data-kind="opt" onclick="setKind('opt')"><span class="br br-o">Optional</span></button>
+  <button class="kp-item" data-kind="inc" onclick="setKind('inc')"><span class="br br-o">Included</span></button>
+  <button class="kp-item" data-kind="excl" onclick="setKind('excl')"><span class="br br-ex">Excluded</span></button>
+  <div class="kp-sep"></div>
+  <button class="kp-item" data-kind="" onclick="setKind('')" style="color:var(--c-text2)">Clear override</button>
+</div>
+
 <!-- BOM Share Import confirmation modal -->
 <div id="bom-share-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:5px;width:440px;max-width:95vw;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.3);">
@@ -527,31 +670,35 @@
 
 <script>
 const CATALOG = [
-  { file:'fortigate-bomgen.html',    label:'FortiGate',      cat:'Network Security' },
-  { file:'fortiadc-bomgen.html', label:'FortiADC', cat:'Network Security' },
-  { file:'fortideceptor-bomgen.html', label:'FortiDeceptor', cat:'Network Security' },
-  { file:'fortisandbox-bomgen.html', label:'FortiSandbox', cat:'Network Security' },
-  { file:'fortiweb-bomgen.html', label:'FortiWeb', cat:'Network Security' },
+  { file:'fortigate-bomgen.html',    label:'FortiGate (FGT)',      cat:'Network Security' },
+  { file:'fortiadc-bomgen.html', label:'FortiADC (FAD)', cat:'Network Security' },
+  { file:'fortiddos-bomgen.html', label:'FortiDDoS', cat:'Network Security' },
+  { file:'fortideceptor-bomgen.html', label:'FortiDeceptor (FDC)', cat:'Network Security' },
+  { file:'fortipam-bomgen.html', label:'FortiPAM', cat:'Network Security' },
+  { file:'fortiproxy-bomgen.html', label:'FortiProxy', cat:'Network Security' },
+  { file:'fortisandbox-bomgen.html', label:'FortiSandbox (FSA)', cat:'Network Security' },
+  { file:'fortiweb-bomgen.html', label:'FortiWeb (FWB)', cat:'Network Security' },
   { file:'fortiappsec-bomgen.html', label:'FortiAppSec Cloud', cat:'Cloud Security' },
   { file:'forticnapp-bomgen.html', label:'FortiCNAPP', cat:'Cloud Security' },
   { file:'fortisase-bomgen.html',    label:'FortiSASE',      cat:'Cloud Security' },
-  { file:'fortimail-bomgen.html', label:'FortiMail', cat:'Email Security' },
+  { file:'fortimail-bomgen.html', label:'FortiMail (FML)', cat:'Email Security' },
   { file:'fortimail-workspace-bomgen.html', label:'FortiMail Workspace', cat:'Email Security' },
-  { file:'fortiap-bomgen.html',      label:'FortiAP',        cat:'Network Access' },
-  { file:'fortiextender-bomgen.html', label:'FortiExtender', cat:'Network Access' },
+  { file:'fortiap-bomgen.html',      label:'FortiAP (FAP)',        cat:'Network Access' },
+  { file:'fortiextender-bomgen.html', label:'FortiExtender (FEX)', cat:'Network Access' },
   { file:'fortipresence-bomgen.html', label:'FortiPresence', cat:'Network Access' },
-  { file:'fortiswitch-bomgen.html',  label:'FortiSwitch',    cat:'Network Access' },
-  { file:'forticlient-bomgen.html', label:'FortiClient', cat:'Endpoint Security' },
+  { file:'fortiswitch-bomgen.html',  label:'FortiSwitch (FSW)',    cat:'Network Access' },
+  { file:'forticlient-bomgen.html', label:'FortiClient (FCT)', cat:'Endpoint Security' },
   { file:'fortidlp-bomgen.html', label:'FortiDLP', cat:'Endpoint Security' },
   { file:'fortiedr-bomgen.html', label:'FortiEDR', cat:'Endpoint Security' },
-  { file: 'fortiauthenticator-bomgen.html', label: 'FortiAuthenticator', cat: 'Access Control' },
+  { file: 'fortiauthenticator-bomgen.html', label: 'FortiAuthenticator (FAC)', cat: 'Access Control' },
   { file:'fortinac-bomgen.html',     label:'FortiNAC',       cat:'Access Control' },
-  { file:'fortianalyzer-bomgen.html',label:'FortiAnalyzer',  cat:'Management' },
-  { file:'fortimanager-bomgen.html', label:'FortiManager',   cat:'Management' },
+  { file:'fortianalyzer-bomgen.html',label:'FortiAnalyzer (FAZ)',  cat:'Management' },
+  { file:'fortimanager-bomgen.html', label:'FortiManager (FMG)',   cat:'Management' },
   { file: 'fortiaiops-bomgen.html', label: 'FortiAIOps', cat: 'Management' },
   { file:'fortimonitor-bomgen.html', label:'FortiMonitor', cat:'Management' },
   { file: 'fortirecon-bomgen.html', label: 'FortiRecon', cat: 'Management' },
   { file:'fortisiem-bomgen.html', label:'FortiSIEM', cat:'Management' },
+  { file: 'fortisoar-bomgen.html', label: 'FortiSOAR', cat: 'Management' },
   { file:'fortiflex-bomgen.html', label:'FortiFlex', cat:'Licensing' },
   { file:'custom-sku-bomgen.html', label:'Search & Custom Entry', cat:'Catalog Search' },
   //{ file:'placeholder-bomgen.html',  label:'Placeholder',    cat:'Demo' },
@@ -559,10 +706,37 @@ const CATALOG = [
 
 let cart = [], seq = 0, activeNav = null;
 let savedProjects = [];
+let spvFilter = '';
+let spRevExpanded = {}; // projectKey -> boolean, tracks which revision lists are expanded
 // cart entries are either product-entries {id, product, label, rows, meta}
 // or group-header entries {id, _type:'group', label, note}
 
 // ── PERSISTENCE ───────────────────────────────────────────────────────────────
+function savePiData() {
+  try {
+    localStorage.setItem('fortibom_pi', JSON.stringify({
+      cust:  document.getElementById('pi-cust').value,
+      opp:   document.getElementById('pi-opp').value,
+      eng:   document.getElementById('pi-eng').value,
+      date:  document.getElementById('pi-date').value,
+      term:  document.getElementById('pi-term').value,
+      notes: document.getElementById('pi-notes').value
+    }));
+  } catch(e) {}
+}
+function loadPiData() {
+  try {
+    const raw = localStorage.getItem('fortibom_pi');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d.cust  !== undefined) document.getElementById('pi-cust').value  = d.cust;
+    if (d.opp   !== undefined) document.getElementById('pi-opp').value   = d.opp;
+    if (d.eng   !== undefined) document.getElementById('pi-eng').value   = d.eng;
+    if (d.date  !== undefined) document.getElementById('pi-date').value  = d.date;
+    if (d.term  !== undefined) document.getElementById('pi-term').value  = d.term;
+    if (d.notes !== undefined) document.getElementById('pi-notes').value = d.notes;
+  } catch(e) {}
+}
 function saveCart() {
   try {
     localStorage.setItem('fortibom_cart', JSON.stringify({ cart, seq }));
@@ -592,10 +766,28 @@ function loadSaved() {
     if (!raw) return;
     savedProjects = JSON.parse(raw) || [];
   } catch(e) { savedProjects = []; }
+
+  // Migration: assign projectKey to old snapshots that lack one, grouped by customer name
+  const keyMap = {};
+  savedProjects.forEach(p => {
+    if (p.projectKey) {
+      const norm = (p.meta.cust || '').trim().toLowerCase();
+      if (!keyMap[norm]) keyMap[norm] = p.projectKey;
+    }
+  });
+  savedProjects.forEach(p => {
+    if (!p.projectKey) {
+      const norm = (p.meta.cust || '').trim().toLowerCase();
+      if (!keyMap[norm]) keyMap[norm] = 'pk_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+      p.projectKey = keyMap[norm];
+    }
+  });
+  saveSaved();
 }
 function updateSavedBadge() {
   const badge = document.getElementById('sp-badge');
-  const n = savedProjects.length;
+  const uniqueKeys = new Set(savedProjects.map(p => p.projectKey || p.id));
+  const n = uniqueKeys.size;
   badge.textContent = n;
   n > 0 ? badge.classList.add('on') : badge.classList.remove('on');
 }
@@ -698,7 +890,7 @@ function showAbout() {
   document.getElementById('pf').style.display = 'none';
   const ws = document.getElementById('ws');
   ws.style.display = 'flex';
-  ws.querySelector('h2').textContent = 'FortiBOM v2.0';
+  ws.querySelector('h2').textContent = 'FabricBOM v1.0.1b';
   ws.querySelector('p').textContent = 'Cross-product Bill of Materials generator for Fortinet deployments. Build BOMs per product, then combine them into a Project BOM.';
   ws.querySelector('p').innerHTML += '<br><br>Disclaimer: FabricBOM is not an officially sanctioned Fortinet product. Always validate output against the official Fortinet product ordering guides.';
   ws.querySelector('p').innerHTML += '<br><br><a href="https://github.com/msalty/FortiBOM/issues" target="_blank" rel="noopener noreferrer">Report an issue on GitHub</a>';
@@ -706,15 +898,15 @@ function showAbout() {
 
 // ── postMessage RECEIVER ─────────────────────────────────────────────────────
 window.addEventListener('message', e => {
-  if (!e.data || e.data.type !== 'FORTIBOM_ADD') return;
+  if (!e.data) return;
+  if (e.data.type === 'FORTIBOM_CLOSE') { closeSkuModal(); return; }
+  if (e.data.type !== 'FORTIBOM_ADD') return;
   const { product, label, rows, meta } = e.data;
-  const count = cart.filter(c => c.product === product).length;
-  const dispLabel = count > 0 ? `${label} (run ${count+1})` : label;
-  cart.push({ id:++seq, product, label:dispLabel, rows, meta });
+  cart.push({ id:++seq, product, label, rows, meta });
   updateBadges();
   renderGroups();
   saveCart();
-  toast(`✓ Added to Project BOM: ${dispLabel}`);
+  toast(`✓ Added to Project BOM: ${label}`);
   if (cart.length === 1) showPBV();
 });
 
@@ -742,7 +934,93 @@ function toggleDetail(btn) {
   btn.classList.toggle('open', !open);
   btn.textContent = open ? '+' : '−';
 }
+function updateQty(entryId, rowIdx, rawVal) {
+  const entry = cart.find(e => e.id === entryId);
+  if (!entry) return;
+  const num = parseInt(rawVal, 10);
+  entry.rows[rowIdx].qty = (rawVal === '' || rawVal === null) ? undefined : (!isNaN(num) && num >= 0 ? num : entry.rows[rowIdx].qty);
+  saveCart();
+  renderGroups();
+}
+function updateEntryLabel(id, value) {
+  const entry = cart.find(c => c.id === id);
+  if (!entry) return;
+  const v = value.trim();
+  if (v) entry.label = v;
+  saveCart();
+  renderGroups();
+}
+function updateSectionLabel(entryId, rowIdx, value) {
+  const entry = cart.find(e => e.id === entryId);
+  if (!entry || !entry.rows || entry.rows[rowIdx] === undefined) return;
+  entry.rows[rowIdx].section = value.trim();
+  saveCart();
+  renderGroups();
+}
 function clearCart() { if (!confirm('Clear all items from the Project BOM?')) return; cart=[]; seq=0; if (location.hash.startsWith('#bom=')) history.replaceState(null, '', location.pathname); updateBadges(); renderGroups(); saveCart(); }
+function newProject() {
+  if (cart.length && !confirm('Start a new project? The current BOM and project info will be cleared.')) return;
+  cart=[]; seq=0;
+  if (location.hash.startsWith('#bom=')) history.replaceState(null, '', location.pathname);
+  document.getElementById('pi-cust').value  = '';
+  document.getElementById('pi-opp').value   = '';
+  document.getElementById('pi-eng').value   = '';
+  document.getElementById('pi-date').value  = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('pi-term').value  = 'DD';
+  document.getElementById('pi-notes').value = '';
+  savePiData();
+  const card = document.getElementById('proj-info-card');
+  card.classList.remove('view-mode');
+  document.getElementById('pi-edit-btn').classList.remove('active');
+  document.getElementById('pi-edit-label').textContent = 'View';
+  updateBadges(); renderGroups(); saveCart();
+  showPBV();
+}
+
+// ── KIND (TYPE) OVERRIDE ─────────────────────────────────────────────────────
+let kindPopoverTarget = null;
+
+function openKindPopover(e, entryId, rowIdx) {
+  e.stopPropagation();
+  kindPopoverTarget = {entryId, rowIdx};
+  const entry = cart.find(c => c.id === entryId);
+  const row = entry && entry.rows[rowIdx];
+  const effectiveKind = row ? (row._kindOverride !== undefined ? row._kindOverride : (row.kind || '')) : '';
+  const pop = document.getElementById('kind-popover');
+  pop.querySelectorAll('.kp-item').forEach(el => el.classList.toggle('kp-active', el.dataset.kind === effectiveKind));
+  const rect = e.currentTarget.getBoundingClientRect();
+  pop.style.top = (rect.bottom + 4) + 'px';
+  pop.style.left = rect.left + 'px';
+  pop.classList.add('on');
+  requestAnimationFrame(() => {
+    const pr = pop.getBoundingClientRect();
+    if (pr.right > window.innerWidth - 8) pop.style.left = (window.innerWidth - pr.width - 8) + 'px';
+  });
+}
+
+function setKind(newKind) {
+  if (!kindPopoverTarget) return;
+  const {entryId, rowIdx} = kindPopoverTarget;
+  const entry = cart.find(c => c.id === entryId);
+  if (!entry) return;
+  if (newKind === '') {
+    delete entry.rows[rowIdx]._kindOverride;
+  } else {
+    entry.rows[rowIdx]._kindOverride = newKind;
+  }
+  closeKindPopover();
+  saveCart();
+  renderGroups();
+}
+
+function closeKindPopover() {
+  document.getElementById('kind-popover').classList.remove('on');
+  kindPopoverTarget = null;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#kind-popover') && !e.target.closest('.type-btn')) closeKindPopover();
+});
 
 // ── RENDER ───────────────────────────────────────────────────────────────────
 async function renderGroups() {
@@ -750,29 +1028,22 @@ async function renderGroups() {
   try {
     const pricingRaw = await getPricingIDB();
     if (pricingRaw && pricingRaw.rows && pricingRaw.rows.length) {
-      priceMap = new Map(pricingRaw.rows.map(r => [
-        r.sku || r.SKU,
-        {
-          numeric: typeof r.price === 'number' ? r.price : parsePriceValue(r.Price),
-          display: normalizePriceDisplay(r.price_display || r.Price, typeof r.price === 'number' ? r.price : parsePriceValue(r.Price))
-        }
-      ]));
+      priceMap = new Map(pricingRaw.rows.map(r => [r['SKU'], r['Price']]));
     }
   } catch(e) { /* pricing unavailable */ }
   const hasPricing = priceMap !== null;
   const colSpan = hasPricing ? 8 : 6;
   const c = document.getElementById('bgc');
   const ec = document.getElementById('ec');
-  const sbar = document.getElementById('sbar');
   if (!cart.length) {
     c.innerHTML = '';
     ec.style.display = 'flex';
-    sbar.style.display = 'none';
+    document.getElementById('project-total').style.display = 'none';
     return;
   }
   ec.style.display = 'none';
-  sbar.style.display = 'flex';
   let totL=0, totQ=0;
+  let grandTotal=0, grandTotalValid=false;
   c.innerHTML = '';
   for (const entry of cart) {
     if (entry._type === 'group') {
@@ -786,7 +1057,7 @@ async function renderGroups() {
         </div>
         <div class="bgr-body">
           <svg class="bgr-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="4" width="12" height="6" rx="1" stroke="#EE3124" stroke-width="1.3"/><path d="M4 7h6" stroke="#EE3124" stroke-width="1.3" stroke-linecap="round"/></svg>
-          <span class="bgr-label">${h(entry.label)}</span>
+          <input type="text" class="label-input bgr-label" value="${h(entry.label)}" onchange="updateEntryLabel(${entry.id},this.value)">
           ${entry.note ? `<span class="bgr-note">${h(entry.note)}</span>` : ''}
         </div>
         <div class="bgr-actions">
@@ -798,25 +1069,30 @@ async function renderGroups() {
     } else {
       let lines=0, qty=0;
       const displayRows = rowsWithTerm(entry.rows);
-      const rows = displayRows.map(r => {
-        if (r.section!==undefined) return `<tr class="sr"><td colspan="${colSpan}">${h(r.section)}</td></tr>`;
+      const rows = displayRows.map((r, i) => {
+        if (r.section!==undefined) return `<tr class="sr"><td colspan="${colSpan}"><input type="text" class="label-input" value="${h(r.section)}" onchange="updateSectionLabel(${entry.id},${i},this.value)"></td></tr>`;
         lines++; if (typeof r.qty==='number') qty+=r.qty;
-        const bm={req:'<span class="br br-r">Required</span>',mand:'<span class="br br-m">Mandatory</span>',opt:'<span class="br br-o">Optional</span>',inc:'<span class="br br-o">Included</span>',note:''};
+        const bm={req:'<span class="br br-r">Required</span>',mand:'<span class="br br-m">Mandatory</span>',opt:'<span class="br br-o">Optional</span>',inc:'<span class="br br-o">Included</span>',excl:'<span class="br br-ex">Excluded</span>',note:''};
+        const effectiveKind = r._kindOverride !== undefined ? r._kindOverride : r.kind;
+        const isExcluded = effectiveKind === 'excl';
         let priceCells = '';
         if (hasPricing) {
-          const pricing = priceMap.get(r.sku || '');
-          const listPriceNum = pricing ? pricing.numeric : NaN;
+          const listPrice = priceMap.get(r.sku || '');
+          const listPriceNum = listPrice ? parseFloat(String(listPrice).replace(/[^0-9.]/g, '')) : NaN;
           const totalNum = (!isNaN(listPriceNum) && typeof r.qty === 'number') ? listPriceNum * r.qty : NaN;
-          priceCells = `<td class="nc" style="text-align:right;white-space:nowrap;">${pricing?.display ? h(pricing.display) : ''}</td><td class="nc" style="text-align:right;white-space:nowrap;">${!isNaN(totalNum) ? formatCurrency(totalNum) : ''}</td>`;
+          if (!isExcluded && !isNaN(totalNum)) { grandTotal += totalNum; grandTotalValid = true; }
+          const totalDisplay = isExcluded ? '$0.00' : (!isNaN(totalNum) ? '$'+totalNum.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '');
+          priceCells = `<td class="nc" style="text-align:right;white-space:nowrap;">${listPrice ? h(listPrice) : ''}</td><td class="nc" style="text-align:right;white-space:nowrap;">${totalDisplay}</td>`;
         }
         const detailRows = [];
         if (r.desc) detailRows.push(`<tr><td class="det-k">Description</td><td class="det-v nc">${h(r.desc)}</td></tr>`);
-        if (r.kind && bm[r.kind]) detailRows.push(`<tr><td class="det-k">Type</td><td class="det-v">${bm[r.kind]}</td></tr>`);
+        if (effectiveKind && bm[effectiveKind]) detailRows.push(`<tr><td class="det-k">Type</td><td class="det-v">${bm[effectiveKind]}</td></tr>`);
         if (r.note) detailRows.push(`<tr><td class="det-k">Notes</td><td class="det-v nc">${h(r.note)}</td></tr>`);
         const expCell = detailRows.length ? `<td class="col-exp"><button class="exp-btn" onclick="toggleDetail(this)" title="Show details">+</button></td>` : `<td class="col-exp"></td>`;
         const detailTr = detailRows.length ? `<tr class="bom-detail"><td colspan="100"><table class="det-tbl"><tbody>${detailRows.join('')}</tbody></table></td></tr>` : '';
         const evenCls = lines%2===0 ? ' class="bt-even"' : '';
-        return `<tr${evenCls}><td><span class="sk">${h(r.sku||'')}</span></td><td class="nc col-desc"><span class="note-clamp" title="${h(r.desc||'')}">${h(r.desc||'')}</span></td><td class="qc">${r.qty??''}</td><td class="col-type">${bm[r.kind]||''}</td><td class="nc col-notes"><span class="note-clamp" title="${h(r.note||'')}">${h(r.note||'')}</span></td>${priceCells}${expCell}</tr>${detailTr}`;
+        const typeCell = `<button class="type-btn" onclick="openKindPopover(event,${entry.id},${i})" title="Click to change type">${bm[effectiveKind]||'<span class=\\"type-empty\\">—</span>'}<span class="type-hint">▾</span></button>`;
+        return `<tr${evenCls}>${expCell}<td><span class="sk">${h(r.sku||'')}</span></td><td class="nc col-desc"><span class="note-clamp" title="${h(r.desc||'')}">${h(r.desc||'')}</span></td><td class="qc"><input type="number" class="qty-input" value="${r.qty??''}" min="0" onchange="updateQty(${entry.id},${i},this.value)"></td><td class="col-type">${typeCell}</td><td class="nc col-notes"><span class="note-clamp" title="${h(r.note||'')}">${h(r.note||'')}</span></td>${priceCells}</tr>${detailTr}`;
       }).join('');
       totL+=lines; totQ+=qty;
       const el = document.createElement('div');
@@ -827,14 +1103,13 @@ async function renderGroups() {
           <div class="drag-handle" title="Drag to reorder">
             <svg width="12" height="18" viewBox="0 0 12 18" fill="none"><circle cx="4" cy="4" r="1.3" fill="currentColor"/><circle cx="8" cy="4" r="1.3" fill="currentColor"/><circle cx="4" cy="9" r="1.3" fill="currentColor"/><circle cx="8" cy="9" r="1.3" fill="currentColor"/><circle cx="4" cy="14" r="1.3" fill="currentColor"/><circle cx="8" cy="14" r="1.3" fill="currentColor"/></svg>
           </div>
-          <div><div class="bgp">${h(entry.label)}</div><div class="bgm">${lines} line item${lines!==1?'s':''} · ${qty.toLocaleString()} units/licenses</div></div>
-          <span class="bg-tag">${h(entry.product)}</span>
-          <button class="bg-del" onclick="removeFromCart(${entry.id})">✕ Remove</button>
+          <div style="flex:1;min-width:0;"><input type="text" class="label-input bgp" value="${h(entry.label)}" onchange="updateEntryLabel(${entry.id},this.value)"><div class="bgm">${lines} line item${lines!==1?'s':''} · ${qty.toLocaleString()} units/licenses</div></div>
+          ${entry.product !== 'Custom SKU' ? `<span class="bg-tag">${h(entry.product)}</span>` : ''}
+          <button class="bg-del" onclick="removeFromCart(${entry.id})">✕</button>
         </div>
         <div class="bt-wrap"><table class="bt"><thead><tr>
-          <th style="width:200px;">Part Number</th><th class="col-desc">Description</th>
-          <th style="width:50px;text-align:center;">Qty</th><th class="col-type" style="width:100px;">Type</th><th class="col-notes" style="width:125px;">Notes</th>${hasPricing ? '<th style="width:110px;text-align:right;">List Price</th><th style="width:120px;text-align:right;">Total Price</th>' : ''}
-          <th class="col-exp"></th>
+          <th class="col-exp"></th><th style="width:200px;">Part Number</th><th class="col-desc">Description</th>
+          <th style="width:64px;text-align:center;">Qty</th><th class="col-type" style="width:100px;">Type</th><th class="col-notes" style="width:125px;">Notes</th>${hasPricing ? '<th style="width:110px;text-align:right;">List Price</th><th style="width:120px;text-align:right;">Total Price</th>' : ''}
         </tr></thead><tbody>${rows}</tbody></table></div>`;
       addDragListeners(el);
       c.appendChild(el);
@@ -846,14 +1121,41 @@ async function renderGroups() {
   document.getElementById('sum-q').textContent = totQ.toLocaleString();
   const term = getCurrentTerm();
   const termLabel = {DD:'-DD (co-term)',12:'-12 (1 yr)',36:'-36 (3 yr)',60:'-60 (5 yr)'}[term];
-  document.getElementById('sum-term').textContent = termLabel;
+  const sumTermEl = document.getElementById('sum-term');
+  sumTermEl.textContent = termLabel;
+  sumTermEl.classList.toggle('term-warn', term === 'DD');
+  const ptEl = document.getElementById('project-total');
+  if (hasPricing && grandTotalValid) {
+    document.getElementById('pt-value').textContent = '$' + grandTotal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    ptEl.style.display = 'flex';
+  } else {
+    ptEl.style.display = 'none';
+  }
 }
 
 // ── DRAG-TO-REORDER ──────────────────────────────────────────────────────────
 let dragSrcId = null;
 
+function _doDrop(targetId) {
+  if (dragSrcId === null || dragSrcId === targetId) return;
+  const srcIdx = cart.findIndex(c => c.id === dragSrcId);
+  const tgtIdx = cart.findIndex(c => c.id === targetId);
+  if (srcIdx === -1 || tgtIdx === -1) return;
+  const [moved] = cart.splice(srcIdx, 1);
+  cart.splice(tgtIdx, 0, moved);
+  dragSrcId = null;
+  renderGroups();
+  saveCart();
+}
+
+function _topItem(node) {
+  const bgc = document.getElementById('bgc');
+  while (node && node.parentElement !== bgc) node = node.parentElement;
+  return (node && node.dataset.id) ? node : null;
+}
+
 function addDragListeners(el) {
-  // Only allow drag when the mousedown originated on the drag handle
+  // ── Mouse / HTML5 drag ──
   el.addEventListener('mousedown', e => {
     el.draggable = !!e.target.closest('.drag-handle');
   });
@@ -875,16 +1177,47 @@ function addDragListeners(el) {
   });
   el.addEventListener('drop', e => {
     e.preventDefault();
-    const targetId = Number(el.dataset.id);
-    if (dragSrcId === null || dragSrcId === targetId) return;
-    const srcIdx = cart.findIndex(c => c.id === dragSrcId);
-    const tgtIdx = cart.findIndex(c => c.id === targetId);
-    if (srcIdx === -1 || tgtIdx === -1) return;
-    const [moved] = cart.splice(srcIdx, 1);
-    cart.splice(tgtIdx, 0, moved);
+    _doDrop(Number(el.dataset.id));
+  });
+
+  // ── Touch drag (mobile) ──
+  el.addEventListener('touchstart', e => {
+    if (!e.target.closest('.drag-handle')) return;
+    e.preventDefault();
+    dragSrcId = Number(el.dataset.id);
+    el.classList.add('dragging');
+  }, { passive: false });
+
+  el.addEventListener('touchmove', e => {
+    if (dragSrcId === null) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    el.style.pointerEvents = 'none';
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    el.style.pointerEvents = '';
+    const targetEl = under && _topItem(under);
+    document.querySelectorAll('#bgc > *').forEach(n => n.classList.remove('drag-over'));
+    if (targetEl && Number(targetEl.dataset.id) !== dragSrcId) targetEl.classList.add('drag-over');
+  }, { passive: false });
+
+  el.addEventListener('touchend', e => {
+    if (dragSrcId === null) return;
+    e.preventDefault();
+    el.classList.remove('dragging');
+    const t = e.changedTouches[0];
+    el.style.pointerEvents = 'none';
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    el.style.pointerEvents = '';
+    document.querySelectorAll('#bgc > *').forEach(n => n.classList.remove('drag-over'));
+    const targetEl = under && _topItem(under);
+    if (targetEl) _doDrop(Number(targetEl.dataset.id));
+    else dragSrcId = null;
+  }, { passive: false });
+
+  el.addEventListener('touchcancel', () => {
+    el.classList.remove('dragging');
+    document.querySelectorAll('#bgc > *').forEach(n => n.classList.remove('drag-over'));
     dragSrcId = null;
-    renderGroups();
-    saveCart();
   });
 }
 
@@ -937,7 +1270,7 @@ function saveGroupRow() {
 
 // Allow Enter key in group modal inputs
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeGroupModal(); closeImport(); closeBOMShareModal(); }
+  if (e.key === 'Escape') { closeGroupModal(); closeImport(); closeBOMShareModal(); closeKindPopover(); }
   if (e.key === 'Enter' && document.getElementById('grp-modal').classList.contains('on')) saveGroupRow();
 });
 
@@ -974,8 +1307,14 @@ function rowsWithTerm(rows) {
 function saveProject() {
   if (!cart.length) { toast('⚠ Nothing to save — add items to the BOM first'); return; }
   const meta = getMeta();
+  const normalizedCust = (meta.cust || '').trim().toLowerCase();
+  const existing = savedProjects.find(p =>
+    p.projectKey && (p.meta.cust || '').trim().toLowerCase() === normalizedCust
+  );
+  const projectKey = existing ? existing.projectKey : 'pk_' + Date.now();
   const snapshot = {
     id: 'save_' + Date.now(),
+    projectKey,
     savedAt: new Date().toISOString(),
     meta,
     cart: JSON.parse(JSON.stringify(cart)),
@@ -993,40 +1332,114 @@ function showSavedProjects() {
   document.getElementById('pfw').style.display = 'none';
   document.getElementById('pbv').style.display = 'none';
   document.getElementById('spv').style.display = 'flex';
+  spvFilter = '';
+  document.getElementById('spv-filter').value = '';
+  document.getElementById('spv-filter-clear').style.display = 'none';
   renderSavedProjects();
   renderPricingSection();
 }
 
+function filterSavedProjects(q) {
+  spvFilter = q.toLowerCase();
+  document.getElementById('spv-filter-clear').style.display = q ? 'block' : 'none';
+  renderSavedProjects();
+}
+function clearSpvFilter() {
+  const i = document.getElementById('spv-filter');
+  i.value = '';
+  filterSavedProjects('');
+  i.focus();
+}
+
 function renderSavedProjects() {
   const content = document.getElementById('spv-content');
-  if (!savedProjects.length) {
-    content.innerHTML = `<div class="sp-empty">
+
+  // Group by projectKey, preserving unshift order (newest first within each group)
+  const groupMap = {};
+  savedProjects.forEach(p => {
+    const key = p.projectKey || p.id;
+    if (!groupMap[key]) groupMap[key] = [];
+    groupMap[key].push(p);
+  });
+
+  // Sort groups so the one with the most recent primary save appears first
+  let groups = Object.values(groupMap);
+  groups.sort((a, b) => new Date(b[0].savedAt) - new Date(a[0].savedAt));
+
+  // Apply filter against the primary (latest) revision's metadata
+  if (spvFilter) {
+    groups = groups.filter(g => {
+      const p = g[0];
+      return (p.meta.cust || '').toLowerCase().includes(spvFilter) ||
+             (p.meta.opp  || '').toLowerCase().includes(spvFilter) ||
+             (p.meta.eng  || '').toLowerCase().includes(spvFilter);
+    });
+  }
+
+  if (!groups.length) {
+    content.innerHTML = spvFilter
+      ? `<div class="sp-empty"><h3>No matching projects</h3><p>No saved projects match your filter.</p></div>`
+      : `<div class="sp-empty">
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="6" y="6" width="36" height="36" rx="5" stroke="#9BA5BA" stroke-width="2"/><rect x="16" y="6" width="16" height="14" rx="2" stroke="#9BA5BA" stroke-width="2"/><rect x="12" y="26" width="24" height="12" rx="2" stroke="#9BA5BA" stroke-width="2"/></svg>
       <h3>No saved projects yet</h3>
       <p>Use the <strong>Save Project</strong> button in your Project BOM to save a snapshot you can resume later.</p>
     </div>`;
     return;
   }
-  const cards = savedProjects.map(p => {
+
+  const cards = groups.map(revisions => {
+    const p = revisions[0]; // primary (most recent)
+    const key = p.projectKey || p.id;
     const prodCount = p.cart.filter(c => !c._type).length;
     const lineCount = p.cart.filter(c => !c._type).reduce((s, c) => s + (c.rows ? c.rows.filter(r => r.section === undefined).length : 0), 0);
     const when = new Date(p.savedAt).toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-    const opp  = p.meta.opp  ? `<div class="sp-meta">Opp: ${h(p.meta.opp)}</div>`  : '';
-    const eng  = p.meta.eng  ? `<div class="sp-meta">SE: ${h(p.meta.eng)}</div>`   : '';
+    const opp  = p.meta.opp ? `<div class="sp-meta">Opp: ${h(p.meta.opp)}</div>` : '';
+    const eng  = p.meta.eng ? `<div class="sp-meta">SE: ${h(p.meta.eng)}</div>`  : '';
+
+    const priorRevisions = revisions.slice(1);
+    const hasRevisions = priorRevisions.length > 0;
+    const isExpanded = !!spRevExpanded[key];
+
+    const toggleBtn = hasRevisions
+      ? `<button class="sp-rev-toggle" onclick="toggleRevisions('${h(key)}')" aria-expanded="${isExpanded}">
+           <span class="sp-rev-arrow">${isExpanded ? '&#9660;' : '&#9658;'}</span>
+           ${priorRevisions.length} prior save${priorRevisions.length !== 1 ? 's' : ''}
+         </button>`
+      : '';
+
+    let revList = '';
+    if (hasRevisions && isExpanded) {
+      const rows = priorRevisions.map(r => {
+        const rWhen = new Date(r.savedAt).toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+        return `<div class="sp-rev-row">
+          <span class="sp-rev-date">${rWhen}</span>
+          <button class="btn bs sp-rev-load" onclick="loadSavedProject('${r.id}')">Load</button>
+        </div>`;
+      }).join('');
+      revList = `<div class="sp-rev-list">${rows}</div>`;
+    }
+
     return `<div class="sp-card">
       <div class="sp-accent"></div>
       <div class="sp-body">
         <div class="sp-name">${h(p.meta.cust || 'Unnamed Project')}</div>
         <div class="sp-meta">${when} &middot; ${prodCount} product group${prodCount !== 1 ? 's' : ''} &middot; ${lineCount} line item${lineCount !== 1 ? 's' : ''}</div>
         ${opp}${eng}
+        ${toggleBtn}
+        ${revList}
       </div>
       <div class="sp-actions">
         <button class="btn bs" onclick="loadSavedProject('${p.id}')">Load</button>
-        <button class="btn bd" onclick="deleteSavedProject('${p.id}')">Delete</button>
+        <button class="btn bd" onclick="deleteProjectGroup('${h(key)}')">Delete</button>
       </div>
     </div>`;
   }).join('');
   content.innerHTML = `<div class="sp-list">${cards}</div>`;
+}
+
+function toggleRevisions(projectKey) {
+  spRevExpanded[projectKey] = !spRevExpanded[projectKey];
+  renderSavedProjects();
 }
 
 function loadSavedProject(id) {
@@ -1044,7 +1457,9 @@ function loadSavedProject(id) {
   updateBadges();
   renderGroups();
   saveCart();
+  savePiData();
   toast(`✓ Loaded: "${snap.meta.cust || 'Unnamed'}"`);
+  initPiMode();
   showPBV();
 }
 
@@ -1052,6 +1467,23 @@ function deleteSavedProject(id) {
   const snap = savedProjects.find(p => p.id === id);
   if (!confirm(`Delete saved project "${snap?.meta?.cust || 'this project'}"?`)) return;
   savedProjects = savedProjects.filter(p => p.id !== id);
+  saveSaved();
+  updateSavedBadge();
+  renderSavedProjects();
+  toast('✓ Saved project deleted');
+}
+
+function deleteProjectGroup(projectKey) {
+  const group = savedProjects.filter(p => (p.projectKey || p.id) === projectKey);
+  if (!group.length) return;
+  const name = group[0].meta.cust || 'this project';
+  const revCount = group.length;
+  const msg = revCount > 1
+    ? `Delete all ${revCount} saves for "${name}"? This cannot be undone.`
+    : `Delete saved project "${name}"?`;
+  if (!confirm(msg)) return;
+  savedProjects = savedProjects.filter(p => (p.projectKey || p.id) !== projectKey);
+  delete spRevExpanded[projectKey];
   saveSaved();
   updateSavedBadge();
   renderSavedProjects();
@@ -1079,7 +1511,7 @@ function serializeBOM() {
     const rows = entry.rows.map(r =>
       r.section !== undefined
         ? { s: r.section }
-        : [r.sku || '', r.desc || '', r.qty ?? null, r.kind || '', r.note || '']
+        : [r.sku || '', r.desc || '', r.qty ?? null, r.kind || '', r.note || '', r._kindOverride || '']
     );
     return { p: entry.product, l: entry.label, r: rows };
   });
@@ -1101,7 +1533,7 @@ function deserializeBOM(json) {
     }
     const rows = (item.r || []).map(r =>
       Array.isArray(r)
-        ? { sku: r[0]||'', desc: r[1]||'', qty: r[2] ?? undefined, kind: r[3]||'', note: r[4]||'' }
+        ? { sku: r[0]||'', desc: r[1]||'', qty: r[2] ?? undefined, kind: r[3]||'', note: r[4]||'', ...(r[5] ? {_kindOverride: r[5]} : {}) }
         : { section: r.s }
     );
     return { product: item.p || item.l || '', label: item.l || '', rows };
@@ -1146,7 +1578,7 @@ function exportCSV() {
     rows.push([entry.label,'','','','','']);
     for (const r of rowsWithTerm(entry.rows)) {
       if (r.section!==undefined) rows.push(['',`--- ${r.section} ---`,'','','','']);
-      else rows.push(['',r.sku||'',r.desc||'',r.qty??'',r.kind||'',r.note||'']);
+      else rows.push(['',r.sku||'',r.desc||'',r.qty??'',(r._kindOverride !== undefined ? r._kindOverride : r.kind)||'',r.note||'']);
     }
     rows.push([]);
   }
@@ -1167,6 +1599,31 @@ function toggleCopyMenu(e) {
   menu.classList.add('on');
 }
 function closeCopyMenu() { document.getElementById('copy-menu').classList.remove('on'); }
+function toggleAddMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('add-menu');
+  if (menu.classList.contains('on')) { menu.classList.remove('on'); return; }
+  const rect = e.currentTarget.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = rect.left + 'px';
+  menu.classList.add('on');
+}
+function closeAddMenu() { document.getElementById('add-menu').classList.remove('on'); }
+function openSkuModal() {
+  const frame = document.getElementById('sku-frame');
+  if (!frame.src.includes('custom-sku-bomgen-mobile.html')) {
+    frame.src = 'products/custom-sku-bomgen-mobile.html';
+  } else {
+    try { frame.contentWindow.resetForm(); } catch(_) {}
+  }
+  document.getElementById('sku-modal').classList.add('on');
+}
+function closeSkuModal() {
+  document.getElementById('sku-modal').classList.remove('on');
+}
+document.getElementById('sku-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeSkuModal();
+});
 async function toggleProjectMenu(e) {
   e.stopPropagation();
   const menu = document.getElementById('project-menu');
@@ -1188,28 +1645,9 @@ document.addEventListener('click', function(e) {
   if (m && !m.contains(e.target) && e.target.id !== 'copy-export-btn') m.classList.remove('on');
   const p = document.getElementById('project-menu');
   if (p && !p.contains(e.target) && e.target.id !== 'project-btn') p.classList.remove('on');
+  const a = document.getElementById('add-menu');
+  if (a && !a.contains(e.target) && e.target.id !== 'add-btn') a.classList.remove('on');
 });
-
-function parsePriceValue(value) {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  const cleaned = String(value || '').replace(/[^0-9.-]+/g, '').trim();
-  if (!cleaned) return NaN;
-  const numeric = parseFloat(cleaned);
-  return Number.isFinite(numeric) ? numeric : NaN;
-}
-
-function formatCurrency(value) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return '';
-  return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function normalizePriceDisplay(displayValue, numericValue) {
-  const cleanedDisplay = String(displayValue || '').trim();
-  if (cleanedDisplay && !/^[-—–]+$/.test(cleanedDisplay) && !/^n\/?a$/i.test(cleanedDisplay)) {
-    return cleanedDisplay;
-  }
-  return formatCurrency(numericValue);
-}
 
 function clipboardWrite(text, msg) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1269,9 +1707,9 @@ function exportSFDC(region) {
   const rows = [['UID','Quantity','Disti Discount','Quote Line Item Notes']];
   for (const r of bomDataRows()) {
     if (!r.sku) continue;
-    rows.push([`${r.sku}-${region}`, r.qty??'', 28, r.note||'']);
+    rows.push([`${r.sku}${region}`, r.qty??'', 28, r.note||'']);
   }
-  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const csv = rows.map(r => r.map(c => String(c).replace(/,/g,'')).join(',')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
   a.download = `SFDC_${region}_${new Date().toISOString().slice(0,10)}.csv`;
@@ -1402,11 +1840,13 @@ function doImport() {
   updateBadges();
   renderGroups();
   saveCart();
+  savePiData();
   closeImport();
   const parts = [];
   if (prodCount) parts.push(`${prodCount} product group${prodCount!==1?'s':''}`);
   if (grpCount)  parts.push(`${grpCount} group header${grpCount!==1?'s':''}`);
   toast('✓ Imported ' + (parts.join(' + ') || 'project'));
+  initPiMode();
   showPBV();
 }
 
@@ -1432,6 +1872,8 @@ function applySharedBOM(parsed) {
   updateBadges();
   renderGroups();
   saveCart();
+  savePiData();
+  initPiMode();
 }
 
 function showBOMFragmentConfirm(parsed, name, summary) {
@@ -1490,11 +1932,6 @@ function checkBOMFragment() {
 
 // ── PRICING (IndexedDB) ────────────────────────────────────────────────────────
 let _pricingDb = null;
-let _fortiSkuDb = null;
-const FORTISKU_DB_NAME = 'fortisku-idb';
-const FORTISKU_STORE_NAME = 'store';
-const FORTISKU_ROWS_KEY_PREFIX = 'fortisku-finder:rows:v';
-const FORTISKU_META_KEY_PREFIX = 'fortisku-finder:meta:v';
 
 function openPricingDB() {
   if (_pricingDb) return Promise.resolve(_pricingDb);
@@ -1515,7 +1952,13 @@ async function savePricingIDB(data) {
   });
 }
 async function getPricingIDB() {
-  return getFortiSkuPricingIDB();
+  const db = await openPricingDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('pricing', 'readonly');
+    const req = tx.objectStore('pricing').get('current');
+    req.onsuccess = e => resolve(e.target.result || null);
+    req.onerror = e => reject(e.target.error);
+  });
 }
 async function deletePricingIDB() {
   const db = await openPricingDB();
@@ -1525,92 +1968,6 @@ async function deletePricingIDB() {
     tx.oncomplete = resolve;
     tx.onerror = e => reject(e.target.error);
   });
-}
-
-function openFortiSkuDB() {
-  if (_fortiSkuDb) return Promise.resolve(_fortiSkuDb);
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(FORTISKU_DB_NAME, 1);
-    req.onsuccess = e => { _fortiSkuDb = e.target.result; resolve(_fortiSkuDb); };
-    req.onerror = e => reject(e.target.error);
-  });
-}
-
-async function fortiSkuGet(key) {
-  const db = await openFortiSkuDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(FORTISKU_STORE_NAME, 'readonly');
-    const req = tx.objectStore(FORTISKU_STORE_NAME).get(key);
-    req.onsuccess = e => resolve(e.target.result || null);
-    req.onerror = e => reject(e.target.error);
-  });
-}
-
-async function fortiSkuKeys() {
-  const db = await openFortiSkuDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(FORTISKU_STORE_NAME, 'readonly');
-    const req = tx.objectStore(FORTISKU_STORE_NAME).getAllKeys();
-    req.onsuccess = e => resolve(Array.isArray(e.target.result) ? e.target.result : []);
-    req.onerror = e => reject(e.target.error);
-  });
-}
-
-async function getLatestFortiSkuKeys() {
-  const keys = await fortiSkuKeys();
-  const metaKeys = keys.filter(k => typeof k === 'string' && k.startsWith(FORTISKU_META_KEY_PREFIX));
-  if (!metaKeys.length) return null;
-  metaKeys.sort((a, b) => {
-    const av = parseInt(String(a).slice(FORTISKU_META_KEY_PREFIX.length), 10) || 0;
-    const bv = parseInt(String(b).slice(FORTISKU_META_KEY_PREFIX.length), 10) || 0;
-    return bv - av;
-  });
-  const metaKey = metaKeys[0];
-  const version = metaKey.slice(FORTISKU_META_KEY_PREFIX.length);
-  return {
-    metaKey,
-    rowsKey: `${FORTISKU_ROWS_KEY_PREFIX}${version}`
-  };
-}
-
-async function getFortiSkuPricingIDB() {
-  try {
-    const latest = await getLatestFortiSkuKeys();
-    if (!latest) return null;
-    const [meta, rows] = await Promise.all([
-      fortiSkuGet(latest.metaKey),
-      fortiSkuGet(latest.rowsKey)
-    ]);
-    if (!meta || !Array.isArray(rows) || !rows.length) {
-      return null;
-    }
-    const pricingRows = rows
-      .filter(r => r && r.sku)
-      .map(r => ({
-        sku: String(r.sku || '').trim(),
-        price: typeof r.price === 'number' ? r.price : parsePriceValue(r.price_display || r.price),
-        price_display: normalizePriceDisplay(
-          r.price_display,
-          typeof r.price === 'number' ? r.price : parsePriceValue(r.price_display || r.price)
-        )
-      }))
-      .filter(r => r.sku);
-
-    if (!pricingRows.length) {
-      return null;
-    }
-
-    return {
-      source: 'fortisku',
-      name: meta.priceListLabel || 'SKU Finder Price List',
-      effectiveDate: meta.updatedAt || '',
-      uploadedAt: meta.updatedAt || '',
-      meta,
-      rows: pricingRows
-    };
-  } catch (error) {
-    return null;
-  }
 }
 
 function parsePricingLine(line) {
@@ -1632,7 +1989,22 @@ function parsePricingLine(line) {
 }
 
 function parsePricingCSV(text) {
-  const rawLines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  // Split into logical CSV lines respecting quoted fields that may contain newlines
+  const rawLines = [];
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  let lineBuf = '', inQ = false;
+  for (let i = 0; i < normalized.length; i++) {
+    const c = normalized[i];
+    if (c === '"') {
+      if (inQ && normalized[i + 1] === '"') { lineBuf += '""'; i++; }
+      else { inQ = !inQ; lineBuf += c; }
+    } else if (c === '\n' && !inQ) {
+      rawLines.push(lineBuf); lineBuf = '';
+    } else {
+      lineBuf += c;
+    }
+  }
+  rawLines.push(lineBuf);
   let name = '', effectiveDate = '', headerRowIdx = -1, foundDate = false;
 
   for (let i = 0; i < Math.min(rawLines.length, 30); i++) {
@@ -1693,14 +2065,11 @@ async function renderPricingSection() {
     const data = await getPricingIDB();
     if (!data) {
       el.innerHTML = `
-        <div class="sp-list">
-          <div class="sp-card">
-            <div class="sp-accent"></div>
-            <div class="sp-body">
-              <div class="sp-name">SKU Finder pricing not available</div>
-              <div class="sp-meta">Upload a price list in SKU Finder first. Project BOM pricing now uses the shared SKU Finder database instead of a separate CSV upload.</div>
-            </div>
-          </div>
+        <div id="pricing-drop" onclick="document.getElementById('pricing-file').click()"
+             ondragover="pricingDragOver(event)" ondragleave="pricingDragLeave(event)" ondrop="pricingDrop(event)">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="opacity:.35"><rect x="4" y="4" width="24" height="24" rx="3" stroke="#6B7589" stroke-width="1.5"/><path d="M10 16h12M16 10v12" stroke="#6B7589" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <div style="font-weight:600;color:var(--c-text);margin-top:8px;">Drop a Fortinet Pricing CSV here or click to browse</div>
+          <p>The price list name and effective date will be read automatically from the file header.</p>
         </div>`;
     } else {
       const when = new Date(data.uploadedAt).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
@@ -1711,7 +2080,13 @@ async function renderPricingSection() {
             <div class="sp-accent"></div>
             <div class="sp-body">
               <div class="sp-name">${h(data.name)}</div>
-              <div class="sp-meta">Source: SKU Finder shared database &middot; Effective: ${h(data.effectiveDate || '—')} &middot; ${rowCount} items &middot; Updated ${when}</div>
+              <div class="sp-meta">Effective: ${h(data.effectiveDate || '—')} &middot; ${rowCount} items &middot; Uploaded ${when}</div>
+            </div>
+            <div class="sp-actions">
+              <button class="btn bd" onclick="deletePricing()">
+                <svg viewBox="0 0 13 13" fill="none"><path d="M2 3.5h9M5 3.5V2h3v1.5M5.5 6v4M7.5 6v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3 3.5l.5 7a1 1 0 0 0 1 .9h4a1 1 0 0 0 1-.9l.5-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                Delete
+              </button>
             </div>
           </div>
         </div>`;
@@ -1757,12 +2132,116 @@ async function deletePricing() {
   }
 }
 
+// ── PROJECT INFO EDIT TOGGLE ─────────────────────────────────────────────────
+const PI_TERM_LABELS = {DD:'Co-term / Date-driven',12:'1 Year',36:'3 Years',60:'5 Years'};
+
+function piAutoLink(text) {
+  if (!text) return '';
+  const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return esc
+    .replace(/\n/g,'<br>')
+    .replace(/(https?:\/\/[^\s<>"&][^\s<>"]*)/g, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
+}
+
+function updatePiView() {
+  const cust  = document.getElementById('pi-cust').value.trim();
+  const opp   = document.getElementById('pi-opp').value.trim();
+  const eng   = document.getElementById('pi-eng').value.trim();
+  const date  = document.getElementById('pi-date').value.trim();
+  const term  = document.getElementById('pi-term').value;
+  const notes = document.getElementById('pi-notes').value.trim();
+  const termLabel = PI_TERM_LABELS[term] || term;
+
+  const field = (label, value, cls='', fullRow=false) => {
+    const isEmpty = !value;
+    const displayVal = isEmpty ? '—' : piAutoLink(value);
+    return `<div class="pi-vf${fullRow?' full':''}${cls?' '+cls:''}">
+      <span class="pi-vl">${label}</span>
+      <span class="pi-vv${isEmpty?' empty':''}">${displayVal}</span>
+    </div>`;
+  };
+
+  const custField = `<div class="pi-vf full cust-row">
+    <span class="pi-vl">Customer / Opportunity</span>
+    <span class="pi-vv pi-cust-val${!cust?' empty':''}">${cust ? piAutoLink(cust) : 'Unnamed Project'}</span>
+  </div>`;
+
+  let html = `<div class="pi-vg">${custField}`;
+  if (opp)   html += field('Opportunity ID', opp);
+  if (eng)   html += field('SE / Engineer', eng);
+  if (date)  html += field('Date', date);
+  html += field('Support / License Term', termLabel);
+  if (notes) html += field('Project Scope / Notes', notes, '', true);
+  html += '</div>';
+
+  document.getElementById('pi-view').innerHTML = html;
+}
+
+function togglePiEdit() {
+  const card  = document.getElementById('proj-info-card');
+  const btn   = document.getElementById('pi-edit-btn');
+  const label = document.getElementById('pi-edit-label');
+  const isView = card.classList.contains('view-mode');
+  if (isView) {
+    card.classList.remove('view-mode');
+    btn.classList.remove('active');
+    label.textContent = 'View';
+  } else {
+    updatePiView();
+    card.classList.add('view-mode');
+    btn.classList.add('active');
+    label.textContent = 'Edit';
+  }
+}
+
+function clearPiFields() {
+  if (!confirm('Clear all Project Information fields?')) return;
+  document.getElementById('pi-cust').value  = '';
+  document.getElementById('pi-opp').value   = '';
+  document.getElementById('pi-eng').value   = '';
+  document.getElementById('pi-date').value  = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('pi-term').value  = 'DD';
+  document.getElementById('pi-notes').value = '';
+  savePiData();
+  const card  = document.getElementById('proj-info-card');
+  const btn   = document.getElementById('pi-edit-btn');
+  const label = document.getElementById('pi-edit-label');
+  card.classList.remove('view-mode');
+  btn.classList.remove('active');
+  label.textContent = 'View';
+}
+
+function hasPiData() {
+  return ['pi-cust','pi-opp','pi-eng','pi-notes'].some(
+    id => document.getElementById(id).value.trim()
+  );
+}
+
+function initPiMode() {
+  const card  = document.getElementById('proj-info-card');
+  const btn   = document.getElementById('pi-edit-btn');
+  const label = document.getElementById('pi-edit-label');
+  if (hasPiData()) {
+    updatePiView();
+    card.classList.add('view-mode');
+    btn.classList.add('active');
+    label.textContent = 'Edit';
+  } else {
+    card.classList.remove('view-mode');
+    btn.classList.remove('active');
+    label.textContent = 'View';
+  }
+}
+
 // ── TOAST ────────────────────────────────────────────────────────────────────
 let tt=null;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');if(tt)clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),3000);}
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
-document.getElementById('pi-date').value = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+loadPiData();
+if (!document.getElementById('pi-date').value) {
+  document.getElementById('pi-date').value = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+}
 loadCart();
 loadSaved();
 updateBadges();
@@ -1771,6 +2250,14 @@ renderGroups();
 if (cart.length) showPBV();
 buildNav();
 checkBOMFragment();
+initPiMode();
+['pi-cust','pi-opp','pi-eng','pi-date','pi-notes'].forEach(id => {
+  document.getElementById(id).addEventListener('input', savePiData);
+});
+document.getElementById('pi-term').addEventListener('change', savePiData);
+
+// Ensure view mode content is populated before printing regardless of current state
+window.addEventListener('beforeprint', updatePiView);
 
 // ── SERVICE WORKER REGISTRATION ───────────────────────────────────────────────
 if ('serviceWorker' in navigator) {

@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiProxy BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--forti-text);
+  background: var(--forti-bg);
+  padding: 20px;
+}
+/* ---- Page header ---- */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.page-icon {
+  width: 42px; height: 42px;
+  background: var(--forti-red);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.page-icon svg { width: 24px; height: 24px; fill: #fff; }
+.page-title { font-size: 20px; font-weight: 700; color: var(--forti-text); }
+.page-subtitle { font-size: 11px; color: var(--forti-text-muted); margin-top: 1px; }
+/* ---- Cards ---- */
+.card {
+  background: var(--forti-white);
+  border: 1px solid var(--forti-border);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.card-header {
+  background: var(--forti-section-header);
+  border-bottom: 1px solid var(--forti-border);
+  padding: 9px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--forti-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.card-body { padding: 16px 18px; }
+/* ---- Overview table ---- */
+.overview-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+.overview-table th {
+  background: var(--forti-table-head);
+  border: 1px solid var(--forti-border);
+  padding: 7px 11px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+  text-align: left;
+}
+.overview-table td {
+  border: 1px solid var(--forti-border);
+  padding: 7px 11px;
+  vertical-align: top;
+}
+.overview-table tbody tr:nth-child(even) td { background: var(--forti-table-stripe); }
+.overview-table .sec-hdr td {
+  background: #EAECF3 !important;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--forti-text-secondary);
+  padding: 5px 11px;
+  border-top: 2px solid #C5CAD9;
+}
+.check { color: #2E7D32; font-size: 14px; }
+.inc-tag { font-size: 10px; color: #3557A5; }
+.add-tag { font-size: 10px; color: var(--forti-text-muted); }
+/* ---- Tabs ---- */
+.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--forti-border); margin-bottom: 16px; }
+.tab {
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--forti-text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color .15s, border-color .15s;
+  user-select: none;
+}
+.tab:hover { color: var(--forti-text); }
+.tab.active { color: var(--forti-red); border-bottom-color: var(--forti-red); }
+/* ---- Model cards ---- */
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.model-card {
+  border: 1.5px solid var(--forti-border);
+  border-radius: 4px;
+  padding: 11px 13px;
+  cursor: pointer;
+  background: #fff;
+  transition: border-color .15s, background .15s;
+}
+.model-card:hover { border-color: #aaa; }
+.model-card.selected { border: 2px solid var(--forti-red); background: #FEF8F8; }
+.model-card .mc-name { font-weight: 700; font-size: 13px; }
+.model-card .mc-sub { font-size: 11px; color: var(--forti-text-secondary); margin-top: 3px; }
+.model-card .mc-users { font-size: 10px; color: var(--forti-text-muted); margin-top: 2px; }
+/* ---- Form elements ---- */
+.field-group { margin-bottom: 13px; }
+.field-label { font-size: 12px; font-weight: 600; margin-bottom: 5px; display: flex; align-items: center; gap: 4px; }
+.req-star { color: var(--forti-red); }
+input[type=number], select {
+  background: #fff;
+  border: 1px solid var(--forti-input-border);
+  border-radius: 3px;
+  padding: 6px 9px;
+  font-size: 13px;
+  width: 100%;
+  font-family: inherit;
+  color: var(--forti-text);
+}
+input[type=number]:focus, select:focus {
+  outline: none;
+  border-color: var(--forti-red);
+  box-shadow: 0 0 0 2px rgba(238,49,36,.1);
+}
+input[type=number].invalid, select.invalid {
+  border-color: var(--forti-red);
+  box-shadow: 0 0 0 2px rgba(238,49,36,.15);
+}
+.err-msg { font-size: 11px; color: var(--forti-red); margin-top: 3px; display: none; }
+/* ---- Two-col grid ---- */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 560px) { .two-col { grid-template-columns: 1fr; } }
+/* ---- Band indicator ---- */
+.band-indicator {
+  display: none;
+  background: var(--forti-info-bg);
+  border: 1px solid var(--forti-info-border);
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--forti-info-text);
+  margin-top: 4px;
+}
+/* ---- Callouts ---- */
+.callout { border-radius: 3px; padding: 9px 12px; font-size: 12px; line-height: 1.6; display: flex; gap: 8px; margin-bottom: 12px; }
+.info { background: var(--forti-info-bg); border: 1px solid var(--forti-info-border); color: var(--forti-info-text); }
+.warn { background: var(--forti-warn-bg); border: 1px solid var(--forti-warn-border); color: var(--forti-warn-text); }
+/* ---- Add-on checkboxes ---- */
+.addon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: 10px;
+}
+.addon-item {
+  border: 1.5px solid var(--forti-border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: #fff;
+  transition: border-color .15s, background .15s;
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+.addon-item:hover:not(.disabled) { border-color: #aaa; }
+.addon-item.checked { border-color: var(--forti-red); background: #FEF8F8; }
+.addon-item.disabled { opacity: 0.4; pointer-events: none; }
+.addon-item input[type=checkbox] { margin-top: 2px; flex-shrink: 0; accent-color: var(--forti-red); }
+.addon-item .ao-label { font-weight: 600; font-size: 12px; }
+.addon-item .ao-desc { font-size: 11px; color: var(--forti-text-muted); margin-top: 2px; }
+/* ---- Action buttons ---- */
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.btn {
+  padding: 7px 16px;
+  border: none;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity .15s;
+}
+.btn:hover { opacity: .87; }
+.btn-primary { background: var(--forti-red); color: #fff; }
+.btn-success { background: #2E7D32; color: #fff; }
+.btn-secondary { background: #fff; color: var(--forti-text); border: 1px solid var(--forti-input-border); }
+.smsg { font-size: 12px; font-weight: 600; }
+/* ---- BOM Preview ---- */
+#bom-section { display: none; margin-top: 6px; }
+.bom-meta { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; margin-bottom: 10px; padding: 10px 14px; background: var(--forti-section-header); border: 1px solid var(--forti-border); border-radius: 4px; }
+.bom-meta .bm-item { display: flex; flex-direction: column; }
+.bom-meta .bm-key { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--forti-text-muted); }
+.bom-meta .bm-val { font-weight: 600; color: var(--forti-text); }
+table.bom { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.bom thead th {
+  background: var(--forti-table-head);
+  border: 1px solid var(--forti-border);
+  padding: 7px 11px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+  text-align: left;
+}
+table.bom tbody td { border: 1px solid var(--forti-border); padding: 7px 11px; vertical-align: top; }
+table.bom tbody tr:nth-child(even) td { background: var(--forti-table-stripe); }
+table.bom .section-row td {
+  background: #EAECF3 !important;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--forti-text-secondary);
+  padding: 5px 11px;
+  border-top: 2px solid #C5CAD9;
+}
+.sku { font-family: 'Courier New', monospace; font-size: 11px; color: #1A4E82; }
+.nc { color: var(--forti-text-muted); }
+.badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-radius: 2px; padding: 1px 4px; display: inline-block; }
+.badge-req  { background: #FEF0EE; color: #C0392B; border: 1px solid #F5C6C2; }
+.badge-mand { background: #FFF8EE; color: #8A5800; border: 1px solid #F5D9A0; }
+.badge-opt  { background: #EEF3FF; color: #3557A5; border: 1px solid #B8CBF5; }
+.badge-inc  { background: #EEF3FF; color: #3557A5; border: 1px solid #B8CBF5; }
+</style>
+</head>
+<body>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5L12 1zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5z"/>
+      <path d="M10 14l-2-2-1.4 1.4 3.4 3.4 6-6L14.6 9.4z"/>
+    </svg>
+  </div>
+  <div>
+    <div class="page-title">FortiProxy</div>
+    <div class="page-subtitle">Secure Web Gateway BOM Generator · Doc: FPX-OG-R15-20250811</div>
+  </div>
+</div>
+
+<!-- Overview Comparison Table -->
+<div class="card">
+  <div class="card-header">Product Overview</div>
+  <div class="card-body" style="padding:12px 18px;">
+    <table class="overview-table">
+      <thead>
+        <tr>
+          <th>Feature / License</th>
+          <th>FPX-400G (HW)</th>
+          <th>FPX-2000G (HW)</th>
+          <th>FPX-4000G (HW)</th>
+          <th>VM02</th>
+          <th>VM04</th>
+          <th>VM08</th>
+          <th>VM16</th>
+          <th>VMUL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="sec-hdr"><td colspan="9">License Offering</td></tr>
+        <tr>
+          <td>Users License</td>
+          <td>500–6,000</td><td>500–20,000</td><td>500–60,000</td>
+          <td>100–75,000*</td><td>100–2,500</td><td>100–10,000</td><td>100–25,000</td><td>100–50,000</td>
+        </tr>
+        <tr>
+          <td>SWG Protection Bundle</td>
+          <td colspan="8" style="text-align:center;"><span class="add-tag">Add-on license (all models)</span></td>
+        </tr>
+        <tr>
+          <td>Advanced Caching</td>
+          <td colspan="8" style="text-align:center;"><span class="inc-tag">✓ Included</span></td>
+        </tr>
+        <tr>
+          <td>WAN Optimization</td>
+          <td colspan="8" style="text-align:center;"><span class="inc-tag">✓ Included</span></td>
+        </tr>
+        <tr>
+          <td>Data Protection Service</td>
+          <td colspan="8" style="text-align:center;"><span class="add-tag">Add-on license (all models)</span></td>
+        </tr>
+        <tr>
+          <td>VDOM (5 included)</td>
+          <td><span class="add-tag">+10 max</span></td>
+          <td><span class="add-tag">+100 max</span></td>
+          <td><span class="add-tag">+250 max</span></td>
+          <td><span class="add-tag">+10 max</span></td>
+          <td><span class="add-tag">+25 max</span></td>
+          <td><span class="add-tag">+50 max</span></td>
+          <td><span class="add-tag">+100 max</span></td>
+          <td><span class="add-tag">+500 max</span></td>
+        </tr>
+        <tr>
+          <td>Client Browser Isolation</td>
+          <td colspan="8" style="text-align:center;"><span class="add-tag">Add-on license (all models)</span></td>
+        </tr>
+        <tr class="sec-hdr"><td colspan="9">Hardware</td></tr>
+        <tr>
+          <td>10/100/1000 GE</td>
+          <td>4 GE</td><td>4 GE, 2 SFP</td><td>4 GE, 2 SFP</td>
+          <td colspan="5" style="text-align:center;color:var(--forti-text-muted);">VM (hypervisor-dependent)</td>
+        </tr>
+        <tr>
+          <td>10G SFP+</td>
+          <td>2 SFP+</td><td>2 SFP+</td><td>4 SFP+</td>
+          <td colspan="5" style="text-align:center;color:var(--forti-text-muted);">—</td>
+        </tr>
+        <tr>
+          <td>Dual Power Supply</td>
+          <td>Single (Opt. Dual)</td><td>Dual</td><td>Dual</td>
+          <td colspan="5" style="text-align:center;color:var(--forti-text-muted);">—</td>
+        </tr>
+        <tr>
+          <td>Form Factor</td>
+          <td>1U</td><td>2U</td><td>2U</td>
+          <td colspan="5" style="text-align:center;color:var(--forti-text-muted);">Virtual</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:7px; font-size:11px; color:var(--forti-text-muted);">* VM02 intended primarily for testing/SFR; user licenses shared across Security Fabric.</div>
+  </div>
+</div>
+
+<!-- Deployment Type Tabs -->
+<div class="card">
+  <div class="card-header">Configuration</div>
+  <div class="card-body">
+
+    <div class="tabs">
+      <div class="tab active" id="tab-hw" onclick="switchTab('hw')">Hardware Appliance (FPX-HW)</div>
+      <div class="tab" id="tab-vm" onclick="switchTab('vm')">Virtual Machine (FPX-VM)</div>
+    </div>
+
+    <!-- HARDWARE TAB -->
+    <div id="section-hw">
+      <div class="field-group">
+        <div class="field-label">Select Hardware Model <span class="req-star">*</span></div>
+        <div class="model-grid">
+          <div class="model-card" id="mc-400G" onclick="selectHWModel('400G')">
+            <div class="mc-name">FPX-400G</div>
+            <div class="mc-sub">1U · 4GE + 2×10G SFP+</div>
+            <div class="mc-users">500–6,000 users</div>
+          </div>
+          <div class="model-card" id="mc-2000G" onclick="selectHWModel('2000G')">
+            <div class="mc-name">FPX-2000G</div>
+            <div class="mc-sub">2U · 4GE/2SFP + 2×10G SFP+ · Dual PS</div>
+            <div class="mc-users">500–20,000 users</div>
+          </div>
+          <div class="model-card" id="mc-4000G" onclick="selectHWModel('4000G')">
+            <div class="mc-name">FPX-4000G</div>
+            <div class="mc-sub">2U · 4GE/2SFP + 4×10G SFP+ · Dual PS</div>
+            <div class="mc-users">500–60,000 users</div>
+          </div>
+        </div>
+        <div id="err-hw-model" class="err-msg">Please select a hardware model.</div>
+      </div>
+
+      <div class="two-col">
+        <div class="field-group">
+          <label class="field-label" for="hw-qty">Quantity <span class="req-star">*</span></label>
+          <input type="number" id="hw-qty" value="1" min="1" max="99" oninput="onHWChange()">
+          <div id="err-hw-qty" class="err-msg">Quantity must be ≥ 1.</div>
+        </div>
+        <div class="field-group" id="hw-psu-group" style="display:none;">
+          <label class="field-label" for="hw-psu">Redundant Power Supply (400G only)</label>
+          <select id="hw-psu">
+            <option value="no">No — Single PSU</option>
+            <option value="yes">Yes — Add Redundant PSU (SP-FAD400F-PS)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="callout info">ℹ️ <span><strong>Seat/User License Note:</strong> Each seat-based license line applies to 1 Serial Number. For multiple devices, add one license line per device. Qty on a seat SKU multiplies the seat count on that serial number — not across devices.</span></div>
+      </div>
+
+      <div class="two-col">
+        <div class="field-group">
+          <label class="field-label" for="hw-users">Protected User Count (per device) <span class="req-star">*</span></label>
+          <input type="number" id="hw-users" placeholder="e.g. 1000" min="500" max="60000" oninput="onHWChange()">
+          <div id="err-hw-users" class="err-msg">Enter a user count (500–60,000 for HW).</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">SWG Protection Bundle</label>
+          <div style="padding:7px 0; font-size:12px; color:var(--forti-text-muted);">Required to enable web security features. Add-on license.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VM TAB -->
+    <div id="section-vm" style="display:none;">
+      <div class="field-group">
+        <div class="field-label">Select VM Size <span class="req-star">*</span></div>
+        <div class="model-grid">
+          <div class="model-card" id="mc-VM02" onclick="selectVMModel('VM02')">
+            <div class="mc-name">FPX-VM02</div>
+            <div class="mc-sub">2 vCPU (testing/SFR)</div>
+            <div class="mc-users">100–75,000 users*</div>
+          </div>
+          <div class="model-card" id="mc-VM04" onclick="selectVMModel('VM04')">
+            <div class="mc-name">FPX-VM04</div>
+            <div class="mc-sub">4 vCPU</div>
+            <div class="mc-users">100–2,500 users</div>
+          </div>
+          <div class="model-card" id="mc-VM08" onclick="selectVMModel('VM08')">
+            <div class="mc-name">FPX-VM08</div>
+            <div class="mc-sub">8 vCPU</div>
+            <div class="mc-users">100–10,000 users</div>
+          </div>
+          <div class="model-card" id="mc-VM16" onclick="selectVMModel('VM16')">
+            <div class="mc-name">FPX-VM16</div>
+            <div class="mc-sub">16 vCPU</div>
+            <div class="mc-users">100–25,000 users</div>
+          </div>
+          <div class="model-card" id="mc-VMUL" onclick="selectVMModel('VMUL')">
+            <div class="mc-name">FPX-VMUL</div>
+            <div class="mc-sub">Unlimited vCPU</div>
+            <div class="mc-users">100–50,000 users</div>
+          </div>
+        </div>
+        <div id="err-vm-model" class="err-msg">Please select a VM size.</div>
+      </div>
+
+      <div id="vm-vm02-warn" class="callout warn" style="display:none;">
+        ⚠️ <span>VM02 is intended primarily for testing and as Security Fabric Root (SFR). User licenses attached to VM02 can be shared across Fabric devices via the FPX license sharing mechanism.</span>
+      </div>
+
+      <div class="two-col">
+        <div class="field-group">
+          <label class="field-label" for="vm-qty">Quantity <span class="req-star">*</span></label>
+          <input type="number" id="vm-qty" value="1" min="1" max="99" oninput="onVMChange()">
+          <div id="err-vm-qty" class="err-msg">Quantity must be ≥ 1.</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="vm-users">Protected User Count (per device) <span class="req-star">*</span></label>
+          <input type="number" id="vm-users" placeholder="e.g. 500" min="100" max="75000" oninput="onVMChange()">
+          <div id="err-vm-users" class="err-msg">Enter a user count (100–75,000 for VM).</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add-on Licenses -->
+<div class="card">
+  <div class="card-header">Add-on Licenses</div>
+  <div class="card-body">
+    <div class="callout info" style="margin-bottom:14px;">ℹ️ <span>SWG Protection Bundle is required to enable security features. Without it, FortiProxy only performs caching and WAN optimization. Add-on licenses are per-device per-year subscriptions.</span></div>
+    <div class="addon-grid">
+
+      <div class="addon-item" id="ao-swg" onclick="toggleAddon('swg', this)">
+        <input type="checkbox" id="chk-swg" onclick="event.stopPropagation();" onchange="toggleAddon('swg', this.closest('.addon-item'))">
+        <div>
+          <div class="ao-label">SWG Protection Bundle</div>
+          <div class="ao-desc">Web/Video/DNS Filtering, App Control, IPS, AV, CDR, Botnet, Sandbox Cloud</div>
+        </div>
+      </div>
+
+      <div class="addon-item" id="ao-dp" onclick="toggleAddon('dp', this)">
+        <input type="checkbox" id="chk-dp" onclick="event.stopPropagation();" onchange="toggleAddon('dp', this.closest('.addon-item'))">
+        <div>
+          <div class="ao-label">Data Protection Service</div>
+          <div class="ao-desc">DLP + Content Analysis (image AI, EDM, OCR, FortiGuard DLP)</div>
+        </div>
+      </div>
+
+      <div class="addon-item" id="ao-cbi" onclick="toggleAddon('cbi', this)">
+        <input type="checkbox" id="chk-cbi" onclick="event.stopPropagation();" onchange="toggleAddon('cbi', this.closest('.addon-item'))">
+        <div>
+          <div class="ao-label">Client Browser Isolation</div>
+          <div class="ao-desc">Native browser isolation (NBI) via Docker — contains zero-day browser threats</div>
+        </div>
+      </div>
+
+      <div class="addon-item" id="ao-dlp" onclick="toggleAddon('dlp', this)">
+        <input type="checkbox" id="chk-dlp" onclick="event.stopPropagation();" onchange="toggleAddon('dlp', this.closest('.addon-item'))">
+        <div>
+          <div class="ao-label">FortiGuard DLP Service</div>
+          <div class="ao-desc">Standalone DLP service (HW only) — separate from Data Protection bundle</div>
+        </div>
+      </div>
+
+      <div class="addon-item" id="ao-vdom" onclick="toggleAddon('vdom', this)">
+        <input type="checkbox" id="chk-vdom" onclick="event.stopPropagation();" onchange="toggleAddon('vdom', this.closest('.addon-item'))">
+        <div>
+          <div class="ao-label">VDOM Expansion</div>
+          <div class="ao-desc">Additional packs of 5 VDOMs (5 included by default on all models)</div>
+        </div>
+      </div>
+
+      <div class="addon-item" id="ao-psu" onclick="toggleAddon('psu', this)" style="display:none;">
+        <input type="checkbox" id="chk-psu" onclick="event.stopPropagation();" onchange="toggleAddon('psu', this.closest('.addon-item'))">
+        <div>
+          <div class="ao-label">Redundant PSU (FPX-400G)</div>
+          <div class="ao-desc">SP-FAD400F-PS — Optional second power supply for 400G</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VDOM pack count -->
+    <div id="vdom-count-group" style="display:none; margin-top:12px;">
+      <label class="field-label" for="vdom-packs">VDOM Packs to Add (×5 VDOMs each) <span class="req-star">*</span></label>
+      <input type="number" id="vdom-packs" value="1" min="1" max="99" style="max-width:120px;">
+      <div id="err-vdom-packs" class="err-msg">Enter number of VDOM packs (min 1).</div>
+      <div style="font-size:11px; color:var(--forti-text-muted); margin-top:4px;" id="vdom-limit-note"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="card">
+  <div class="card-body">
+    <div class="actions">
+      <button class="btn btn-primary" onclick="generateBOM()">Preview BOM</button>
+      <button class="btn btn-success" onclick="addToProjectBOM()">Add to Project BOM</button>
+      <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+      <span id="smsg" class="smsg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- BOM Preview -->
+<div id="bom-section" class="card">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>BOM Preview</span>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary" onclick="copyTSV()" style="font-size:11px; padding:4px 10px;">Copy TSV</button>
+      <button class="btn btn-secondary" onclick="window.print()" style="font-size:11px; padding:4px 10px;">Print</button>
+    </div>
+  </div>
+  <div class="card-body" style="padding:12px 18px;">
+    <div class="bom-meta" id="bom-meta"></div>
+    <div style="overflow-x:auto;">
+      <table class="bom" id="bom-table">
+        <thead>
+          <tr>
+            <th>Part Number</th>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Type</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="bom-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let _currentTab = 'hw';
+let _hwModel = null;   // '400G' | '2000G' | '4000G'
+let _vmModel = null;   // 'VM02' | 'VM04' | 'VM08' | 'VM16' | 'VMUL'
+let _lastRows = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+// ─── SKU Data ─────────────────────────────────────────────────────────────────
+const HW_MODELS = {
+  '400G': {
+    hwSku: 'FPX-400G',
+    hwDesc: 'FortiProxy 400G Hardware Appliance · 1U · 4GE + 2×10G SFP+',
+    mcCode: 'XY40G',
+    userRange: '500–6,000',
+    vdomLimit: 10,
+    hasPSU: true
+  },
+  '2000G': {
+    hwSku: 'FPX-2000G',
+    hwDesc: 'FortiProxy 2000G Hardware Appliance · 2U · Dual PS · 4GE/2SFP + 2×10G SFP+',
+    mcCode: 'XY2KG',
+    userRange: '500–20,000',
+    vdomLimit: 100,
+    hasPSU: false
+  },
+  '4000G': {
+    hwSku: 'FPX-4000G',
+    hwDesc: 'FortiProxy 4000G Hardware Appliance · 2U · Dual PS · 4GE/2SFP + 4×10G SFP+',
+    mcCode: 'XY4KG',
+    userRange: '500–60,000',
+    vdomLimit: 250,
+    hasPSU: false
+  }
+};
+
+const VM_MODELS = {
+  'VM02': { vmSku: 'VM02', band: 'FC1', vmDesc: 'FortiProxy VM02 (2 vCPU) Software Subscription', vdomLimit: 10  },
+  'VM04': { vmSku: 'VM04', band: 'FC2', vmDesc: 'FortiProxy VM04 (4 vCPU) Software Subscription', vdomLimit: 25  },
+  'VM08': { vmSku: 'VM08', band: 'FC3', vmDesc: 'FortiProxy VM08 (8 vCPU) Software Subscription', vdomLimit: 50  },
+  'VM16': { vmSku: 'VM16', band: 'FC4', vmDesc: 'FortiProxy VM16 (16 vCPU) Software Subscription', vdomLimit: 100 },
+  'VMUL': { vmSku: 'VMUL', band: 'FC5', vmDesc: 'FortiProxy VMUL (Unlimited vCPU) Software Subscription', vdomLimit: 500 }
+};
+
+// ─── Tab Switching ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  _currentTab = tab;
+  document.getElementById('tab-hw').classList.toggle('active', tab === 'hw');
+  document.getElementById('tab-vm').classList.toggle('active', tab === 'vm');
+  document.getElementById('section-hw').style.display = tab === 'hw' ? '' : 'none';
+  document.getElementById('section-vm').style.display = tab === 'vm' ? '' : 'none';
+  // Show/hide HW-only DLP addon
+  document.getElementById('ao-dlp').style.display = tab === 'hw' ? '' : 'none';
+  if (tab === 'vm') {
+    document.getElementById('chk-dlp').checked = false;
+    document.getElementById('ao-dlp').classList.remove('checked');
+  }
+  clearStatus();
+  hideBOM();
+}
+
+// ─── Model Selection ──────────────────────────────────────────────────────────
+function selectHWModel(m) {
+  _hwModel = m;
+  ['400G','2000G','4000G'].forEach(id => document.getElementById('mc-'+id).classList.remove('selected'));
+  document.getElementById('mc-'+m).classList.add('selected');
+  document.getElementById('err-hw-model').style.display = 'none';
+  // PSU option only for 400G
+  const is400 = m === '400G';
+  document.getElementById('hw-psu-group').style.display = is400 ? '' : 'none';
+  // Update VDOM limit note
+  updateVDOMLimitNote('hw');
+  hideBOM(); clearStatus();
+}
+
+function selectVMModel(m) {
+  _vmModel = m;
+  ['VM02','VM04','VM08','VM16','VMUL'].forEach(id => document.getElementById('mc-'+id).classList.remove('selected'));
+  document.getElementById('mc-'+m).classList.add('selected');
+  document.getElementById('err-vm-model').style.display = 'none';
+  document.getElementById('vm-vm02-warn').style.display = m === 'VM02' ? '' : 'none';
+  updateVDOMLimitNote('vm');
+  hideBOM(); clearStatus();
+}
+
+// ─── Add-on Toggle ────────────────────────────────────────────────────────────
+function toggleAddon(key, el) {
+  const chk = document.getElementById('chk-'+key);
+  // If clicking the card (not the checkbox directly), toggle checkbox
+  if (!(event && event.target === chk)) {
+    chk.checked = !chk.checked;
+  }
+  el.classList.toggle('checked', chk.checked);
+  if (key === 'vdom') {
+    document.getElementById('vdom-count-group').style.display = chk.checked ? '' : 'none';
+  }
+  hideBOM(); clearStatus();
+}
+
+function updateVDOMLimitNote(type) {
+  const noteEl = document.getElementById('vdom-limit-note');
+  let limit = null;
+  if (type === 'hw' && _hwModel) limit = HW_MODELS[_hwModel].vdomLimit;
+  if (type === 'vm' && _vmModel) limit = VM_MODELS[_vmModel].vdomLimit;
+  if (limit) {
+    noteEl.textContent = 'Max VDOM for selected model: ' + limit + ' (including 5 default)';
+  } else {
+    noteEl.textContent = '';
+  }
+}
+
+function onHWChange() { updateVDOMLimitNote('hw'); hideBOM(); clearStatus(); }
+function onVMChange() { updateVDOMLimitNote('vm'); hideBOM(); clearStatus(); }
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+function setFieldValid(fieldId, errId, ok) {
+  const f = document.getElementById(fieldId);
+  const e = document.getElementById(errId);
+  if (f) f.classList.toggle('invalid', !ok);
+  if (e) e.style.display = ok ? 'none' : 'block';
+  return ok;
+}
+
+// ─── BOM Generation ───────────────────────────────────────────────────────────
+function generateBOM() {
+  const rows = [];
+  let valid = true;
+
+  const addSwg  = document.getElementById('chk-swg').checked;
+  const addDp   = document.getElementById('chk-dp').checked;
+  const addCbi  = document.getElementById('chk-cbi').checked;
+  const addDlp  = document.getElementById('chk-dlp').checked;
+  const addVdom = document.getElementById('chk-vdom').checked;
+  const vdomPacks = parseInt(document.getElementById('vdom-packs').value) || 0;
+
+  if (_currentTab === 'hw') {
+    // Validate
+    if (!_hwModel) {
+      document.getElementById('err-hw-model').style.display = 'block';
+      valid = false;
+    }
+    const qty = parseInt(document.getElementById('hw-qty').value);
+    if (!qty || qty < 1) { setFieldValid('hw-qty','err-hw-qty',false); valid = false; } else setFieldValid('hw-qty','err-hw-qty',true);
+    const users = parseInt(document.getElementById('hw-users').value);
+    const userOk = users && users >= 500 && users <= 60000;
+    setFieldValid('hw-users','err-hw-users', userOk);
+    if (!userOk) valid = false;
+
+    if (addVdom && vdomPacks < 1) { setFieldValid('vdom-packs','err-vdom-packs',false); valid = false; } else setFieldValid('vdom-packs','err-vdom-packs',true);
+
+    if (!valid) { showStatus('⚠ Please fix errors above.', '#C0392B'); return false; }
+
+    const m = HW_MODELS[_hwModel];
+    const mc = m.mcCode;
+
+    // Hardware
+    rows.push({ section: 'Hardware Appliances' });
+    rows.push({ sku: m.hwSku, desc: m.hwDesc, qty, kind: 'req', note: '' });
+
+    // Optional PSU (400G only)
+    const addPSU = _hwModel === '400G' && document.getElementById('hw-psu').value === 'yes';
+    if (addPSU) {
+      rows.push({ sku: 'SP-FAD400F-PS', desc: 'FortiProxy 400G Redundant Power Supply Unit', qty, kind: 'opt', note: '400G optional dual PSU · per unit' });
+    }
+
+    // Support
+    rows.push({ section: 'Support' });
+    rows.push({
+      sku: `FC-10-${mc}-247-02-DD`,
+      desc: `FortiCare 24×7 Support for FortiProxy ${_hwModel}`,
+      qty, kind: 'req', note: 'Co-term -DD · per unit'
+    });
+
+    // SWG Bundle (user-seat based)
+    rows.push({ section: 'Subscription Licenses (Seat-Based — one line per device SN)' });
+    rows.push({ sku: '⚠', desc: 'Each seat-based license line applies to 1 device serial number. For '+qty+' device(s), order '+qty+' line(s) with the desired user count per device. Multiple qty on a single line multiplies seats on ONE SN — not across devices.', qty: null, kind: 'note', note: '' });
+
+    if (addSwg) {
+      rows.push({
+        sku: `FC1-10-${mc}-514-02-DD`,
+        desc: `SWG Protection Bundle for FortiProxy ${_hwModel} — Web/Video/DNS Filtering, App Control, IPS, AV, CDR, Botnet, Sandbox Cloud`,
+        qty: users, kind: 'mand',
+        note: `${users} seats · per device SN · co-term -DD`
+      });
+    }
+
+    if (addDp) {
+      rows.push({
+        sku: `FC1-10-${mc}-1005-02-DD`,
+        desc: `Data Protection Service for FortiProxy ${_hwModel} — DLP + Content Analysis (AI image, EDM, OCR, FortiGuard DLP)`,
+        qty: users, kind: 'opt',
+        note: `${users} seats · per device SN · co-term -DD`
+      });
+    }
+
+    if (addDlp) {
+      rows.push({
+        sku: `FC1-10-${mc}-589-02-DD`,
+        desc: `FortiGuard DLP Service for FortiProxy ${_hwModel} — standalone DLP`,
+        qty: users, kind: 'opt',
+        note: `${users} seats · per device SN · co-term -DD`
+      });
+    }
+
+    if (addCbi) {
+      rows.push({
+        sku: `FC1-10-${mc}-587-02-DD`,
+        desc: `Client Browser Isolation for FortiProxy ${_hwModel} — NBI via Docker container`,
+        qty: users, kind: 'opt',
+        note: `${users} seats · per device SN · co-term -DD`
+      });
+    }
+
+    if (!addSwg && !addDp && !addDlp && !addCbi) {
+      rows.push({ sku: '⚠', desc: 'No SWG or security licenses selected — FortiProxy will only perform Advanced Caching and WAN Optimization.', qty: null, kind: 'note', note: '' });
+    }
+
+    // VDOM
+    if (addVdom) {
+      rows.push({ section: 'VDOM Expansion' });
+      rows.push({ sku: 'FPX-VDOM-5-UG', desc: 'FortiProxy VDOM Pack — 5 additional Virtual Domains', qty: vdomPacks, kind: 'opt', note: `5 VDOMs per pack · max ${m.vdomLimit} total (incl. default 5)` });
+    }
+
+    _lastLabel = `FortiProxy ${_hwModel} ×${qty} · ${users} users`;
+    _lastMeta = {
+      'Model': `FPX-${_hwModel}`,
+      'Qty': qty,
+      'Users/Device': users,
+      'SWG Bundle': addSwg ? 'Yes' : 'No',
+      'Data Protection': addDp ? 'Yes' : 'No',
+      'Browser Isolation': addCbi ? 'Yes' : 'No',
+      'FortiGuard DLP': addDlp ? 'Yes' : 'No',
+      'VDOM Packs': addVdom ? vdomPacks : 'None'
+    };
+
+  } else {
+    // VM
+    if (!_vmModel) {
+      document.getElementById('err-vm-model').style.display = 'block';
+      valid = false;
+    }
+    const qty = parseInt(document.getElementById('vm-qty').value);
+    if (!qty || qty < 1) { setFieldValid('vm-qty','err-vm-qty',false); valid = false; } else setFieldValid('vm-qty','err-vm-qty',true);
+    const users = parseInt(document.getElementById('vm-users').value);
+    const userOk = users && users >= 100 && users <= 75000;
+    setFieldValid('vm-users','err-vm-users', userOk);
+    if (!userOk) valid = false;
+    if (addVdom && vdomPacks < 1) { setFieldValid('vdom-packs','err-vdom-packs',false); valid = false; } else setFieldValid('vdom-packs','err-vdom-packs',true);
+
+    if (!valid) { showStatus('⚠ Please fix errors above.', '#C0392B'); return false; }
+
+    const vm = VM_MODELS[_vmModel];
+
+    // VM Subscription
+    rows.push({ section: 'VM Software Subscription' });
+    rows.push({
+      sku: `${vm.band}-10-PXVMS-258-02-DD`,
+      desc: `${vm.vmDesc}`,
+      qty, kind: 'req', note: `${vm.band} band · co-term -DD · per VM`
+    });
+
+    // Seat-based licenses
+    rows.push({ section: 'Subscription Licenses (Seat-Based — one line per device SN)' });
+    rows.push({ sku: '⚠', desc: 'Each seat-based license line applies to 1 VM serial number. For '+qty+' VM(s), order '+qty+' line(s) with the desired user count per VM.', qty: null, kind: 'note', note: '' });
+
+    if (addSwg) {
+      rows.push({
+        sku: 'FC1-10-PXVMS-514-02-DD',
+        desc: 'SWG Protection Bundle for FortiProxy VM — Web/Video/DNS Filtering, App Control, IPS, AV, CDR, Botnet, Sandbox Cloud',
+        qty: users, kind: 'mand',
+        note: `${users} seats · per device SN · co-term -DD`
+      });
+    }
+
+    if (addDp) {
+      rows.push({
+        sku: 'FC1-10-PXVMS-1005-02-DD',
+        desc: 'Data Protection Service for FortiProxy VM — DLP + Content Analysis (AI image, EDM, OCR, FortiGuard DLP)',
+        qty: users, kind: 'opt',
+        note: `${users} seats · per device SN · co-term -DD`
+      });
+    }
+
+    if (addCbi) {
+      rows.push({
+        sku: 'FC1-10-PXVMS-587-02-DD',
+        desc: 'Client Browser Isolation for FortiProxy VM — NBI via Docker container',
+        qty: users, kind: 'opt',
+        note: `${users} seats · per device SN · co-term -DD`
+      });
+    }
+
+    if (!addSwg && !addDp && !addCbi) {
+      rows.push({ sku: '⚠', desc: 'No SWG or security licenses selected — FortiProxy will only perform Advanced Caching and WAN Optimization.', qty: null, kind: 'note', note: '' });
+    }
+
+    // VDOM
+    if (addVdom) {
+      rows.push({ section: 'VDOM Expansion' });
+      rows.push({ sku: 'FPX-VDOM-5-UG', desc: 'FortiProxy VDOM Pack — 5 additional Virtual Domains', qty: vdomPacks, kind: 'opt', note: `5 VDOMs per pack · max ${vm.vdomLimit} total (incl. default 5)` });
+    }
+
+    _lastLabel = `FortiProxy ${_vmModel} ×${qty} · ${users} users`;
+    _lastMeta = {
+      'Model': `FPX-${_vmModel}`,
+      'Band': vm.band,
+      'Qty': qty,
+      'Users/Device': users,
+      'SWG Bundle': addSwg ? 'Yes' : 'No',
+      'Data Protection': addDp ? 'Yes' : 'No',
+      'Browser Isolation': addCbi ? 'Yes' : 'No',
+      'VDOM Packs': addVdom ? vdomPacks : 'None'
+    };
+  }
+
+  _lastRows = rows;
+  renderBOM(rows);
+  return true;
+}
+
+// ─── Render BOM ───────────────────────────────────────────────────────────────
+function renderBOM(rows) {
+  // Meta bar
+  const metaEl = document.getElementById('bom-meta');
+  metaEl.innerHTML = Object.entries(_lastMeta).map(([k,v]) =>
+    `<div class="bm-item"><span class="bm-key">${k}</span><span class="bm-val">${v}</span></div>`
+  ).join('');
+
+  // Table
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.section !== undefined) {
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${row.section}</td>`;
+    } else {
+      const isSku = row.sku && row.sku !== '⚠';
+      const badgeHtml = row.kind === 'req'  ? '<span class="badge badge-req">Required</span>'
+                      : row.kind === 'mand' ? '<span class="badge badge-mand">Mandatory</span>'
+                      : row.kind === 'opt'  ? '<span class="badge badge-opt">Optional</span>'
+                      : row.kind === 'inc'  ? '<span class="badge badge-inc">Included</span>'
+                      : '';
+      tr.innerHTML = `
+        <td><span class="${isSku ? 'sku' : ''}">${row.sku || ''}</span></td>
+        <td class="${row.kind==='note'?'nc':''}">${row.desc}</td>
+        <td>${row.qty != null ? row.qty : ''}</td>
+        <td>${badgeHtml}</td>
+        <td class="nc">${row.note || ''}</td>
+      `;
+    }
+    tbody.appendChild(tr);
+  });
+
+  const sec = document.getElementById('bom-section');
+  sec.style.display = '';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ─── Add to Project BOM ───────────────────────────────────────────────────────
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'FORTIBOM_ADD',
+      product: 'FortiProxy',
+      label: _lastLabel,
+      rows:  _lastRows,
+      meta:  _lastMeta
+    }, '*');
+    showStatus('✓ Added to Project BOM.', '#2E7D32');
+  } else {
+    showStatus('✓ BOM generated (standalone mode).', '#2E7D32');
+  }
+}
+
+// ─── Reset ────────────────────────────────────────────────────────────────────
+function resetForm() {
+  _hwModel = null;
+  _vmModel = null;
+  ['400G','2000G','4000G'].forEach(id => document.getElementById('mc-'+id).classList.remove('selected'));
+  ['VM02','VM04','VM08','VM16','VMUL'].forEach(id => document.getElementById('mc-'+id).classList.remove('selected'));
+  document.getElementById('hw-qty').value = '1';
+  document.getElementById('vm-qty').value = '1';
+  document.getElementById('hw-users').value = '';
+  document.getElementById('vm-users').value = '';
+  document.getElementById('hw-psu').value = 'no';
+  document.getElementById('hw-psu-group').style.display = 'none';
+  document.getElementById('vm-vm02-warn').style.display = 'none';
+  ['swg','dp','cbi','dlp','vdom'].forEach(k => {
+    document.getElementById('chk-'+k).checked = false;
+    document.getElementById('ao-'+k).classList.remove('checked');
+  });
+  document.getElementById('vdom-count-group').style.display = 'none';
+  document.getElementById('vdom-packs').value = '1';
+  document.getElementById('vdom-limit-note').textContent = '';
+  // Clear errors
+  ['err-hw-model','err-hw-qty','err-hw-users','err-vm-model','err-vm-qty','err-vm-users','err-vdom-packs'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  ['hw-qty','hw-users','vm-qty','vm-users','vdom-packs'].forEach(id => {
+    document.getElementById(id).classList.remove('invalid');
+  });
+  hideBOM(); clearStatus();
+}
+
+// ─── Copy TSV ─────────────────────────────────────────────────────────────────
+function copyTSV() {
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  _lastRows.forEach(row => {
+    if (row.section !== undefined) {
+      lines.push(`[${row.section}]\t\t\t\t`);
+    } else {
+      lines.push([row.sku||'', row.desc||'', row.qty!=null?row.qty:'', row.kind||'', row.note||''].join('\t'));
+    }
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    showStatus('✓ Copied to clipboard.', '#2E7D32');
+  }).catch(() => {
+    showStatus('⚠ Copy failed — select and copy manually.', '#8A5800');
+  });
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function hideBOM() { document.getElementById('bom-section').style.display = 'none'; }
+function clearStatus() { const s = document.getElementById('smsg'); s.textContent = ''; }
+function showStatus(msg, color) {
+  const s = document.getElementById('smsg');
+  s.textContent = msg;
+  s.style.color = color;
+}
+
+// Init: show HW-only DLP addon by default
+document.getElementById('ao-dlp').style.display = '';
+</script>
+</body>
+</html>

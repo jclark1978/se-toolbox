@@ -2,7 +2,7 @@
 
 **Cross-product Bill of Materials generator for Fortinet deployments**
 
-![Version](https://img.shields.io/badge/version-2.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.0.1b-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Overview
 

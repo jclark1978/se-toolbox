@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiPAM BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--forti-text);
+  background: var(--forti-bg);
+  padding: 20px;
+}
+/* Page header */
+.page-header { display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+.page-icon { width:44px; height:44px; background:var(--forti-red); border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.page-icon svg { width:24px; height:24px; fill:white; }
+.page-title { font-size:20px; font-weight:700; color:var(--forti-text); line-height:1.2; }
+.page-subtitle { font-size:11px; color:var(--forti-text-muted); margin-top:2px; }
+
+/* Cards */
+.card { background:var(--forti-white); border:1px solid var(--forti-border); border-radius:4px; margin-bottom:14px; overflow:hidden; }
+.card-header { background:var(--forti-section-header); border-bottom:1px solid var(--forti-border); padding:9px 18px; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); }
+.card-body { padding:16px 18px; }
+
+/* Form elements */
+label { display:block; font-size:12px; font-weight:600; color:var(--forti-text-secondary); margin-bottom:4px; }
+label .req { color:var(--forti-red); }
+input[type=number], select {
+  background:white; border:1px solid var(--forti-input-border); border-radius:3px;
+  padding:6px 9px; font-size:13px; width:100%; color:var(--forti-text);
+  font-family: inherit;
+}
+input[type=number]:focus, select:focus {
+  border-color:var(--forti-red); outline:none;
+  box-shadow:0 0 0 2px rgba(238,49,36,.1);
+}
+input.invalid, select.invalid { border-color:var(--forti-red) !important; }
+.field-err { display:none; font-size:11px; color:var(--forti-red); margin-top:3px; }
+
+.grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(210px,100%),1fr)); gap:14px; }
+.field { }
+
+/* Deployment type tabs */
+.deploy-tabs { display:flex; gap:6px; flex-wrap:wrap; }
+.deploy-tab {
+  padding:6px 14px; border:1px solid var(--forti-border); border-radius:3px;
+  background:white; cursor:pointer; font-size:12px; font-weight:600;
+  color:var(--forti-text-secondary); transition:all .15s;
+}
+.deploy-tab:hover { border-color:var(--forti-red); color:var(--forti-text); }
+.deploy-tab.selected { border:2px solid var(--forti-red); background:#FEF8F8; color:var(--forti-red); }
+
+/* Model cards */
+.model-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:8px; }
+.model-card {
+  border:1px solid var(--forti-border); border-radius:4px; padding:10px 12px;
+  cursor:pointer; background:white; transition:all .15s;
+}
+.model-card:hover { border-color:var(--forti-red); }
+.model-card.selected { border:2px solid var(--forti-red); background:#FEF8F8; }
+.model-card .mc-name { font-weight:700; font-size:13px; }
+.model-card .mc-detail { font-size:11px; color:var(--forti-text-secondary); margin-top:2px; }
+
+/* Band indicator */
+.band-indicator {
+  background:var(--forti-info-bg); border:1px solid var(--forti-info-border);
+  border-radius:3px; padding:4px 10px; font-size:12px; color:var(--forti-info-text);
+  margin-top:4px; display:none;
+}
+.band-indicator code { font-family:'Courier New',monospace; font-weight:700; }
+
+/* Callouts */
+.callout { border-radius:3px; padding:9px 12px; font-size:12px; line-height:1.6; display:flex; gap:8px; margin-bottom:10px; }
+.info { background:var(--forti-info-bg); border:1px solid var(--forti-info-border); color:var(--forti-info-text); }
+.warn { background:var(--forti-warn-bg); border:1px solid var(--forti-warn-border); color:var(--forti-warn-text); }
+.callout-icon { flex-shrink:0; font-size:14px; }
+
+/* Section visibility */
+.section-hidden { display:none !important; }
+
+/* Checkbox rows */
+.check-row { display:flex; align-items:flex-start; gap:8px; padding:7px 0; border-bottom:1px solid var(--forti-border); }
+.check-row:last-child { border-bottom:none; }
+.check-row input[type=checkbox] { margin-top:2px; flex-shrink:0; accent-color:var(--forti-red); }
+.check-label { font-size:12px; font-weight:600; color:var(--forti-text); }
+.check-desc { font-size:11px; color:var(--forti-text-muted); }
+.check-row.disabled { opacity:0.4; pointer-events:none; }
+
+/* UG packer result */
+.ug-preview { font-size:11px; color:var(--forti-info-text); background:var(--forti-info-bg); border:1px solid var(--forti-info-border); border-radius:3px; padding:5px 9px; margin-top:4px; display:none; }
+
+/* Action buttons */
+.actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.btn { padding:7px 16px; border:none; border-radius:3px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+.btn-primary { background:var(--forti-red); color:white; }
+.btn-primary:hover { background:#c9281d; }
+.btn-add { background:#2E7D32; color:white; }
+.btn-add:hover { background:#1b5e20; }
+.btn-reset { background:white; color:var(--forti-text); border:1px solid var(--forti-border); }
+.btn-reset:hover { background:var(--forti-bg); }
+.btn-sm { padding:5px 10px; font-size:11px; font-weight:600; }
+#smsg { font-size:12px; font-weight:600; }
+
+/* BOM table */
+#bom-section { display:none; }
+#bom-section .card-header { display:flex; align-items:center; justify-content:space-between; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th {
+  background:var(--forti-table-head); border:1px solid var(--forti-border);
+  padding:7px 11px; font-size:10px; text-transform:uppercase;
+  letter-spacing:.05em; color:var(--forti-text-secondary); text-align:left;
+}
+tbody td { border:1px solid var(--forti-border); padding:7px 11px; vertical-align:top; }
+tbody tr:nth-child(even) td { background:var(--forti-table-stripe); }
+.section-row td {
+  background:#EAECF3 !important; font-weight:700; font-size:10px;
+  text-transform:uppercase; letter-spacing:.06em;
+  color:var(--forti-text-secondary); padding:5px 11px;
+  border-top:2px solid #C5CAD9;
+}
+.badge { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; border-radius:2px; padding:1px 4px; display:inline-block; white-space:nowrap; }
+.badge-req  { background:#FEF0EE; color:#C0392B; border:1px solid #F5C6C2; }
+.badge-opt  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.badge-mand { background:#FFF8EE; color:#8A5800; border:1px solid #F5D9A0; }
+.badge-inc  { background:#EEF3FF; color:#3557A5; border:1px solid #B8CBF5; }
+.sku-cell { font-family:'Courier New',monospace; font-size:11px; color:#1A4E82; }
+.nc { color:var(--forti-text-muted); }
+.qty-cell { text-align:center; font-weight:600; }
+
+/* Overview table */
+.overview-table { width:100%; border-collapse:collapse; font-size:12px; }
+.overview-table th { background:var(--forti-table-head); border:1px solid var(--forti-border); padding:7px 11px; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--forti-text-secondary); text-align:left; }
+.overview-table td { border:1px solid var(--forti-border); padding:7px 11px; vertical-align:top; }
+.overview-table tr:nth-child(even) td { background:var(--forti-table-stripe); }
+.check-y { color:#2E7D32; font-weight:700; }
+.check-n { color:#ccc; }
+</style>
+</head>
+<body>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 2.61 1.36 4.92 3.43 6.27L9 20h6l.57-4.73C17.64 13.92 19 11.61 19 9c0-3.87-3.13-7-7-7zm0 2a5 5 0 010 10A5 5 0 0112 4zm-1 13h2l-.3 2h-1.4L11 17z"/>
+    </svg>
+  </div>
+  <div>
+    <div class="page-title">FortiPAM — BOM Generator</div>
+    <div class="page-subtitle">Privileged Access Management · Ordering Guide FPA-OG-R12-20260219</div>
+  </div>
+</div>
+
+<!-- Product Overview -->
+<div class="card">
+  <div class="card-header">Product Overview &amp; Licensing Models</div>
+  <div class="card-body">
+    <div class="callout info" style="margin-bottom:12px;">
+      <span class="callout-icon">ℹ</span>
+      <div>FortiPAM offers three mutually exclusive licensing models. HA nodes must use the <strong>same license type</strong>. VM user licenses are subscription-based (1/3/5 yr); HW user upgrade packs are perpetual.</div>
+    </div>
+    <table class="overview-table">
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th>Hardware Appliance</th>
+          <th>VM – Named Users (SRA)</th>
+          <th>VM – Concurrent Sessions (SRA)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Form Factor</strong></td><td>1000G (50 users), 3000G (100 users)</td><td>Virtual Machine</td><td>Virtual Machine</td></tr>
+        <tr><td><strong>User Model</strong></td><td>Named users (perpetual UG packs)</td><td>Named users (subscription) · MOQ 5</td><td>Concurrent sessions (subscription) · MOQ 1</td></tr>
+        <tr><td><strong>Max Users</strong></td><td>3000 enabled users</td><td>3000 enabled users</td><td>3000 concurrent sessions</td></tr>
+        <tr><td><strong>AV/DLP Included</strong></td><td class="check-n">Optional add-on</td><td class="check-y">✓ Included</td><td class="check-y">✓ Included</td></tr>
+        <tr><td><strong>FortiCare Premium Included</strong></td><td class="check-n">Optional add-on</td><td class="check-y">✓ Included</td><td class="check-y">✓ Included</td></tr>
+        <tr><td><strong>FortiClient VRS / ZTNA Included</strong></td><td class="check-n">—</td><td class="check-y">✓ Included</td><td class="check-y">✓ Included</td></tr>
+        <tr><td><strong>HA Support</strong></td><td class="check-y">✓ Users pooled</td><td class="check-y">✓ Users pooled (FPA 1.5+)</td><td class="check-y">✓ Sessions pooled (FPA 1.5+)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Step 1: Deployment Type -->
+<div class="card">
+  <div class="card-header">Step 1 — Deployment Type</div>
+  <div class="card-body">
+    <label>Select Licensing Model <span class="req">*</span></label>
+    <div class="deploy-tabs" style="margin-top:6px;">
+      <div class="deploy-tab selected" id="tab-hw" onclick="setDeploy('hw')">Hardware Appliance</div>
+      <div class="deploy-tab" id="tab-vm-named" onclick="setDeploy('vm-named')">VM — Named Users</div>
+      <div class="deploy-tab" id="tab-vm-conc" onclick="setDeploy('vm-conc')">VM — Concurrent Sessions</div>
+    </div>
+    <div id="mutually-exclusive-note" class="callout warn" style="margin-top:10px;">
+      <span class="callout-icon">⚠</span>
+      <div>These licensing models are <strong>mutually exclusive</strong> and cannot interoperate. Each HA node must use the same license type.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 2: Hardware Configuration (shown when deploy=hw) -->
+<div class="card" id="section-hw">
+  <div class="card-header">Step 2 — Hardware Model &amp; Configuration</div>
+  <div class="card-body">
+    <label style="margin-bottom:8px;">Select Appliance Model <span class="req">*</span></label>
+    <div class="model-grid" id="hw-model-grid">
+      <div class="model-card selected" id="mc-1000g" onclick="selectHWModel('1000g')">
+        <div class="mc-name">FPA-1000G</div>
+        <div class="mc-detail">FortiPAM 1000G · 50 users included</div>
+        <div class="mc-detail" style="margin-top:4px; color:#9BA5BA;">Desktop · Max 3000 users</div>
+      </div>
+      <div class="model-card" id="mc-3000g" onclick="selectHWModel('3000g')">
+        <div class="mc-name">FPA-3000G</div>
+        <div class="mc-detail">FortiPAM 3000G · 100 users included</div>
+        <div class="mc-detail" style="margin-top:4px; color:#9BA5BA;">1U Rack · Max 3000 users</div>
+      </div>
+    </div>
+    <div id="hw-model-err" class="field-err">Please select a hardware model.</div>
+
+    <div class="grid" style="margin-top:16px;">
+      <div class="field">
+        <label>Quantity of Appliances <span class="req">*</span></label>
+        <input type="number" id="hw-qty" value="1" min="1" max="100" oninput="onHWChange()">
+        <div id="hw-qty-err" class="field-err">Quantity must be at least 1.</div>
+      </div>
+      <div class="field">
+        <label>Total Users Required</label>
+        <input type="number" id="hw-users" value="" min="0" max="3000" placeholder="e.g. 200" oninput="onHWChange()">
+        <div id="hw-users-err" class="field-err">Max 3000 users per platform.</div>
+        <div id="hw-ug-preview" class="ug-preview"></div>
+      </div>
+      <div class="field">
+        <label>HA Configuration?</label>
+        <select id="hw-ha" onchange="onHWChange()">
+          <option value="no">No — Standalone</option>
+          <option value="yes">Yes — HA Pair (×2 appliances)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 2: VM Named Users (shown when deploy=vm-named) -->
+<div class="card section-hidden" id="section-vm-named">
+  <div class="card-header">Step 2 — VM Named User Configuration</div>
+  <div class="card-body">
+    <div class="callout info" style="margin-bottom:12px;">
+      <span class="callout-icon">ℹ</span>
+      <div>Minimum order quantity is <strong>5 named users</strong>. Users are pooled across HA/DR nodes (FortiPAM 1.5+). Each HA node needs its own license.</div>
+    </div>
+    <div class="grid">
+      <div class="field">
+        <label>Total Named Users <span class="req">*</span></label>
+        <input type="number" id="vmn-users" value="" min="5" max="3000" placeholder="e.g. 25 (min 5)" oninput="onVMNChange()">
+        <div id="vmn-users-err" class="field-err">Minimum 5 users required.</div>
+        <div id="vmn-band-indicator" class="band-indicator">
+          Band: <code id="vmn-band-text">FC1</code> · <span id="vmn-band-range">5–9 users</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Number of VM Nodes</label>
+        <input type="number" id="vmn-nodes" value="1" min="1" max="10" placeholder="1 = standalone; 2 = HA" oninput="onVMNChange()">
+        <div style="font-size:11px; color:var(--forti-text-muted); margin-top:3px;">For HA: enter users per node separately (users are pooled).</div>
+      </div>
+    </div>
+    <div id="vmn-preview" class="ug-preview" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- Step 2: VM Concurrent Sessions (shown when deploy=vm-conc) -->
+<div class="card section-hidden" id="section-vm-conc">
+  <div class="card-header">Step 2 — VM Concurrent Session Configuration</div>
+  <div class="card-body">
+    <div class="callout info" style="margin-bottom:12px;">
+      <span class="callout-icon">ℹ</span>
+      <div>Minimum order quantity is <strong>1 concurrent session</strong>. A single user logged in from two terminals counts as 2 sessions. No restriction on number of created users. Sessions are pooled across HA/DR nodes (FortiPAM 1.5+).</div>
+    </div>
+    <div class="grid">
+      <div class="field">
+        <label>Total Concurrent Sessions <span class="req">*</span></label>
+        <input type="number" id="vmc-sessions" value="" min="1" max="3000" placeholder="e.g. 10 (min 1)" oninput="onVMCChange()">
+        <div id="vmc-sessions-err" class="field-err">Minimum 1 concurrent session required.</div>
+        <div id="vmc-band-indicator" class="band-indicator">
+          Band: <code id="vmc-band-text">FC1</code> · <span id="vmc-band-range">1–9 sessions</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Number of VM Nodes</label>
+        <input type="number" id="vmc-nodes" value="1" min="1" max="10" placeholder="1 = standalone; 2 = HA" oninput="onVMCChange()">
+        <div style="font-size:11px; color:var(--forti-text-muted); margin-top:3px;">For HA: enter sessions per node separately (sessions are pooled).</div>
+      </div>
+    </div>
+    <div id="vmc-preview" class="ug-preview" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- Step 3: Add-on Options (HW only) -->
+<div class="card" id="section-hw-addons">
+  <div class="card-header">Step 3 — Hardware Add-on Subscriptions</div>
+  <div class="card-body">
+    <div class="callout warn" style="margin-bottom:10px;">
+      <span class="callout-icon">⚠</span>
+      <div>AV/DLP and FortiCare Premium Support are <strong>not included</strong> with hardware appliances — they must be ordered separately. VM licenses include both.</div>
+    </div>
+    <div id="hw-addon-list">
+      <div class="check-row" id="row-avdlp">
+        <input type="checkbox" id="chk-avdlp" checked>
+        <div>
+          <div class="check-label">Antivirus &amp; Data Leak Prevention (AV/DLP)</div>
+          <div class="check-desc nc" id="avdlp-sku-hint">FC-10-PA1KG-681-02-DD — per appliance</div>
+        </div>
+      </div>
+      <div class="check-row" id="row-care">
+        <input type="checkbox" id="chk-care" checked>
+        <div>
+          <div class="check-label">FortiCare Premium Support</div>
+          <div class="check-desc nc" id="care-sku-hint">FC-10-PA1KG-247-02-DD — per appliance</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="actions">
+  <button class="btn btn-primary" onclick="generateBOM()">▶ Preview BOM</button>
+  <button class="btn btn-add" onclick="addToProjectBOM()">＋ Add to Project BOM</button>
+  <button class="btn btn-reset" onclick="resetForm()">↺ Reset</button>
+  <span id="smsg"></span>
+</div>
+
+<!-- BOM Preview -->
+<div id="bom-section" class="card">
+  <div class="card-header">
+    <span>BOM Preview</span>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-reset btn-sm" onclick="copyTSV()">Copy TSV</button>
+      <button class="btn btn-reset btn-sm" onclick="window.print()">Print</button>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0;">
+    <div id="bom-meta" style="padding:10px 14px; background:var(--forti-info-bg); border-bottom:1px solid var(--forti-info-border); font-size:12px; color:var(--forti-info-text);"></div>
+    <table id="bom-table">
+      <thead>
+        <tr>
+          <th style="width:200px;">Part Number</th>
+          <th>Description</th>
+          <th style="width:50px; text-align:center;">Qty</th>
+          <th style="width:80px;">Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+/* ===== STATE ===== */
+let _deploy = 'hw';
+let _hwModel = '1000g';
+let _lastRows = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+/* ===== LOOKUP DATA ===== */
+const HW_MODELS = {
+  '1000g': {
+    hwSku:   'FPA-1000G',
+    hwDesc:  'FortiPAM-1000G Privileged Access Management server for up to 50 users',
+    baseUsers: 50,
+    avdlpSku: 'FC-10-PA1KG-681-02-DD',
+    avdlpDesc:'Antivirus and Data Leak Prevention protection for FortiPAM-1000G',
+    careSku:  'FC-10-PA1KG-247-02-DD',
+    careDesc: 'FortiCare Premium Support for FortiPAM-1000G',
+    modelCode:'PA1KG',
+  },
+  '3000g': {
+    hwSku:   'FPA-3000G',
+    hwDesc:  'FortiPAM-3000G Privileged Access Management server for up to 100 users',
+    baseUsers: 100,
+    avdlpSku: 'FC-10-PA3KG-681-02-DD',
+    avdlpDesc:'Antivirus and Data Leak Prevention protection for FortiPAM-3000G',
+    careSku:  'FC-10-PA3KG-247-02-DD',
+    careDesc: 'FortiCare Premium Support for FortiPAM-3000G',
+    modelCode:'PA3KG',
+  }
+};
+
+// HW User Upgrade packs (largest first for greedy packing)
+const HW_UG_TIERS = [
+  { users:200, sku:'FPM-HW-200UG', desc:'Adds 200 users to FortiPAM HW models\' user limit. Stackable. Support included.' },
+  { users:100, sku:'FPM-HW-100UG', desc:'Adds 100 users to FortiPAM HW models\' user limit. Stackable. Support included.' },
+  { users: 50, sku:'FPM-HW-50UG',  desc:'Adds 50 users to FortiPAM HW models\' user limit. Stackable. Support included.' },
+  { users: 25, sku:'FPM-HW-25UG',  desc:'Adds 25 users to FortiPAM HW models\' user limit. Stackable. Support included.' },
+];
+
+// VM Named User bands (FC1-FC6)
+const VMN_BANDS = [
+  { band:'FC1', min:5,   max:9,   sku:'FC1-10-PAVUL-591-02-DD', desc:'FortiPAM VM – Named Users (5–9), incl. FortiClient VRS, AMP, FortiCare Premium' },
+  { band:'FC2', min:10,  max:24,  sku:'FC2-10-PAVUL-591-02-DD', desc:'FortiPAM VM – Named Users (10–24), incl. FortiClient VRS, AMP, FortiCare Premium' },
+  { band:'FC3', min:25,  max:49,  sku:'FC3-10-PAVUL-591-02-DD', desc:'FortiPAM VM – Named Users (25–49), incl. FortiClient VRS, AMP, FortiCare Premium' },
+  { band:'FC4', min:50,  max:99,  sku:'FC4-10-PAVUL-591-02-DD', desc:'FortiPAM VM – Named Users (50–99), incl. FortiClient VRS, AMP, FortiCare Premium' },
+  { band:'FC5', min:100, max:249, sku:'FC5-10-PAVUL-591-02-DD', desc:'FortiPAM VM – Named Users (100–249), incl. FortiClient VRS, AMP, FortiCare Premium' },
+  { band:'FC6', min:250, max:Infinity, sku:'FC6-10-PAVUL-591-02-DD', desc:'FortiPAM VM – Named Users (250+), incl. FortiClient VRS, AMP, FortiCare Premium' },
+];
+
+// VM Concurrent Session bands (FC1-FC6)
+const VMC_BANDS = [
+  { band:'FC1', min:1,   max:9,   sku:'FC1-10-PAVUL-1303-02-DD', desc:'FortiPAM VM – Concurrent Sessions (1–9), incl. FortiClient VRS PAM+SRA, AMP, FortiCare Premium' },
+  { band:'FC2', min:10,  max:24,  sku:'FC2-10-PAVUL-1303-02-DD', desc:'FortiPAM VM – Concurrent Sessions (10–24), incl. FortiClient VRS PAM+SRA, AMP, FortiCare Premium' },
+  { band:'FC3', min:25,  max:49,  sku:'FC3-10-PAVUL-1303-02-DD', desc:'FortiPAM VM – Concurrent Sessions (25–49), incl. FortiClient VRS PAM+SRA, AMP, FortiCare Premium' },
+  { band:'FC4', min:50,  max:99,  sku:'FC4-10-PAVUL-1303-02-DD', desc:'FortiPAM VM – Concurrent Sessions (50–99), incl. FortiClient VRS PAM+SRA, AMP, FortiCare Premium' },
+  { band:'FC5', min:100, max:249, sku:'FC5-10-PAVUL-1303-02-DD', desc:'FortiPAM VM – Concurrent Sessions (100–249), incl. FortiClient VRS PAM+SRA, AMP, FortiCare Premium' },
+  { band:'FC6', min:250, max:Infinity, sku:'FC6-10-PAVUL-1303-02-DD', desc:'FortiPAM VM – Concurrent Sessions (250+), incl. FortiClient VRS PAM+SRA, AMP, FortiCare Premium' },
+];
+
+/* ===== DEPLOY TOGGLE ===== */
+function setDeploy(type) {
+  _deploy = type;
+  ['hw','vm-named','vm-conc'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('selected', t === type);
+  });
+  document.getElementById('section-hw').classList.toggle('section-hidden', type !== 'hw');
+  document.getElementById('section-hw-addons').classList.toggle('section-hidden', type !== 'hw');
+  document.getElementById('section-vm-named').classList.toggle('section-hidden', type !== 'vm-named');
+  document.getElementById('section-vm-conc').classList.toggle('section-hidden', type !== 'vm-conc');
+  hideBOM();
+  clearStatus();
+}
+
+/* ===== HW MODEL SELECT ===== */
+function selectHWModel(model) {
+  _hwModel = model;
+  document.getElementById('mc-1000g').classList.toggle('selected', model === '1000g');
+  document.getElementById('mc-3000g').classList.toggle('selected', model === '3000g');
+  updateHWAddonHints();
+  onHWChange();
+}
+
+function updateHWAddonHints() {
+  const m = HW_MODELS[_hwModel];
+  document.getElementById('avdlp-sku-hint').textContent = m.avdlpSku + ' — per appliance';
+  document.getElementById('care-sku-hint').textContent  = m.careSku  + ' — per appliance';
+}
+
+/* ===== HW CHANGE ===== */
+function onHWChange() {
+  const m = HW_MODELS[_hwModel];
+  const qty = parseInt(document.getElementById('hw-qty').value) || 1;
+  const totalUsersReq = parseInt(document.getElementById('hw-users').value) || 0;
+  const ha = document.getElementById('hw-ha').value === 'yes';
+
+  // Effective appliances
+  const appliances = ha ? Math.max(qty, 2) : qty;
+  const baseUsers = m.baseUsers * appliances;
+
+  const preview = document.getElementById('hw-ug-preview');
+  if (totalUsersReq > 0 && totalUsersReq > baseUsers) {
+    const ugNeeded = totalUsersReq - baseUsers;
+    const packed = packUG(ugNeeded);
+    if (packed.length > 0) {
+      preview.style.display = 'block';
+      preview.textContent = 'UG packs needed: ' + packed.map(p => p.qty + '× ' + p.sku).join(', ');
+    }
+  } else {
+    preview.style.display = 'none';
+  }
+  hideBOM();
+}
+
+/* ===== VM NAMED CHANGE ===== */
+function onVMNChange() {
+  const users = parseInt(document.getElementById('vmn-users').value);
+  const nodes = parseInt(document.getElementById('vmn-nodes').value) || 1;
+  const bi = document.getElementById('vmn-band-indicator');
+  const bandText = document.getElementById('vmn-band-text');
+  const bandRange = document.getElementById('vmn-band-range');
+  const preview = document.getElementById('vmn-preview');
+
+  if (users >= 5) {
+    const b = VMN_BANDS.find(b => users >= b.min && users <= b.max);
+    if (b) {
+      bi.style.display = 'block';
+      bandText.textContent = b.band;
+      bandRange.textContent = (b.max === Infinity ? b.min+'+ users' : b.min+'–'+b.max+' users');
+      preview.style.display = 'block';
+      preview.textContent = nodes + ' node(s) × ' + users + ' users (' + b.band + ') → ' + nodes + '× ' + b.sku;
+    }
+  } else {
+    bi.style.display = 'none';
+    preview.style.display = 'none';
+  }
+  hideBOM();
+}
+
+/* ===== VM CONCURRENT CHANGE ===== */
+function onVMCChange() {
+  const sessions = parseInt(document.getElementById('vmc-sessions').value);
+  const nodes = parseInt(document.getElementById('vmc-nodes').value) || 1;
+  const bi = document.getElementById('vmc-band-indicator');
+  const bandText = document.getElementById('vmc-band-text');
+  const bandRange = document.getElementById('vmc-band-range');
+  const preview = document.getElementById('vmc-preview');
+
+  if (sessions >= 1) {
+    const b = VMC_BANDS.find(b => sessions >= b.min && sessions <= b.max);
+    if (b) {
+      bi.style.display = 'block';
+      bandText.textContent = b.band;
+      bandRange.textContent = (b.max === Infinity ? b.min+'+ sessions' : b.min+'–'+b.max+' sessions');
+      preview.style.display = 'block';
+      preview.textContent = nodes + ' node(s) × ' + sessions + ' sessions (' + b.band + ') → ' + nodes + '× ' + b.sku;
+    }
+  } else {
+    bi.style.display = 'none';
+    preview.style.display = 'none';
+  }
+  hideBOM();
+}
+
+/* ===== UG PACKER ===== */
+function packUG(needed) {
+  let remaining = needed;
+  const result = [];
+  for (const tier of HW_UG_TIERS) {
+    const qty = Math.floor(remaining / tier.users);
+    if (qty > 0) {
+      result.push({ ...tier, qty });
+      remaining -= qty * tier.users;
+    }
+  }
+  if (remaining > 0) {
+    const smallest = HW_UG_TIERS[HW_UG_TIERS.length - 1];
+    result.push({ ...smallest, qty: 1 });
+  }
+  return result;
+}
+
+/* ===== GENERATE BOM ===== */
+function generateBOM() {
+  clearStatus();
+  let valid = true;
+
+  if (_deploy === 'hw') {
+    // Validate
+    const qty = parseInt(document.getElementById('hw-qty').value);
+    const totalUsers = parseInt(document.getElementById('hw-users').value) || 0;
+
+    if (!qty || qty < 1) {
+      showErr('hw-qty', 'hw-qty-err', true); valid = false;
+    } else { showErr('hw-qty', 'hw-qty-err', false); }
+
+    if (totalUsers > 3000) {
+      showErr('hw-users', 'hw-users-err', true); valid = false;
+    } else { showErr('hw-users', 'hw-users-err', false); }
+
+    if (!valid) return false;
+
+    const m = HW_MODELS[_hwModel];
+    const ha = document.getElementById('hw-ha').value === 'yes';
+    const appliances = ha ? Math.max(qty, 2) : qty;
+    const baseUsers = m.baseUsers * appliances;
+    const addAvdlp = document.getElementById('chk-avdlp').checked;
+    const addCare = document.getElementById('chk-care').checked;
+
+    const rows = [];
+    rows.push({ section: 'Hardware Appliances' });
+    rows.push({
+      sku: m.hwSku,
+      desc: m.hwDesc,
+      qty: appliances,
+      kind: 'req',
+      note: ha ? 'HA pair' : 'Standalone'
+    });
+
+    // User Upgrades
+    if (totalUsers > baseUsers) {
+      const ugNeeded = totalUsers - baseUsers;
+      const packed = packUG(ugNeeded);
+      rows.push({ section: 'User Upgrade Packs (Perpetual · Support Included)' });
+      for (const p of packed) {
+        rows.push({
+          sku: p.sku,
+          desc: p.desc,
+          qty: p.qty,
+          kind: 'req',
+          note: '+' + (p.users * p.qty) + ' users · largest-first packing'
+        });
+      }
+    } else if (totalUsers > 0 && totalUsers <= baseUsers) {
+      rows.push({ section: 'User Upgrade Packs' });
+      rows.push({
+        sku: '⚠',
+        desc: 'No user upgrade packs required — ' + baseUsers + ' base users from ' + appliances + ' appliance(s) cover requirement of ' + totalUsers + ' users.',
+        qty: null,
+        kind: 'note',
+        note: ''
+      });
+    }
+
+    // Subscriptions
+    if (addAvdlp || addCare) {
+      rows.push({ section: 'Subscriptions & Support' });
+      if (addAvdlp) {
+        rows.push({
+          sku: m.avdlpSku,
+          desc: m.avdlpDesc,
+          qty: appliances,
+          kind: 'mand',
+          note: 'Per appliance · co-term -DD'
+        });
+      }
+      if (addCare) {
+        rows.push({
+          sku: m.careSku,
+          desc: m.careDesc,
+          qty: appliances,
+          kind: 'mand',
+          note: 'Per appliance · co-term -DD'
+        });
+      }
+    }
+
+    if (!addAvdlp || !addCare) {
+      rows.push({ section: 'Reminders' });
+      if (!addAvdlp) rows.push({ sku:'⚠', desc:'AV/DLP subscription not included in this BOM. Add ' + m.avdlpSku + ' if required.', qty:null, kind:'note', note:'' });
+      if (!addCare)  rows.push({ sku:'⚠', desc:'FortiCare Premium Support not included in this BOM. Add ' + m.careSku + ' if required.', qty:null, kind:'note', note:'' });
+    }
+
+    _lastLabel = m.hwSku + (appliances > 1 ? ' ×' + appliances : '') + (totalUsers ? ' / ' + totalUsers + ' users' : '');
+    _lastMeta  = {
+      'Deployment': 'Hardware Appliance' + (ha ? ' (HA)' : ''),
+      'Model': m.hwSku,
+      'Appliances': appliances,
+      'Base Users': baseUsers,
+      'Total Users': totalUsers || baseUsers,
+      'AV/DLP': addAvdlp ? 'Included' : 'Not ordered',
+      'FortiCare Premium': addCare ? 'Included' : 'Not ordered',
+    };
+    _lastRows = rows;
+
+  } else if (_deploy === 'vm-named') {
+    const users = parseInt(document.getElementById('vmn-users').value);
+    const nodes = parseInt(document.getElementById('vmn-nodes').value) || 1;
+
+    if (!users || users < 5) {
+      showErr('vmn-users', 'vmn-users-err', true); valid = false;
+    } else { showErr('vmn-users', 'vmn-users-err', false); }
+
+    if (users > 3000) {
+      showErr('vmn-users', 'vmn-users-err', true); valid = false;
+    }
+
+    if (!valid) return false;
+
+    const b = VMN_BANDS.find(b => users >= b.min && users <= b.max);
+    const rows = [];
+    rows.push({ section: 'VM Named User Licenses (Subscription · All-Inclusive)' });
+    rows.push({
+      sku: b.sku,
+      desc: b.desc,
+      qty: nodes,
+      kind: 'req',
+      note: b.band + ' · ' + users + ' named users · per VM node · incl. AMP, FortiCare, FortiClient VRS'
+    });
+
+    if (nodes > 1) {
+      rows.push({ sku:'⚠', desc:'HA/DR: Each VM node needs its own license. Users are pooled across nodes (FortiPAM 1.5+). Ensure all nodes use the same license type.', qty:null, kind:'note', note:'' });
+    }
+
+    _lastLabel = 'FortiPAM VM Named ×' + nodes + ' / ' + users + ' users (' + b.band + ')';
+    _lastMeta  = {
+      'Deployment': 'VM – Named Users' + (nodes > 1 ? ' (HA/DR)' : ''),
+      'Users per Node': users,
+      'VM Nodes': nodes,
+      'Band': b.band,
+      'Includes': 'AMP · FortiCare Premium · FortiClient VRS',
+    };
+    _lastRows = rows;
+
+  } else if (_deploy === 'vm-conc') {
+    const sessions = parseInt(document.getElementById('vmc-sessions').value);
+    const nodes = parseInt(document.getElementById('vmc-nodes').value) || 1;
+
+    if (!sessions || sessions < 1) {
+      showErr('vmc-sessions', 'vmc-sessions-err', true); valid = false;
+    } else { showErr('vmc-sessions', 'vmc-sessions-err', false); }
+
+    if (sessions > 3000) {
+      showErr('vmc-sessions', 'vmc-sessions-err', true); valid = false;
+    }
+
+    if (!valid) return false;
+
+    const b = VMC_BANDS.find(b => sessions >= b.min && sessions <= b.max);
+    const rows = [];
+    rows.push({ section: 'VM Concurrent Session Licenses (Subscription · All-Inclusive)' });
+    rows.push({
+      sku: b.sku,
+      desc: b.desc,
+      qty: nodes,
+      kind: 'req',
+      note: b.band + ' · ' + sessions + ' concurrent sessions · per VM node · incl. AMP, FortiCare, FortiClient VRS PAM+SRA'
+    });
+
+    if (nodes > 1) {
+      rows.push({ sku:'⚠', desc:'HA/DR: Each VM node needs its own license. Sessions are pooled across nodes (FortiPAM 1.5+). Ensure all nodes use the same license type.', qty:null, kind:'note', note:'' });
+    }
+
+    _lastLabel = 'FortiPAM VM Concurrent ×' + nodes + ' / ' + sessions + ' sessions (' + b.band + ')';
+    _lastMeta  = {
+      'Deployment': 'VM – Concurrent Sessions' + (nodes > 1 ? ' (HA/DR)' : ''),
+      'Sessions per Node': sessions,
+      'VM Nodes': nodes,
+      'Band': b.band,
+      'Includes': 'AMP · FortiCare Premium · FortiClient VRS (PAM+SRA)',
+    };
+    _lastRows = rows;
+  }
+
+  renderBOM(_lastRows);
+  return true;
+}
+
+/* ===== RENDER BOM ===== */
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+
+  for (const row of rows) {
+    const tr = document.createElement('tr');
+    if (row.section !== undefined) {
+      tr.className = 'section-row';
+      tr.innerHTML = '<td colspan="5">' + escH(row.section) + '</td>';
+    } else {
+      const badgeMap = { req:'badge-req', opt:'badge-opt', mand:'badge-mand', inc:'badge-inc', note:'' };
+      const labelMap = { req:'Required', opt:'Optional', mand:'Mandatory', inc:'Included', note:'' };
+      const badgeHTML = row.kind && row.kind !== 'note'
+        ? '<span class="badge ' + badgeMap[row.kind] + '">' + labelMap[row.kind] + '</span>'
+        : '';
+      tr.innerHTML =
+        '<td class="sku-cell">' + escH(row.sku) + '</td>' +
+        '<td class="nc">' + escH(row.desc) + '</td>' +
+        '<td class="qty-cell">' + (row.qty !== null && row.qty !== undefined ? row.qty : '—') + '</td>' +
+        '<td>' + badgeHTML + '</td>' +
+        '<td class="nc" style="font-size:11px;">' + escH(row.note || '') + '</td>';
+    }
+    tbody.appendChild(tr);
+  }
+
+  // Meta bar
+  const meta = document.getElementById('bom-meta');
+  meta.innerHTML = Object.entries(_lastMeta).map(([k,v]) => '<strong>' + escH(k) + ':</strong> ' + escH(String(v))).join(' &nbsp;·&nbsp; ');
+
+  document.getElementById('bom-section').style.display = 'block';
+  document.getElementById('bom-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ===== ADD TO PROJECT BOM ===== */
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'FORTIBOM_ADD',
+      product: 'FortiPAM',
+      label: _lastLabel,
+      rows:  _lastRows,
+      meta:  _lastMeta
+    }, '*');
+    const smsg = document.getElementById('smsg');
+    smsg.textContent = '✓ Added to Project BOM.';
+    smsg.style.color = '#2E7D32';
+  } else {
+    const smsg = document.getElementById('smsg');
+    smsg.textContent = '✓ BOM generated (standalone mode — no parent frame).';
+    smsg.style.color = '#3557A5';
+  }
+}
+
+/* ===== RESET ===== */
+function resetForm() {
+  setDeploy('hw');
+  selectHWModel('1000g');
+  document.getElementById('hw-qty').value = '1';
+  document.getElementById('hw-users').value = '';
+  document.getElementById('hw-ha').value = 'no';
+  document.getElementById('chk-avdlp').checked = true;
+  document.getElementById('chk-care').checked = true;
+  document.getElementById('vmn-users').value = '';
+  document.getElementById('vmn-nodes').value = '1';
+  document.getElementById('vmc-sessions').value = '';
+  document.getElementById('vmc-nodes').value = '1';
+  document.getElementById('vmn-band-indicator').style.display = 'none';
+  document.getElementById('vmc-band-indicator').style.display = 'none';
+  document.getElementById('vmn-preview').style.display = 'none';
+  document.getElementById('vmc-preview').style.display = 'none';
+  document.getElementById('hw-ug-preview').style.display = 'none';
+  hideBOM();
+  clearStatus();
+}
+
+/* ===== COPY TSV ===== */
+function copyTSV() {
+  let tsv = 'Part Number\tDescription\tQty\tType\tNotes\n';
+  for (const row of _lastRows) {
+    if (row.section !== undefined) {
+      tsv += '[SECTION]\t' + row.section + '\t\t\t\n';
+    } else {
+      tsv += [row.sku, row.desc, row.qty ?? '', row.kind ?? '', row.note ?? ''].join('\t') + '\n';
+    }
+  }
+  navigator.clipboard.writeText(tsv).then(() => {
+    const smsg = document.getElementById('smsg');
+    smsg.textContent = '✓ Copied to clipboard.';
+    smsg.style.color = '#3557A5';
+  });
+}
+
+/* ===== HELPERS ===== */
+function hideBOM() {
+  document.getElementById('bom-section').style.display = 'none';
+}
+function clearStatus() {
+  const smsg = document.getElementById('smsg');
+  smsg.textContent = '';
+}
+function showErr(fieldId, errId, show) {
+  const f = document.getElementById(fieldId);
+  const e = document.getElementById(errId);
+  if (show) { f.classList.add('invalid'); e.style.display = 'block'; }
+  else       { f.classList.remove('invalid'); e.style.display = 'none'; }
+}
+function escH(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ===== INIT ===== */
+updateHWAddonHints();
+</script>
+</body>
+</html>

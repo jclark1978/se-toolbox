@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiSOAR BOM Generator</title>
+<style>
+:root {
+  --forti-red:    #EE3124;
+  --forti-border: #DDE1E9;
+  --forti-bg:     #F2F4F7;
+  --forti-white:  #FFFFFF;
+  --forti-text:   #2A2F3A;
+  --forti-text-secondary: #6B7589;
+  --forti-text-muted:     #9BA5BA;
+  --forti-section-header: #F7F9FC;
+  --forti-input-border:   #C8CDD9;
+  --forti-table-head:     #EEF1F6;
+  --forti-table-stripe:   #F7F9FC;
+  --forti-info-bg:    #EEF3FF;
+  --forti-info-border:#B8CBF5;
+  --forti-info-text:  #3557A5;
+  --forti-warn-bg:    #FFF8EE;
+  --forti-warn-border:#F5D9A0;
+  --forti-warn-text:  #8A5800;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--forti-text);
+  background: var(--forti-bg);
+  padding: 20px;
+}
+
+/* Page header */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.page-icon {
+  background: var(--forti-red);
+  color: white;
+  width: 42px;
+  height: 42px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.page-title { font-size: 18px; font-weight: 700; color: var(--forti-text); line-height: 1.2; }
+.page-subtitle { font-size: 11px; color: var(--forti-text-muted); margin-top: 2px; }
+
+/* Cards */
+.card {
+  background: var(--forti-white);
+  border: 1px solid var(--forti-border);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.card-header {
+  background: var(--forti-section-header);
+  border-bottom: 1px solid var(--forti-border);
+  padding: 9px 18px;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+}
+.card-body { padding: 16px 18px; }
+
+/* Grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); gap: 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* Form elements */
+label { display: block; font-size: 12px; font-weight: 600; color: var(--forti-text-secondary); margin-bottom: 4px; }
+label .req { color: var(--forti-red); margin-left: 2px; }
+input[type=number], select {
+  background: white;
+  border: 1px solid var(--forti-input-border);
+  border-radius: 3px;
+  padding: 6px 9px;
+  font-size: 13px;
+  width: 100%;
+  font-family: inherit;
+  color: var(--forti-text);
+}
+input[type=number]:focus, select:focus {
+  outline: none;
+  border-color: var(--forti-red);
+  box-shadow: 0 0 0 2px rgba(238,49,36,.1);
+}
+input.invalid, select.invalid {
+  border-color: var(--forti-red);
+}
+.err { display: none; color: var(--forti-red); font-size: 11px; margin-top: 3px; }
+
+/* Model cards */
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+.model-card {
+  border: 1.5px solid var(--forti-border);
+  border-radius: 4px;
+  padding: 10px 13px;
+  cursor: pointer;
+  background: white;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.model-card:hover { border-color: #b0b8cc; background: #FAFBFC; }
+.model-card.selected { border: 2px solid var(--forti-red); background: #FEF8F8; }
+.model-card-title { font-weight: 600; font-size: 12px; color: var(--forti-text); }
+.model-card-desc { font-size: 11px; color: var(--forti-text-secondary); margin-top: 2px; }
+
+/* Callouts */
+.callout { border-radius: 3px; padding: 9px 12px; font-size: 12px; line-height: 1.6; display: flex; gap: 8px; margin-top: 10px; }
+.info { background: var(--forti-info-bg); border: 1px solid var(--forti-info-border); color: var(--forti-info-text); }
+.warn { background: var(--forti-warn-bg); border: 1px solid var(--forti-warn-border); color: var(--forti-warn-text); }
+.callout-icon { flex-shrink: 0; font-size: 14px; }
+
+/* Checkboxes */
+.checkbox-group { display: flex; flex-direction: column; gap: 8px; }
+.checkbox-item { display: flex; align-items: flex-start; gap: 8px; }
+.checkbox-item input[type=checkbox] { margin-top: 2px; flex-shrink: 0; accent-color: var(--forti-red); }
+.checkbox-label { font-size: 12px; font-weight: 600; color: var(--forti-text); }
+.checkbox-desc { font-size: 11px; color: var(--forti-text-muted); margin-top: 1px; }
+.checkbox-item.disabled { opacity: 0.4; pointer-events: none; }
+
+/* Action buttons */
+.actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+button {
+  background: var(--forti-red);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity .15s;
+}
+button:hover { opacity: .88; }
+button.secondary { background: #4A5568; }
+button.success { background: #2E7D32; }
+button.small { padding: 4px 10px; font-size: 11px; }
+#smsg { font-size: 12px; }
+
+/* BOM table */
+.bom-section { display: none; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th {
+  background: var(--forti-table-head);
+  border: 1px solid var(--forti-border);
+  padding: 7px 11px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+  text-align: left;
+  font-weight: 700;
+}
+tbody td { border: 1px solid var(--forti-border); padding: 7px 11px; vertical-align: top; }
+tbody tr:nth-child(even) td { background: var(--forti-table-stripe); }
+.section-row td {
+  background: #EAECF3 !important;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--forti-text-secondary);
+  padding: 5px 11px;
+  border-top: 2px solid #C5CAD9;
+}
+.sku-cell { font-family: 'Courier New', monospace; font-size: 11px; color: #1A4E82; }
+.nc { color: var(--forti-text-muted); }
+.badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-radius: 2px; padding: 1px 4px; display: inline-block; }
+.badge-req  { background: #FEF0EE; color: #C0392B; border: 1px solid #F5C6C2; }
+.badge-opt  { background: #EEF3FF; color: #3557A5; border: 1px solid #B8CBF5; }
+.badge-mand { background: #FFF8EE; color: #8A5800; border: 1px solid #F5D9A0; }
+.badge-inc  { background: #EEF3FF; color: #3557A5; border: 1px solid #B8CBF5; }
+.badge-note { display: none; }
+
+/* Overview table */
+.overview-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.overview-table th {
+  background: var(--forti-table-head);
+  border: 1px solid var(--forti-border);
+  padding: 7px 10px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--forti-text-secondary);
+  text-align: left;
+  font-weight: 700;
+}
+.overview-table td { border: 1px solid var(--forti-border); padding: 7px 10px; vertical-align: top; }
+.overview-table tr:nth-child(even) td { background: var(--forti-table-stripe); }
+.check { color: #2E7D32; font-weight: 700; }
+.dash { color: var(--forti-text-muted); }
+
+/* Band indicator */
+.band-indicator {
+  display: none;
+  background: var(--forti-info-bg);
+  border: 1px solid var(--forti-info-border);
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--forti-info-text);
+  margin-top: 4px;
+}
+
+/* Divider */
+hr { border: none; border-top: 1px solid var(--forti-border); margin: 14px 0; }
+</style>
+</head>
+<body>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-icon">🛡</div>
+  <div>
+    <div class="page-title">FortiSOAR</div>
+    <div class="page-subtitle">Security Orchestration, Automation & Response · Ordering Guide FSR-OG-R17-20260113</div>
+  </div>
+</div>
+
+<!-- Overview / Comparison Table -->
+<div class="card">
+  <div class="card-header">Edition Comparison</div>
+  <div class="card-body" style="padding:0;">
+    <table class="overview-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Starter Edition</th>
+          <th>Enterprise Edition</th>
+          <th>Multi-Tenant (Manager)</th>
+          <th>Multi-Tenant (Dedicated)</th>
+          <th>Multi-Tenant (Regional)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>All Enterprise Features</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+        </tr>
+        <tr>
+          <td>Daily Action Limit</td>
+          <td>10,000/day</td>
+          <td>Unlimited</td>
+          <td>Unlimited</td>
+          <td>Unlimited</td>
+          <td>Unlimited</td>
+        </tr>
+        <tr>
+          <td>Multi-Tenant / MSSP</td>
+          <td class="dash">—</td>
+          <td class="dash">—</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+        </tr>
+        <tr>
+          <td>HA Support</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+          <td class="check">✓ (Manager/Regional)</td>
+          <td class="dash">—</td>
+          <td class="check">✓</td>
+        </tr>
+        <tr>
+          <td>Included User Seats</td>
+          <td>2</td>
+          <td>2</td>
+          <td>2</td>
+          <td>2</td>
+          <td>2</td>
+        </tr>
+        <tr>
+          <td>Ideal For</td>
+          <td>Pilot / Dev</td>
+          <td>Self-managed SOC</td>
+          <td>MSSP / Multi-SOC</td>
+          <td>Isolated tenant</td>
+          <td>Remote SOC</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Step 1: Deployment Model -->
+<div class="card">
+  <div class="card-header">Step 1 — Deployment Model</div>
+  <div class="card-body">
+    <div style="margin-bottom:12px;">
+      <label>Hosting Type <span class="req">*</span></label>
+      <div class="model-grid" id="host-grid">
+        <div class="model-card selected" onclick="selectHost('vm')">
+          <div class="model-card-title">FortiSOAR VM (Subscription)</div>
+          <div class="model-card-desc">On-premises or public cloud (AWS, VMware, Rocky Linux)</div>
+        </div>
+        <div class="model-card" onclick="selectHost('cloud')">
+          <div class="model-card-title">FortiSOAR Cloud (PaaS)</div>
+          <div class="model-card-desc">Fortinet-hosted · No FortiCloud Premium required as of Q1 2025</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:0;">
+      <label>Edition <span class="req">*</span></label>
+      <div class="model-grid" id="edition-grid">
+        <div class="model-card selected" onclick="selectEdition('enterprise')">
+          <div class="model-card-title">Enterprise Edition</div>
+          <div class="model-card-desc">Self-managed SOC · All features · Unlimited actions</div>
+        </div>
+        <div class="model-card" onclick="selectEdition('starter')">
+          <div class="model-card-title">Starter Edition</div>
+          <div class="model-card-desc">10,000 actions/day · 2 seats incl. · Dev/pilot use</div>
+        </div>
+        <div class="model-card" onclick="selectEdition('mt-manager')">
+          <div class="model-card-title">Multi-Tenant — Manager</div>
+          <div class="model-card-desc">MSSP centralized management node</div>
+        </div>
+        <div class="model-card" onclick="selectEdition('mt-dedicated')">
+          <div class="model-card-title">Multi-Tenant — Dedicated</div>
+          <div class="model-card-desc">Isolated per-tenant node</div>
+        </div>
+        <div class="model-card" onclick="selectEdition('mt-regional')">
+          <div class="model-card-title">Multi-Tenant — Regional</div>
+          <div class="model-card-desc">Regional SOC / remote node</div>
+        </div>
+      </div>
+      <div id="edition-warn" class="callout warn" style="display:none;">
+        <span class="callout-icon">⚠</span>
+        <span id="edition-warn-text"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 2: Nodes & Users -->
+<div class="card">
+  <div class="card-header">Step 2 — Nodes &amp; User Seats</div>
+  <div class="card-body">
+    <div class="grid">
+      <div>
+        <label>Number of Primary Nodes <span class="req">*</span></label>
+        <input type="number" id="f-nodes" value="1" min="1" max="100" oninput="onFormChange()">
+        <div class="err" id="err-nodes">Enter at least 1 node.</div>
+        <div style="font-size:11px; color:var(--forti-text-muted); margin-top:4px;">Each node = 1 subscription license. 2 user seats included per node.</div>
+      </div>
+      <div>
+        <label>Add HA Node(s)</label>
+        <input type="number" id="f-ha" value="0" min="0" max="10" oninput="onFormChange()">
+        <div style="font-size:11px; color:var(--forti-text-muted); margin-top:4px;" id="ha-note">1 HA node per primary node. VM only. Not available for Starter Edition.</div>
+      </div>
+      <div>
+        <label>Total Concurrent Users Needed</label>
+        <input type="number" id="f-users" value="2" min="2" max="9999" oninput="onFormChange()">
+        <div style="font-size:11px; color:var(--forti-text-muted); margin-top:4px;">2 seats included per node. Additional seats billed separately.</div>
+        <div class="band-indicator" id="seat-indicator"></div>
+      </div>
+    </div>
+    <div class="callout info" style="margin-top:12px;">
+      <span class="callout-icon">ℹ</span>
+      <span>Concurrent users = max simultaneous logins, not total accounts. Plan seats across shifts. Example: 2 admins + 30 analysts on 3 shifts → 12 seats (2 admin + 10 floating).</span>
+    </div>
+  </div>
+</div>
+
+<!-- Step 3: Add-Ons -->
+<div class="card">
+  <div class="card-header">Step 3 — Add-On Options</div>
+  <div class="card-body">
+    <div class="checkbox-group">
+      <div class="checkbox-item" id="chk-threatintel-wrap">
+        <input type="checkbox" id="chk-threatintel" onchange="onFormChange()">
+        <div>
+          <div class="checkbox-label">Threat Intel Management Module (FortiGuard Threat Feed)</div>
+          <div class="checkbox-desc">Unlocks uncapped FortiGuard feeds (IPs, URLs, domains, hashes), contextual sightings, unlimited ingestion &amp; TAXII export. Without this SKU, feeds are capped at 100/day and ingestion stops at 1,000 records.</div>
+        </div>
+      </div>
+      <div class="checkbox-item" id="chk-storage-wrap">
+        <input type="checkbox" id="chk-storage" onchange="onFormChange()">
+        <div>
+          <div class="checkbox-label">Additional Cloud Storage (+1TB Storage, +8GB RAM, +4 vCPU)</div>
+          <div class="checkbox-desc">Cloud (PaaS) only. Per unit of additional compute/storage.</div>
+        </div>
+      </div>
+      <div style="margin-top:4px;">
+        <label style="display:inline; font-size:12px; font-weight:600; color:var(--forti-text-secondary);">Quantity of additional storage units:</label>
+        <input type="number" id="f-storage-qty" value="1" min="1" max="99" style="width:80px; margin-left:8px; display:inline-block;" onchange="onFormChange()">
+      </div>
+    </div>
+    <hr>
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <span>Professional Services (Quick-Start, Scoped SoW, Resident Engineer) and Training (NSE 6/7) are quoted separately. Contact your FortiSOAR account team or PS for a custom quote.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="actions">
+  <button onclick="generateBOM()">🔍 Preview BOM</button>
+  <button class="success" onclick="addToProjectBOM()">＋ Add to Project BOM</button>
+  <button class="secondary" onclick="resetForm()">↺ Reset</button>
+  <span id="smsg"></span>
+</div>
+
+<!-- BOM Preview -->
+<div class="bom-section card" id="bom-section">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>BOM Preview</span>
+    <span>
+      <button class="small" onclick="copyTSV()">📋 Copy TSV</button>
+      &nbsp;
+      <button class="small" onclick="window.print()">🖨 Print</button>
+    </span>
+  </div>
+  <div class="card-body" style="padding:0;">
+    <table id="bom-table">
+      <thead>
+        <tr>
+          <th style="width:200px;">Part Number</th>
+          <th>Description</th>
+          <th style="width:45px;">Qty</th>
+          <th style="width:75px;">Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let _lastRows  = [];
+let _lastLabel = '';
+let _lastMeta  = {};
+
+// SKU tables
+const VM_SKUS = {
+  enterprise:   'FC-10-SRVMS-389-02-DD',
+  starter:      'FC-10-SRVMS-1023-02-DD',
+  'mt-manager': 'FC-10-SRVMS-390-02-DD',
+  'mt-dedicated':'FC-10-SRVMS-387-02-DD',
+  'mt-regional': 'FC-10-SRVMS-388-02-DD',
+};
+const CLOUD_SKUS = {
+  enterprise:    'FC-10-SRCLD-385-02-DD',
+  'mt-manager':  'FC-10-SRCLD-386-02-DD',
+  'mt-dedicated':'FC-10-SRCLD-387-02-DD',
+  'mt-regional': 'FC-10-SRCLD-388-02-DD',
+};
+const EDITION_LABELS = {
+  enterprise:    'FortiSOAR Enterprise Edition',
+  starter:       'FortiSOAR Starter Edition (10K actions/day)',
+  'mt-manager':  'FortiSOAR Multi-Tenant — Manager Node',
+  'mt-dedicated':'FortiSOAR Multi-Tenant — Dedicated Node',
+  'mt-regional': 'FortiSOAR Multi-Tenant — Regional Node',
+};
+const HA_SKU_VM    = 'FC-10-SRVMS-1121-02-DD';
+const USER_SKU_VM  = 'FC-10-SRVMS-384-02-DD';
+const USER_SKU_CLD = 'FC-10-SRCLD-384-02-DD';
+const TIM_SKU_VM   = 'FC-10-SRVMS-592-02-DD';
+const TIM_SKU_CLD  = 'FC-10-SRCLD-592-02-DD';
+const STORAGE_SKU  = 'FC1-10-SRCLD-584-01-DD';
+
+let _host    = 'vm';
+let _edition = 'enterprise';
+
+function selectHost(h) {
+  _host = h;
+  document.querySelectorAll('#host-grid .model-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  updateEditionAvailability();
+  onFormChange();
+}
+
+function selectEdition(e) {
+  _edition = e;
+  document.querySelectorAll('#edition-grid .model-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  updateEditionAvailability();
+  onFormChange();
+}
+
+function updateEditionAvailability() {
+  const warn = document.getElementById('edition-warn');
+  const warnTxt = document.getElementById('edition-warn-text');
+  const storageWrap = document.getElementById('chk-storage-wrap');
+  const haInput = document.getElementById('f-ha');
+
+  // Cloud doesn't support: starter, HA node
+  if (_host === 'cloud') {
+    storageWrap.classList.remove('disabled');
+    haInput.disabled = true;
+    haInput.value = 0;
+    if (_edition === 'starter') {
+      warn.style.display = 'flex';
+      warnTxt.textContent = 'Starter Edition is not available for FortiSOAR Cloud (PaaS). Please select a different edition.';
+    } else {
+      warn.style.display = 'none';
+    }
+  } else {
+    // VM
+    storageWrap.classList.add('disabled');
+    document.getElementById('chk-storage').checked = false;
+    haInput.disabled = false;
+    warn.style.display = 'none';
+  }
+
+  // HA only for enterprise / mt-manager / mt-regional on VM
+  const haSupported = _host === 'vm' && ['enterprise','mt-manager','mt-regional'].includes(_edition);
+  const haWrap = haInput.parentElement;
+  if (!haSupported) {
+    haInput.disabled = true;
+    haInput.value = 0;
+    haWrap.style.opacity = '0.45';
+    haWrap.style.pointerEvents = 'none';
+  } else {
+    haInput.disabled = false;
+    haWrap.style.opacity = '';
+    haWrap.style.pointerEvents = '';
+  }
+
+  // Update seat indicator
+  updateSeatIndicator();
+}
+
+function updateSeatIndicator() {
+  const nodes = parseInt(document.getElementById('f-nodes').value) || 1;
+  const users = parseInt(document.getElementById('f-users').value) || 2;
+  const included = nodes * 2;
+  const extra = Math.max(0, users - included);
+  const ind = document.getElementById('seat-indicator');
+  if (extra > 0) {
+    ind.style.display = 'block';
+    ind.textContent = `${included} seats included (${nodes} node × 2) · ${extra} additional seat(s) to order`;
+  } else {
+    ind.style.display = 'none';
+  }
+}
+
+function onFormChange() {
+  updateSeatIndicator();
+  clearStatus();
+}
+
+function clearStatus() {
+  const s = document.getElementById('smsg');
+  s.textContent = '';
+}
+
+function validate(fieldId, errId, condition) {
+  const field = document.getElementById(fieldId);
+  const err   = document.getElementById(errId);
+  if (!condition) {
+    if (field) field.classList.add('invalid');
+    if (err)   err.style.display = 'block';
+    return false;
+  }
+  if (field) field.classList.remove('invalid');
+  if (err)   err.style.display = 'none';
+  return true;
+}
+
+function generateBOM() {
+  clearStatus();
+  let ok = true;
+
+  const nodes = parseInt(document.getElementById('f-nodes').value) || 0;
+  const ha    = parseInt(document.getElementById('f-ha').value)    || 0;
+  const users = parseInt(document.getElementById('f-users').value) || 0;
+
+  ok = validate('f-nodes','err-nodes', nodes >= 1) && ok;
+
+  // Check cloud + starter
+  if (_host === 'cloud' && _edition === 'starter') {
+    document.getElementById('smsg').textContent = '⚠ Starter Edition is not available on Cloud. Please change selection.';
+    document.getElementById('smsg').style.color = '#8A5800';
+    return false;
+  }
+
+  if (!ok) {
+    document.getElementById('smsg').textContent = '⚠ Please fix validation errors above.';
+    document.getElementById('smsg').style.color = 'var(--forti-red)';
+    return false;
+  }
+
+  const includedSeats = nodes * 2;
+  const extraSeats    = Math.max(0, users - includedSeats);
+  const wantTIM       = document.getElementById('chk-threatintel').checked;
+  const wantStorage   = document.getElementById('chk-storage').checked && _host === 'cloud';
+  const storageQty    = parseInt(document.getElementById('f-storage-qty').value) || 1;
+
+  const hostLabel   = _host === 'vm' ? 'VM (On-Prem / Public Cloud)' : 'Cloud PaaS (Fortinet-Hosted)';
+  const editionName = EDITION_LABELS[_edition] || _edition;
+
+  // Determine main SKU
+  let mainSku;
+  if (_host === 'vm') {
+    mainSku = VM_SKUS[_edition] || '⚠';
+  } else {
+    mainSku = CLOUD_SKUS[_edition] || '⚠';
+  }
+
+  const rows = [];
+
+  // — Main node(s) —
+  rows.push({ section: 'FortiSOAR Nodes' });
+  rows.push({
+    sku:  mainSku,
+    desc: editionName,
+    qty:  nodes,
+    kind: 'req',
+    note: `${hostLabel} · 2 seats included per node`,
+  });
+
+  // HA node(s)
+  if (ha > 0) {
+    rows.push({
+      sku:  HA_SKU_VM,
+      desc: 'FortiSOAR HA Node',
+      qty:  ha,
+      kind: 'req',
+      note: 'VM only · 1 HA node per primary node recommended',
+    });
+  }
+
+  // — User seats —
+  if (extraSeats > 0) {
+    rows.push({ section: 'Additional User Seats' });
+    const userSku = _host === 'vm' ? USER_SKU_VM : USER_SKU_CLD;
+    rows.push({
+      sku:  userSku,
+      desc: 'FortiSOAR Additional Concurrent User Seat',
+      qty:  extraSeats,
+      kind: 'opt',
+      note: `${includedSeats} seats included · ${extraSeats} additional needed for ${users} total`,
+    });
+  } else {
+    rows.push({ section: 'User Seats' });
+    rows.push({
+      sku:  '—',
+      desc: 'No additional user seats required',
+      qty:  null,
+      kind: 'note',
+      note: `${includedSeats} included seats cover ${users} requested concurrent users`,
+    });
+  }
+
+  // — Add-ons —
+  const hasAddons = wantTIM || wantStorage;
+  if (hasAddons) {
+    rows.push({ section: 'Add-On Modules' });
+    if (wantTIM) {
+      const timSku = _host === 'vm' ? TIM_SKU_VM : TIM_SKU_CLD;
+      rows.push({
+        sku:  timSku,
+        desc: 'FortiSOAR Threat Intel Management Module (incl. FortiGuard Threat Feed)',
+        qty:  nodes,
+        kind: 'opt',
+        note: 'Per node · Unlocks uncapped feeds, unlimited ingestion & TAXII export',
+      });
+    }
+    if (wantStorage) {
+      rows.push({
+        sku:  STORAGE_SKU,
+        desc: 'FortiSOAR Cloud — Additional Storage (1TB Storage, 8GB RAM, 4 vCPU)',
+        qty:  storageQty,
+        kind: 'opt',
+        note: 'Cloud (PaaS) only · Per unit',
+      });
+    }
+  }
+
+  // Professional services note
+  rows.push({ section: 'Professional Services & Training' });
+  rows.push({
+    sku:  '—',
+    desc: 'Professional Services & Training (Quick-Start, Scoped SoW, Resident Engineer, NSE 6/7 Training)',
+    qty:  null,
+    kind: 'note',
+    note: 'Contact your FortiSOAR account team for custom quote · Not available via SKU in this tool',
+  });
+
+  // Assemble meta
+  _lastLabel = `FortiSOAR ${editionName} ×${nodes}${ha > 0 ? ` + ${ha} HA` : ''} · ${users} users · ${hostLabel}`;
+  _lastRows  = rows;
+  _lastMeta  = {
+    'Hosting':   hostLabel,
+    'Edition':   editionName,
+    'Nodes':     nodes,
+    'HA Nodes':  ha,
+    'User Seats': users,
+    'Incl. Seats': includedSeats,
+    'Extra Seats': extraSeats,
+    'Threat Intel': wantTIM ? 'Yes' : 'No',
+    'Cloud Storage': wantStorage ? `${storageQty} unit(s)` : 'No',
+  };
+
+  renderBOM(rows);
+  return true;
+}
+
+function renderBOM(rows) {
+  const tbody = document.getElementById('bom-tbody');
+  tbody.innerHTML = '';
+
+  for (const row of rows) {
+    const tr = document.createElement('tr');
+    if (row.section !== undefined) {
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${row.section}</td>`;
+    } else {
+      const badgeHtml = row.kind && row.kind !== 'note'
+        ? `<span class="badge badge-${row.kind}">${row.kind === 'req' ? 'Required' : row.kind === 'opt' ? 'Optional' : row.kind === 'mand' ? 'Mandatory' : 'Included'}</span>`
+        : '';
+      const qtyStr = row.qty !== null && row.qty !== undefined ? row.qty : '—';
+      tr.innerHTML = `
+        <td class="sku-cell">${escHtml(row.sku)}</td>
+        <td>${escHtml(row.desc)}</td>
+        <td style="text-align:center;">${qtyStr}</td>
+        <td>${badgeHtml}</td>
+        <td class="nc">${escHtml(row.note || '')}</td>
+      `;
+    }
+    tbody.appendChild(tr);
+  }
+
+  const sec = document.getElementById('bom-section');
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addToProjectBOM() {
+  if (!generateBOM()) return;
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type:    'FORTIBOM_ADD',
+      product: 'FortiSOAR',
+      label:   _lastLabel,
+      rows:    _lastRows,
+      meta:    _lastMeta,
+    }, '*');
+    const s = document.getElementById('smsg');
+    s.textContent = '✓ Added to Project BOM.';
+    s.style.color = '#2E7D32';
+  } else {
+    const s = document.getElementById('smsg');
+    s.textContent = '✓ BOM generated (standalone mode — not inside FortiBOM hub).';
+    s.style.color = '#2E7D32';
+  }
+}
+
+function resetForm() {
+  _host    = 'vm';
+  _edition = 'enterprise';
+
+  document.querySelectorAll('#host-grid .model-card').forEach((c,i) => c.classList.toggle('selected', i===0));
+  document.querySelectorAll('#edition-grid .model-card').forEach((c,i) => c.classList.toggle('selected', i===0));
+
+  document.getElementById('f-nodes').value = 1;
+  document.getElementById('f-ha').value    = 0;
+  document.getElementById('f-users').value = 2;
+  document.getElementById('chk-threatintel').checked = false;
+  document.getElementById('chk-storage').checked     = false;
+  document.getElementById('f-storage-qty').value     = 1;
+
+  document.getElementById('bom-section').style.display = 'none';
+  document.getElementById('edition-warn').style.display = 'none';
+  document.getElementById('seat-indicator').style.display = 'none';
+
+  // Reset validation
+  ['f-nodes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('invalid');
+  });
+  ['err-nodes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  updateEditionAvailability();
+  clearStatus();
+}
+
+function copyTSV() {
+  const lines = ['Part Number\tDescription\tQty\tType\tNotes'];
+  for (const row of _lastRows) {
+    if (row.section !== undefined) {
+      lines.push(`[${row.section}]\t\t\t\t`);
+    } else {
+      const qty  = row.qty !== null && row.qty !== undefined ? row.qty : '';
+      const kind = row.kind || '';
+      lines.push([row.sku, row.desc, qty, kind, row.note || ''].join('\t'));
+    }
+  }
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const s = document.getElementById('smsg');
+    s.textContent = '✓ TSV copied to clipboard.';
+    s.style.color = '#3557A5';
+  });
+}
+
+// Init
+updateEditionAvailability();
+</script>
+</body>
+</html>

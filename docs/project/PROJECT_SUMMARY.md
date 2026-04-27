@@ -60,7 +60,7 @@ Legacy page URLs are still present only as lightweight redirect files for backwa
 - `src/features/sku-finder/`
   - Main SKU Finder logic, UI, BOM support
 - `src/features/bom-builder/`
-  - FortiBOM-backed wrapper route, adapter logic, and theme bridge assets
+  - FabricBOM-backed wrapper route, adapter logic, and theme bridge assets
 - `src/features/hardware-lifecycle/`
   - Hardware LifeCycle parsing, storage, search, UI
 - `src/features/software-lifecycle/`
@@ -110,9 +110,9 @@ Key modules:
 Primary page: `bom-builder/index.html`
 
 Purpose:
-- Provide an SE Toolbox-native wrapper around a vendored FortiBOM workspace
+- Provide an SE Toolbox-native wrapper around a vendored FabricBOM workspace
 - Keep BOM-building inside the shared SE Toolbox shell and navigation
-- Preserve a cleaner path for future upstream FortiBOM updates
+- Preserve a cleaner path for future upstream FabricBOM updates
 
 Key modules:
 - `src/features/bom-builder/main.js`
