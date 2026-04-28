@@ -1,7 +1,9 @@
 import { groupCatalogByCategory } from "../../features/bom-builder/catalog.js";
 import { initAdminAlerts } from "./admin-alerts.js";
+import { APP_METADATA, formatLastUpdated } from "./app-meta.js";
 
 const SHELL_COLLAPSED_KEY = "fortisku-shell-collapsed";
+const BRAND_ABOUT_DELAY_MS = 3000;
 
 const ICONS = {
   search: `<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>`,
@@ -17,6 +19,27 @@ const ICONS = {
 
 function icon(name, size = 16) {
   return `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ""}</svg>`;
+}
+
+function renderBrandAboutPopover() {
+  return `
+    <div class="forti-brand-about" id="forti-brand-about" role="dialog" aria-modal="false" aria-label="About SE Toolbox" hidden>
+      <div class="forti-brand-about-title">About SE Toolbox</div>
+      <div class="forti-brand-about-row">
+        <span class="forti-brand-about-label">Created by</span>
+        <span class="forti-brand-about-value">${APP_METADATA.author}</span>
+      </div>
+      <div class="forti-brand-about-row">
+        <span class="forti-brand-about-label">Last updated</span>
+        <span class="forti-brand-about-value">${formatLastUpdated(APP_METADATA.lastUpdated)}</span>
+      </div>
+      <div class="forti-brand-about-row">
+        <span class="forti-brand-about-label">Version</span>
+        <span class="forti-brand-about-value">${APP_METADATA.version}</span>
+      </div>
+      <div class="forti-brand-about-note">${APP_METADATA.versionScheme}</div>
+    </div>
+  `;
 }
 
 function categoryKey(category) {
@@ -186,9 +209,10 @@ function buildShell(nav) {
     <div class="forti-sidebar-brand">
       <div class="forti-brand-mark">FS</div>
       <div class="forti-brand-text">
-        <span class="forti-brand-name">SE Toolbox</span>
+        <span class="forti-brand-name" id="forti-brand-name" tabindex="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="forti-brand-about">SE Toolbox</span>
         <span class="forti-brand-sub">Fortinet Utilities</span>
       </div>
+      ${renderBrandAboutPopover()}
     </div>
   `;
 
@@ -238,6 +262,29 @@ function buildShell(nav) {
 function wireShellInteractions() {
   const toggle = document.getElementById("forti-shell-toggle");
   const triggers = document.querySelectorAll(".forti-nav-group-trigger");
+  const brandName = document.getElementById("forti-brand-name");
+  const brandAbout = document.getElementById("forti-brand-about");
+  const brandWrap = document.querySelector(".forti-sidebar-brand");
+  let brandAboutTimer = 0;
+
+  const showBrandAbout = () => {
+    if (!brandAbout || !brandName) return;
+    brandAbout.hidden = false;
+    brandName.setAttribute("aria-expanded", "true");
+  };
+
+  const hideBrandAbout = () => {
+    if (!brandAbout || !brandName) return;
+    window.clearTimeout(brandAboutTimer);
+    brandAbout.hidden = true;
+    brandName.setAttribute("aria-expanded", "false");
+  };
+
+  const queueBrandAbout = () => {
+    if (!brandAbout) return;
+    window.clearTimeout(brandAboutTimer);
+    brandAboutTimer = window.setTimeout(showBrandAbout, BRAND_ABOUT_DELAY_MS);
+  };
 
   toggle?.addEventListener("click", () => {
     const sidebar = document.querySelector(".forti-sidebar");
@@ -252,6 +299,24 @@ function wireShellInteractions() {
       const chevron = trigger.querySelector(".forti-nav-chevron");
       if (chevron) chevron.classList.toggle("open", !expanded);
     });
+  });
+
+  brandName?.addEventListener("mouseenter", queueBrandAbout);
+  brandName?.addEventListener("focus", queueBrandAbout);
+
+  brandWrap?.addEventListener("mouseleave", hideBrandAbout);
+  brandWrap?.addEventListener("focusout", (event) => {
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && brandWrap.contains(nextTarget)) {
+      return;
+    }
+    hideBrandAbout();
+  });
+
+  brandName?.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      hideBrandAbout();
+    }
   });
 
   setCollapsed(preferredCollapsed());

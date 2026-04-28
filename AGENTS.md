@@ -22,3 +22,13 @@ Before working in this repository:
 ## Default Expectation
 
 Treat this file as a pointer, not the full policy source of truth.
+
+## Versioning Instructions
+
+- SE Toolbox uses calendar versioning in the format `YYYY.MM.PATCH`.
+- `YYYY` is the four-digit year of the release.
+- `MM` is the two-digit release month.
+- `PATCH` starts at `1` for the first user-visible release in that month and increments by `1` for each later user-visible release in the same month.
+- The shared metadata source of truth is `src/shared/ui/app-meta.js`.
+- Any user-visible change merged for release must update the version and `lastUpdated` value in `src/shared/ui/app-meta.js`.
+- The About popover shown from `forti-brand-name` must continue to display the current author, last updated date, and version from that shared metadata file.

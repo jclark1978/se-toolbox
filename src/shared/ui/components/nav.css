@@ -205,7 +205,7 @@ body.theme-dark .theme-toggle-knob {
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   transition: width var(--motion-slow) ease, min-width var(--motion-slow) ease;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
   z-index: 10;
   flex-shrink: 0;
@@ -224,6 +224,7 @@ body.theme-dark .theme-toggle-knob {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   gap: 10px;
   flex-shrink: 0;
+  position: relative;
 }
 
 .forti-brand-mark {
@@ -256,6 +257,17 @@ body.theme-dark .theme-toggle-knob {
   white-space: nowrap;
   letter-spacing: -0.3px;
   line-height: 1.2;
+  cursor: help;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(255, 255, 255, 0.3);
+  text-underline-offset: 3px;
+}
+
+.forti-brand-name:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .forti-brand-sub {
@@ -266,6 +278,58 @@ body.theme-dark .theme-toggle-knob {
   text-transform: uppercase;
   white-space: nowrap;
   line-height: 1;
+}
+
+.forti-brand-about {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 14px;
+  width: min(280px, calc(100vw - 32px));
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(28, 31, 40, 0.98), rgba(18, 21, 28, 0.98));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  z-index: 120;
+}
+
+.forti-brand-about[hidden] {
+  display: none;
+}
+
+.forti-brand-about-title {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.forti-brand-about-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.forti-brand-about-label {
+  color: rgba(214, 220, 234, 0.7);
+}
+
+.forti-brand-about-value {
+  color: #fff;
+  font-weight: 600;
+  text-align: right;
+}
+
+.forti-brand-about-note {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(214, 220, 234, 0.68);
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .forti-sidebar-nav {
@@ -307,6 +371,7 @@ body.theme-dark .theme-toggle-knob {
 
 /* Rail mode — hide labels, center icons */
 .forti-sidebar-rail .forti-brand-text,
+.forti-sidebar-rail .forti-brand-about,
 .forti-sidebar-rail .forti-nav-label,
 .forti-sidebar-rail .forti-nav-chevron,
 .forti-sidebar-rail .forti-nav-subitem,
