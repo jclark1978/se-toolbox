@@ -113,18 +113,20 @@ async function handlePricingImport(file) {
       rowCount: rows.length,
       sheetName: result.sheetName,
       skippedRows: result.stats.skippedRows,
-      priceListLabel: result.coverInfo || null
+      priceListLabel: result.coverInfo || null,
+      filename: file.name
     };
     meta.storedBytes = estimateSizeBytes(rows, exported);
 
     await savePersisted(rows, exported, meta);
     await saveOrderingGuideRows(result.orderingGuideRows);
-    await saveSharedDataset("pricing", buildPricingDataset(rows, meta));
+    await saveSharedDataset("pricing", buildPricingDataset(rows, meta, result.rawPricingData));
     notifyAdminRequirementsChanged();
 
+    const displayName = result.rawPricingData?.name ?? meta.priceListLabel;
     updateCardStatus("pricing", {
-      source: { label: meta.priceListLabel, importedAt: meta.updatedAt },
-      meta: { rowCount: rows.length }
+      source: { importedAt: meta.updatedAt },
+      meta: { rowCount: rows.length, datasetName: displayName }
     });
 
     let msg = `Imported ${rows.length} rows from "${result.sheetName}".`;
@@ -310,7 +312,8 @@ function updateCardStatus(key, record) {
     const importedAt = record.source?.importedAt
       ? new Date(record.source.importedAt).toLocaleString()
       : "Unknown time";
-    const label = record.source?.label ? ` — ${record.source.label}` : "";
+    const labelText = record.meta?.datasetName ?? record.source?.label ?? null;
+    const label = labelText ? ` — ${labelText}` : "";
     const rowCount = record.meta?.rowCount ?? "?";
 
     badge.textContent = "Available";
