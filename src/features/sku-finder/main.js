@@ -117,7 +117,8 @@ async function handleUpload({ file, sheetName }) {
       schemaVersion: SCHEMA_VERSION,
       sheetName: result.sheetName,
       skippedRows: result.stats.skippedRows,
-      priceListLabel: result.coverInfo || null
+      priceListLabel: result.coverInfo || null,
+      filename: file.name
     };
 
     const storedBytes = estimateSizeBytes(rows, exported);
@@ -125,7 +126,7 @@ async function handleUpload({ file, sheetName }) {
     await savePersisted(rows, exported, meta);
     await saveOrderingGuideRows(result.orderingGuideRows);
     try {
-      await saveSharedDataset("pricing", buildPricingDataset(rows, meta));
+      await saveSharedDataset("pricing", buildPricingDataset(rows, meta, result.rawPricingData));
     } catch (err) {
       console.warn("Failed to publish shared pricing dataset", err);
     }

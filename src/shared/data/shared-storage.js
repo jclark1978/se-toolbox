@@ -1,18 +1,22 @@
 const DB_NAME = "toolbox_shared";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = "datasets";
 
+let _sharedDb = null;
+
 function openSharedDb() {
+  if (_sharedDb) return Promise.resolve(_sharedDb);
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: "key" });
+      if (db.objectStoreNames.contains(STORE_NAME)) {
+        db.deleteObjectStore(STORE_NAME);
       }
+      db.createObjectStore(STORE_NAME, { keyPath: "key" });
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onsuccess = (e) => { _sharedDb = e.target.result; resolve(_sharedDb); };
+    request.onerror = (e) => reject(e.target.error);
   });
 }
 
@@ -20,10 +24,9 @@ export async function getSharedDataset(key) {
   const db = await openSharedDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.get(key);
-    req.onsuccess = () => { db.close(); resolve(req.result ?? null); };
-    req.onerror = () => { db.close(); reject(req.error); };
+    const req = tx.objectStore(STORE_NAME).get(key);
+    req.onsuccess = (e) => resolve(e.target.result ?? null);
+    req.onerror = (e) => reject(e.target.error);
   });
 }
 
@@ -31,11 +34,9 @@ export async function saveSharedDataset(key, payload) {
   const db = await openSharedDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
-    const store = tx.objectStore(STORE_NAME);
-    const record = { ...payload, key };
-    const req = store.keyPath === "key" ? store.put(record) : store.put(record, key);
-    req.onsuccess = () => { db.close(); resolve(); };
-    req.onerror = () => { db.close(); reject(req.error); };
+    tx.objectStore(STORE_NAME).put({ ...payload, key });
+    tx.oncomplete = resolve;
+    tx.onerror = (e) => reject(e.target.error);
   });
 }
 
@@ -43,10 +44,9 @@ export async function deleteSharedDataset(key) {
   const db = await openSharedDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.delete(key);
-    req.onsuccess = () => { db.close(); resolve(); };
-    req.onerror = () => { db.close(); reject(req.error); };
+    tx.objectStore(STORE_NAME).delete(key);
+    tx.oncomplete = resolve;
+    tx.onerror = (e) => reject(e.target.error);
   });
 }
 
@@ -59,11 +59,9 @@ export async function getAllSharedDatasetMeta() {
   const db = await openSharedDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.getAll();
-    req.onsuccess = () => {
-      db.close();
-      const records = (req.result ?? []).map(({ key, version, source, meta }) => ({
+    const req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = (e) => {
+      const records = (e.target.result ?? []).map(({ key, version, source, meta }) => ({
         key,
         version,
         source,
@@ -71,6 +69,6 @@ export async function getAllSharedDatasetMeta() {
       }));
       resolve(records);
     };
-    req.onerror = () => { db.close(); reject(req.error); };
+    req.onerror = (e) => reject(e.target.error);
   });
 }

@@ -13,6 +13,17 @@ const FIELD_MAP = {
 
 const HEADER_FIELDS = Object.keys(FIELD_MAP);
 
+const REQUIRED_PRICING_HEADERS = [
+  "Comments", "Identifier", "Product Family Group", "Product", "Product Type",
+  "Item", "SKU", "Description #1", "Description #2", "Price", "Category",
+  "Fx Translated Price", "UPC Code", "FED", "GSA", "COO",
+  "Single Pack Weight (lbs.)", "Single Pack Length (in.)", "Single Pack Width (in.)", "Single Pack Height (in.)",
+  "Case Pack Quantity", "Case Pack Weight (lbs.)", "Case Pack Length (in.)", "Case Pack Width (in.)", "Case Pack Height (in.)",
+  "Ground Pallet Quantity", "Ground Pallet Weight (lbs.)", "Ground Pallet Length (in.)", "Ground Pallet Width (in.)", "Ground Pallet Height (in.)",
+  "Air Pallet Quantity", "Air Pallet Weight (lbs.)", "Air Pallet Length (in.)", "Air Pallet Width (in.)", "Air Pallet Height (in.)",
+  "AutoStart", "E-Rate", "Pillar", "Term (Month)"
+];
+
 export async function ingestWorkbook(file, requestedSheetName) {
   const arrayBuffer = await file.arrayBuffer();
   const workbook = await read(arrayBuffer);
@@ -20,7 +31,7 @@ export async function ingestWorkbook(file, requestedSheetName) {
   if (!sheetName) {
     throw new Error(
       requestedSheetName
-        ? `Sheet “${requestedSheetName}” not found. Available sheets: ${workbook.SheetNames.join(", ")}`
+        ? `Sheet "${requestedSheetName}" not found. Available sheets: ${workbook.SheetNames.join(", ")}`
         : "Workbook does not contain any sheets."
     );
   }
@@ -29,7 +40,7 @@ export async function ingestWorkbook(file, requestedSheetName) {
   const rows = utils.sheet_to_json(worksheet, { header: 1 });
 
   if (!rows.length) {
-    throw new Error(`Sheet “${sheetName}” is empty.`);
+    throw new Error(`Sheet "${sheetName}" is empty.`);
   }
 
   const headerInfo = findHeaderRow(rows);
@@ -41,6 +52,7 @@ export async function ingestWorkbook(file, requestedSheetName) {
   const { normalizedRows, stats } = normalizeRows(dataRows, headerInfo.headerMap);
   const coverInfo = extractCoverSheetInfo(workbook);
   const orderingGuideRows = extractOrderingGuideRows(workbook);
+  const rawPricingData = buildRawPricingData(rows, headerInfo);
 
   if (!normalizedRows.length) {
     throw new Error("No data rows contained valid SKU and Description #1 values.");
@@ -51,7 +63,8 @@ export async function ingestWorkbook(file, requestedSheetName) {
     sheetName,
     stats,
     coverInfo,
-    orderingGuideRows
+    orderingGuideRows,
+    rawPricingData
   };
 }
 
@@ -90,7 +103,11 @@ function findHeaderRow(rows) {
     }
     const headerMap = mapHeaders(row);
     if (headerMap.includes("sku") && headerMap.includes("description")) {
-      return { index, headerMap };
+      return {
+        index,
+        headerMap,
+        originalHeaders: row.map(h => String(h ?? "").trim())
+      };
     }
   }
   return null;
@@ -309,4 +326,76 @@ function extractUrlFromText(value) {
     return `https://${wwwMatch[0]}`;
   }
   return "";
+}
+
+// Scans preamble rows (before the header row) for price list name and effective date.
+function extractPreamble(rows, headerIndex) {
+  let name = null;
+  let effectiveDate = null;
+
+  for (let i = 0; i < Math.min(headerIndex, 30); i++) {
+    const row = rows[i] || [];
+
+    for (const cell of row) {
+      const val = String(cell ?? "").trim();
+      if (/^effective date:/i.test(val)) {
+        effectiveDate = val.replace(/^effective date:\s*/i, "").trim();
+      }
+    }
+
+    const firstCell = String(row[0] ?? "").trim();
+    if (firstCell && !/^effective date:/i.test(firstCell)) {
+      const restEmpty = row.slice(1).every(c => String(c ?? "").trim() === "");
+      if (restEmpty) name = firstCell;
+    }
+  }
+
+  return {
+    name: name || "Fortinet Price List",
+    effectiveDate: effectiveDate || ""
+  };
+}
+
+// Returns raw rows keyed by original header names when the sheet has the 39 required pricing headers.
+// Returns null if the headers do not match the required pricing schema.
+function buildRawPricingData(rows, headerInfo) {
+  const trimmedHeaders = headerInfo.originalHeaders.filter(h => h !== "");
+
+  if (
+    trimmedHeaders.length !== REQUIRED_PRICING_HEADERS.length ||
+    !trimmedHeaders.every((h, i) => h === REQUIRED_PRICING_HEADERS[i])
+  ) {
+    return null;
+  }
+
+  const preamble = extractPreamble(rows, headerInfo.index);
+  const rawRows = [];
+
+  for (let i = headerInfo.index + 1; i < rows.length; i++) {
+    const row = rows[i] || [];
+    if (row.every(c => c === null || c === undefined || c === "")) continue;
+
+    const obj = {};
+    for (let j = 0; j < trimmedHeaders.length; j++) {
+      const header = trimmedHeaders[j];
+      let val = j < row.length ? row[j] : "";
+
+      if (header === "Price") {
+        val = String(val ?? "").replace(/[^0-9.]/g, "");
+      } else {
+        val = val === null || val === undefined ? "" : String(val);
+      }
+
+      obj[header] = val;
+    }
+
+    rawRows.push(obj);
+  }
+
+  return {
+    name: preamble.name,
+    effectiveDate: preamble.effectiveDate,
+    headers: trimmedHeaders,
+    rows: rawRows
+  };
 }
