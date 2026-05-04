@@ -93,51 +93,102 @@ The long-term interoperability boundary between SE Toolbox and upstream `FabricB
 Use:
 
 - DB name: `toolbox_shared`
-- schema version: `1`
+- DB version: `2`
 - object store: `datasets`
-- object store keying: treat `datasets` as key-path-backed on `key`
+- object store keying: `datasets` is created with `{ keyPath: "key" }`
 
 Implementation note:
 
-- SE Toolbox currently creates `datasets` with `{ keyPath: "key" }`
-- vendor-side helper code must remain compatible with that shape
-- do not assume a keyless object store plus explicit `.put(payload, key)` calls
+- all apps that participate in the shared dataset contract must open the database as `indexedDB.open("toolbox_shared", 2)`
+- the current `onupgradeneeded` contract is destructive:
+  - if `datasets` exists, delete it
+  - recreate `datasets` with `{ keyPath: "key" }`
+- vendor-side helper code must remain compatible with that exact open/upgrade behavior
+- do not assume a keyless object store plus explicit `.put(payload, key)` calls as the primary shape
 - when saving shared datasets, prefer writing `{ ...payload, key }` and support `store.keyPath === "key"` safely
 
 Dataset keys:
 
 - `pricing`
-- `hardware_lifecycle`
-- `software_lifecycle`
+
+Practical rule:
+
+- for this integration, treat `pricing` as the only required shared dataset key unless and until a separate dataset spec formally reserves more keys
 
 ### Dataset Envelope
 
-Each dataset record stored in `datasets` should follow this shape:
+Each dataset record stored in `datasets` should follow the shared top-level shape:
 
 ```js
 {
   key: "pricing",
   version: 1,
   source: {
-    app: "FortiSKU" | "FabricBOM" | string,
-    format: "xlsx" | "rss" | string,
-    label: string | null,
-    importedAt: "ISO-8601 timestamp",
-    effectiveDate: string | null
+    type: "csv" | "xlsx",
+    filename: string | null,
+    importedAt: "ISO-8601 timestamp"
+  },
+  data: { ... },
+  meta: { ... }
+}
+```
+
+Important distinction:
+
+- DB version `2` is the IndexedDB schema version
+- top-level record `version: 1` is the pricing record schema version
+
+### Shared Pricing Record Shape
+
+Under the new spec, `pricing` is not a FabricBOM-specific normalized row cache. It is the full shared pricing dataset record:
+
+```js
+{
+  key: "pricing",
+  version: 1,
+  source: {
+    type: "csv" | "xlsx",
+    filename: string | null,
+    importedAt: "ISO-8601 timestamp"
   },
   data: {
-    rows: []
+    ok: true,
+    name: string,
+    effectiveDate: string,
+    headers: string[],
+    rows: object[],
+    uploadedAt: "ISO-8601 timestamp"
   },
   meta: {
     rowCount: number,
-    schema: "toolbox_shared.pricing.v1"
+    headerCount: number,
+    effectiveDate: string,
+    datasetName: string
   }
 }
 ```
 
-### Shared Pricing Row Shape
+### Shared Pricing Header Contract
 
-The normalized `pricing` dataset rows should use:
+The authoritative shared pricing dataset is valid only when `data.headers` contains the exact 39 required price-list headers in the original order, including exact casing and punctuation.
+
+Examples that matter to the integration:
+
+- `SKU`
+- `Description #1`
+- `Description #2`
+- `Price`
+- `Category`
+- `Comments`
+
+Practical rule:
+
+- do not treat `Description #1`, `description1`, `description_1`, and `Description 1` as interchangeable inside the shared `pricing` record
+- if FabricBOM needs a normalized in-memory lookup shape for search or pricing resolution, derive it from `data.rows` at runtime instead of redefining the stored shared contract
+
+### FabricBOM Runtime Mapping
+
+FabricBOM may still map the shared dataset into a local runtime view such as:
 
 ```js
 {
@@ -151,20 +202,7 @@ The normalized `pricing` dataset rows should use:
 }
 ```
 
-### Shared Lifecycle Row Shape
-
-The normalized lifecycle datasets should use:
-
-```js
-{
-  product: string,
-  release: string,
-  milestone: string,
-  date: string,
-  details: string,
-  sourceUrl: string
-}
-```
+But that is an adapter concern only. It should not replace or mutate the shared stored record shape.
 
 ## Pricing Model
 
@@ -173,11 +211,12 @@ Pricing must continue to come from the shared workbook-derived dataset rather th
 Current integration behavior:
 
 - SKU Finder workbook import is the canonical pricing source
-- FortiSKU publishes normalized pricing rows into `toolbox_shared` / `datasets` / `pricing`
-- embedded `FabricBOM` should read that normalized dataset from IndexedDB
+- FortiSKU publishes the shared `pricing` dataset record into `toolbox_shared` / `datasets` / `pricing`
+- embedded `FabricBOM` should read that shared dataset record from IndexedDB
 - Project BOM pricing and custom SKU lookup should depend on that shared store
 - FabricBOM standalone mode may also import the same workbook format and write into the same shared dataset contract
-- embedded FabricBOM should treat `priceDisplay` as preferred presentation data but fall back to formatted numeric `price` when `priceDisplay` is empty or placeholder-only
+- embedded FabricBOM can derive its own normalized search/pricing map from the shared record's `data.rows`
+- embedded FabricBOM should treat the source row's `Price` field as the pricing display source and only derive a numeric value for totals/calculation as an adapter concern
 
 Practical rule:
 
@@ -195,27 +234,66 @@ Required behavior:
 - target default sheet name: `DataSet`
 - if `DataSet` is absent, fall back to the first sheet
 - detect the header row dynamically rather than assuming the first row
-- require both SKU and primary description columns
-- accept header synonyms
+- require the full 39-column pricing header set for the canonical shared `pricing` record
+- preserve the original header strings exactly as they appear in the source file
 - skip empty rows
 - trim and sanitize string values
-- parse numeric price when possible
-- preserve the original display string for price
-- sort normalized rows by `sku`
+- preserve `effectiveDate` exactly as it appears in the source file
+- populate `data.name` from the source file and fall back to `Fortinet Price List` only when no recognizable name is present
+- set `source.type` to `csv` or `xlsx` only
+- store the full source rows keyed by the exact original header names
 
-Header mapping:
+Compatibility note:
 
-- `sku`: `sku`, `product_sku`, `part`, `partnumber`
-- `description1`: `description`, `description#1`, `description1`, `desc`, `itemdescription`, `productdescription`
-- `description2`: `description#2`, `description2`, `desc2`, `itemdescription2`, `productdescription2`, `secondarydescription`
-- `price`: `price`, `listprice`, `unitprice`, `msrp`, `usdprice`
-- `category`: `category`, `productcategory`, `family`, `productfamily`, `familyname`, `productline`, `bundle`, `solution`, `segment`, `portfolio`
-- `comments`: `comments`, `comment`, `notes`, `note`
+- FortiSKU may still produce a fallback normalized runtime dataset for local search when a workbook lacks the canonical 39 headers
+- that fallback should not be treated as the authoritative shared `pricing` contract that FabricBOM depends on for upstream compatibility
+
+Required headers:
+
+- `Comments`
+- `Identifier`
+- `Product Family Group`
+- `Product`
+- `Product Type`
+- `Item`
+- `SKU`
+- `Description #1`
+- `Description #2`
+- `Price`
+- `Category`
+- `Fx Translated Price`
+- `UPC Code`
+- `FED`
+- `GSA`
+- `COO`
+- `Single Pack Weight (lbs.)`
+- `Single Pack Length (in.)`
+- `Single Pack Width (in.)`
+- `Single Pack Height (in.)`
+- `Case Pack Quantity`
+- `Case Pack Weight (lbs.)`
+- `Case Pack Length (in.)`
+- `Case Pack Width (in.)`
+- `Case Pack Height (in.)`
+- `Ground Pallet Quantity`
+- `Ground Pallet Weight (lbs.)`
+- `Ground Pallet Length (in.)`
+- `Ground Pallet Width (in.)`
+- `Ground Pallet Height (in.)`
+- `Air Pallet Quantity`
+- `Air Pallet Weight (lbs.)`
+- `Air Pallet Length (in.)`
+- `Air Pallet Width (in.)`
+- `Air Pallet Height (in.)`
+- `AutoStart`
+- `E-Rate`
+- `Pillar`
+- `Term (Month)`
 
 Workbook metadata behavior:
 
-- if a workbook contains `Cover Sheet`, `Cover`, or `Coversheet`, read cell `C7` when present and use it as `source.label`
-- set `source.format = "xlsx"`
+- if a workbook contains `Cover Sheet`, `Cover`, or `Coversheet`, read cell `C7` when present and use it as the dataset name source when applicable
+- set `source.type = "xlsx"` for workbook imports
 - set `source.importedAt` to the import timestamp
 
 Practical rule:
@@ -234,8 +312,8 @@ Required behavior:
 - `pi-term` remains the only control that converts `-DD` to a priced term SKU
 - if `pi-term = DD`, Project BOM should not guess a priced term for display or totals
 - if `pi-term = 12`, `36`, or `60`, Project BOM should resolve pricing against that exact remapped SKU
-- the list-price column should use `priceDisplay` when present
-- if `priceDisplay` is blank or placeholder-only (for example `-`), the list-price column should render a formatted value from numeric `price`
+- the list-price column should use the shared source row `Price` value when present
+- if numeric totals are needed, parse them from the source row as an adapter concern rather than assuming the shared dataset stores a separate normalized display field
 
 Practical rule:
 
@@ -254,14 +332,17 @@ Recommended workflow for future updates:
    - product navigation still works
    - Project BOM still works
    - Saved Projects still works
-   - workbook-based shared pricing still resolves through `toolbox_shared`
-   - custom SKU search still resolves against normalized pricing rows
-   - Project BOM list price renders from `priceDisplay` or formatted numeric `price`
+   - workbook-based shared pricing still resolves through `toolbox_shared` using DB version `2`
+   - shared pricing reads/writes still use the `pricing` key in `datasets`
+   - custom SKU search still resolves after adapting from shared `data.rows`
+   - Project BOM list price renders from the shared row `Price` value or a clearly derived equivalent
    - Project BOM totals only resolve against the exact term selected in `pi-term`
    - `DD` does not silently price as `-12`, `-36`, or `-60`
    - vendor-side workbook import works without CDN access
    - service worker asset list still matches vendored files
    - no refresh reintroduces legacy `fabricbom_pricing` dependence
+   - no refresh downgrades the shared DB open path back to version `1`
+   - no refresh restores the old `source.app` / `source.format` / `meta.schema` envelope as the stored shared contract
 5. update this plan if the boundary changes
 
 Practical rule:
@@ -274,12 +355,15 @@ Practical rule:
 When pulling a newer upstream `FabricBOM` snapshot, protect these integration expectations:
 
 - FabricBOM reads pricing from `toolbox_shared` rather than `fabricbom_pricing`
-- FabricBOM expects normalized `pricing` rows with `sku`, `description1`, `description2`, `price`, `priceDisplay`, `category`, and `comments`
+- FabricBOM opens `toolbox_shared` with DB version `2`
+- FabricBOM reads the shared `pricing` record with top-level fields `key`, `version`, `source`, `data`, and `meta`
+- FabricBOM treats `source.type` as `csv` or `xlsx`, not the older `app` / `format` / `label` shape
+- FabricBOM derives any normalized runtime pricing rows from shared `data.rows` instead of expecting them to already be the stored contract
 - FabricBOM standalone pricing import uses the workbook flow rather than a CSV-only path
 - FabricBOM standalone pricing import loads its workbook parser from a vendored local asset, not a CDN dependency
-- Custom SKU search uses the normalized pricing dataset
-- Project BOM totals use the normalized numeric `price` field
-- Project BOM list price displays `priceDisplay` when valid and falls back to formatted numeric `price`
+- Custom SKU search uses an adapter built from the shared pricing dataset
+- Project BOM totals use a numeric price derived from shared pricing rows
+- Project BOM list price displays the shared `Price` value or a clearly derived equivalent
 - Project BOM remaps `-DD` SKUs only when the user explicitly selects a term in `pi-term`
 - `DD` remains an unpriced placeholder state rather than an implicit one-year selection
 - BOM wrapper copy should continue describing pricing as shared workbook-backed data
@@ -360,11 +444,12 @@ Do this only as a deliberate follow-up after:
 
 1. smoke-test `/bom-builder/` in the browser
 2. verify one standard product flow end to end
-3. verify `Search & Custom Entry` against the shared workbook-derived pricing dataset
+3. verify `Search & Custom Entry` against the shared workbook-derived pricing dataset record
 4. verify Project BOM pricing/export behavior
-5. verify no legacy CSV-only pricing assumptions remain after upstream refresh
-6. verify service worker cache invalidation whenever vendor helper assets or workbook parser assets change
-7. decide whether to keep the vendor path as-is for now or schedule the path rename as a separate cleanup pass
+5. verify no legacy normalized-envelope assumptions remain in vendor helpers before pulling upstream changes
+6. verify no legacy CSV-only pricing assumptions remain after upstream refresh
+7. verify service worker cache invalidation whenever vendor helper assets or workbook parser assets change
+8. decide whether to keep the vendor path as-is for now or schedule the path rename as a separate cleanup pass
 
 ## Strong Recommendation
 
